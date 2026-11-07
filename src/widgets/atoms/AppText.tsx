@@ -25,11 +25,16 @@ export function AppText({
   tone = 'primary',
   style,
   children,
+  pointerEvents,
   ...rest
 }: Props) {
   const base = typography[variant] as TextStyle;
   return (
-    <Text {...rest} style={[base, { color: toneMap[tone] }, style]}>
+    <Text
+      {...rest}
+      pointerEvents={pointerEvents}
+      style={[base, { color: toneMap[tone] }, style]}
+    >
       {children}
     </Text>
   );

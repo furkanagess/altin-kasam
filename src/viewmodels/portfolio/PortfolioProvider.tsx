@@ -2,7 +2,7 @@ import {
   portfolioRepository,
   type AddHoldingInput,
 } from '@/src/data/repositories/portfolioRepository';
-import type { Holding, PortfolioSnapshot } from '@/src/domain/models';
+import type { Holding, MetalQuote, PortfolioSnapshot } from '@/src/domain/models';
 import { useMarketViewModel } from '@/src/viewmodels/market/MarketProvider';
 import React, {
   createContext,
@@ -10,6 +10,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -29,28 +30,41 @@ const PortfolioContext = createContext<PortfolioContextValue | null>(null);
 
 export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const { quotes } = useMarketViewModel();
+  const quotesRef = useRef<MetalQuote[]>(quotes);
+  quotesRef.current = quotes;
+
   const [state, setState] = useState<LoadState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [snapshot, setSnapshot] = useState<PortfolioSnapshot | null>(null);
+
+  const revalue = useCallback((list: Holding[], nextQuotes: MetalQuote[]) => {
+    setSnapshot(portfolioRepository.valuePortfolio(list, nextQuotes));
+  }, []);
 
   const refresh = useCallback(async () => {
     setState((prev) => (prev === 'ready' ? 'ready' : 'loading'));
     try {
       const list = await portfolioRepository.listHoldings();
       setHoldings(list);
-      setSnapshot(portfolioRepository.valuePortfolio(list, quotes));
+      revalue(list, quotesRef.current);
       setError(null);
       setState('ready');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Portföy yüklenemedi');
       setState('error');
     }
-  }, [quotes]);
+  }, [revalue]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // Canlı fiyat gelince mevcut holdingleri yeniden değerle (listeyi tekrar çekmeden).
+  useEffect(() => {
+    if (state !== 'ready') return;
+    revalue(holdings, quotes);
+  }, [quotes, holdings, revalue, state]);
 
   const addHolding = useCallback(
     async (input: AddHoldingInput) => {

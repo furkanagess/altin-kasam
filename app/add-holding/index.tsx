@@ -11,6 +11,7 @@ import { SectionHeader } from '@/src/widgets/molecules/SectionHeader';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
+  Platform,
   Pressable,
   StyleSheet,
   TextInput,
@@ -20,7 +21,7 @@ import {
 export default function AddHoldingScreen() {
   const { quotes } = useMarketViewModel();
   const { addHolding } = usePortfolioViewModel();
-  const [assetId, setAssetId] = useState(GOLD_ASSETS[0].id);
+  const [assetId, setAssetId] = useState(GOLD_ASSETS[4]?.id ?? GOLD_ASSETS[0].id);
   const [quantity, setQuantity] = useState('1');
   const [cost, setCost] = useState('');
   const [saving, setSaving] = useState(false);
@@ -29,19 +30,20 @@ export default function AddHoldingScreen() {
   const suggested = useMemo(() => {
     const asset = GOLD_ASSETS.find((a) => a.id === assetId);
     const xau = quotes.find((q) => q.symbol === MetalSymbol.XAU)?.bid ?? 0;
-    if (!asset) return 0;
+    if (!asset || xau <= 0) return 0;
     return Number((xau * asset.gramWeight * asset.purity).toFixed(2));
   }, [assetId, quotes]);
 
   const onSave = async () => {
-    const qty = Number(quantity.replace(',', '.'));
-    const costBasis = Number((cost || String(suggested)).replace(',', '.'));
+    const qty = Number(String(quantity).replace(',', '.'));
+    const rawCost = cost.trim() ? cost : String(suggested);
+    const costBasis = Number(String(rawCost).replace(',', '.'));
     if (!Number.isFinite(qty) || qty <= 0) {
       setError('Geçerli bir adet girin');
       return;
     }
     if (!Number.isFinite(costBasis) || costBasis <= 0) {
-      setError('Geçerli bir alış fiyatı girin');
+      setError('Piyasa fiyatı henüz hazır değil; birkaç saniye sonra tekrar dene veya fiyat gir.');
       return;
     }
     setSaving(true);
@@ -52,7 +54,11 @@ export default function AddHoldingScreen() {
         quantity: qty,
         costBasisPerUnit: costBasis,
       });
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/(tabs)/portfolio');
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Kayıt başarısız');
     } finally {
@@ -74,11 +80,19 @@ export default function AddHoldingScreen() {
           return (
             <Pressable
               key={asset.id}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              hitSlop={6}
               onPress={() => setAssetId(asset.id)}
-              style={[styles.assetChip, active && styles.assetChipActive]}
+              style={[
+                styles.assetChip,
+                active && styles.assetChipActive,
+                Platform.OS === 'web' ? styles.webCursor : null,
+              ]}
             >
               <AppText
                 variant="caption"
+                pointerEvents="none"
                 style={{ color: active ? colors.text.onGold : colors.text.primary }}
               >
                 {asset.label}
@@ -104,11 +118,15 @@ export default function AddHoldingScreen() {
         onChangeText={setCost}
         keyboardType="decimal-pad"
         style={styles.input}
-        placeholder={`Öneri: ${formatTRY(suggested)}`}
+        placeholder={
+          suggested > 0 ? `Öneri: ${formatTRY(suggested)}` : 'Piyasa fiyatı yükleniyor…'
+        }
         placeholderTextColor={colors.text.tertiary}
       />
       <AppText variant="caption" tone="secondary">
-        Boş bırakırsan güncel piyasa önerisi kullanılır: {formatTRY(suggested)}
+        {suggested > 0
+          ? `Boş bırakırsan güncel piyasa önerisi kullanılır: ${formatTRY(suggested)}`
+          : 'Canlı fiyat gelince öneri otomatik dolar.'}
       </AppText>
 
       {error ? (
@@ -117,7 +135,14 @@ export default function AddHoldingScreen() {
         </AppText>
       ) : null}
 
-      <AppButton label="Kasaya ekle" loading={saving} onPress={() => void onSave()} />
+      <AppButton
+        label="Kasaya ekle"
+        loading={saving}
+        disabled={saving}
+        onPress={() => {
+          void onSave();
+        }}
+      />
     </Screen>
   );
 }
@@ -150,4 +175,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text.primary,
   },
+  webCursor: {
+    cursor: 'pointer',
+  } as import('react-native').ViewStyle,
 });
+

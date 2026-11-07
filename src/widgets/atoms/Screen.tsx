@@ -32,6 +32,8 @@ export function Screen({
       <SafeAreaView style={[styles.safe, style]} edges={['top', 'left', 'right']}>
         <ScrollView
           contentContainerStyle={[styles.content, contentStyle]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           refreshControl={
             onRefresh ? (
               <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.brand.gold} />

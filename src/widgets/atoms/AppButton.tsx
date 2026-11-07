@@ -2,15 +2,17 @@ import { colors, paddings, radii } from '@/src/core/theme';
 import React from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   StyleSheet,
   type PressableProps,
+  type ViewStyle,
 } from 'react-native';
 import { AppText } from './AppText';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
-type Props = PressableProps & {
+type Props = Omit<PressableProps, 'children'> & {
   label: string;
   variant?: Variant;
   loading?: boolean;
@@ -22,27 +24,39 @@ export function AppButton({
   loading,
   disabled,
   style,
+  onPress,
   ...rest
 }: Props) {
-  const isDisabled = disabled || loading;
+  const isDisabled = Boolean(disabled || loading);
+
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={label}
       disabled={isDisabled}
-      style={(state) => [
-        styles.base,
-        styles[variant],
-        state.pressed && styles.pressed,
-        isDisabled && styles.disabled,
-        typeof style === 'function' ? style(state) : style,
-      ]}
+      hitSlop={8}
+      onPress={isDisabled ? undefined : onPress}
+      style={(state) => {
+        const extra = typeof style === 'function' ? style(state) : style;
+        return [
+          styles.base,
+          styles[variant],
+          state.pressed && styles.pressed,
+          isDisabled && styles.disabled,
+          Platform.OS === 'web' ? styles.webCursor : null,
+          extra as ViewStyle,
+        ];
+      }}
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? colors.text.onGold : colors.brand.gold} />
+        <ActivityIndicator
+          color={variant === 'primary' ? colors.text.onGold : colors.brand.gold}
+        />
       ) : (
         <AppText
           variant="bodyStrong"
+          pointerEvents="none"
           tone={variant === 'primary' ? 'primary' : variant === 'danger' ? 'down' : 'gold'}
           style={variant === 'primary' ? { color: colors.text.onGold } : undefined}
         >
@@ -81,4 +95,8 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.5,
   },
+  webCursor: {
+    cursor: 'pointer',
+  } as ViewStyle,
 });
+
