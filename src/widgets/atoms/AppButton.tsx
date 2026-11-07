@@ -1,21 +1,31 @@
-import { colors, paddings, radii } from '@/src/core/theme';
+import { colors, paddings, radii, typography } from '@/src/core/theme';
 import React from 'react';
 import {
   ActivityIndicator,
   Platform,
   Pressable,
   StyleSheet,
+  Text,
+  type GestureResponderEvent,
   type PressableProps,
+  type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { AppText } from './AppText';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
-type Props = Omit<PressableProps, 'children'> & {
+type Props = Omit<PressableProps, 'children' | 'style'> & {
   label: string;
   variant?: Variant;
   loading?: boolean;
+  style?: StyleProp<ViewStyle>;
+};
+
+const labelColor: Record<Variant, string> = {
+  primary: colors.text.onGold,
+  secondary: colors.brand.goldDeep,
+  ghost: colors.brand.goldDeep,
+  danger: colors.semantic.down,
 };
 
 export function AppButton({
@@ -29,39 +39,74 @@ export function AppButton({
 }: Props) {
   const isDisabled = Boolean(disabled || loading);
 
+  const handlePress = (event?: GestureResponderEvent) => {
+    if (isDisabled) return;
+    onPress?.(event as GestureResponderEvent);
+  };
+
+  if (Platform.OS === 'web') {
+    const flat = StyleSheet.flatten([
+      styles.base,
+      styles[variant],
+      isDisabled && styles.disabled,
+      styles.webCursor,
+      style,
+    ]) as Record<string, unknown>;
+
+    return (
+      // Native <button> is more reliable for automation / web clicks than RN Pressable.
+      <button
+        type="button"
+        disabled={isDisabled}
+        aria-label={label}
+        onClick={() => handlePress()}
+        style={{
+          ...flat,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: flat.borderWidth ? Number(flat.borderWidth) : 0,
+          borderStyle: 'solid',
+          borderColor: (flat.borderColor as string) ?? 'transparent',
+          fontFamily: 'inherit',
+        }}
+      >
+        {loading ? (
+          <ActivityIndicator color={labelColor[variant]} />
+        ) : (
+          <Text style={[typography.bodyStrong, { color: labelColor[variant] }]}>
+            {label}
+          </Text>
+        )}
+      </button>
+    );
+  }
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       disabled={isDisabled}
       hitSlop={8}
-      onPress={isDisabled ? undefined : onPress}
-      style={(state) => {
-        const extra = typeof style === 'function' ? style(state) : style;
-        return [
-          styles.base,
-          styles[variant],
-          state.pressed && styles.pressed,
-          isDisabled && styles.disabled,
-          Platform.OS === 'web' ? styles.webCursor : null,
-          extra as ViewStyle,
-        ];
-      }}
+      onPress={handlePress}
+      style={(state) => [
+        styles.base,
+        styles[variant],
+        state.pressed && styles.pressed,
+        isDisabled && styles.disabled,
+        style,
+      ]}
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator
-          color={variant === 'primary' ? colors.text.onGold : colors.brand.gold}
-        />
+        <ActivityIndicator color={labelColor[variant]} />
       ) : (
-        <AppText
-          variant="bodyStrong"
+        <Text
           pointerEvents="none"
-          tone={variant === 'primary' ? 'primary' : variant === 'danger' ? 'down' : 'gold'}
-          style={variant === 'primary' ? { color: colors.text.onGold } : undefined}
+          style={[typography.bodyStrong, { color: labelColor[variant] }]}
         >
           {label}
-        </AppText>
+        </Text>
       )}
     </Pressable>
   );
@@ -99,4 +144,3 @@ const styles = StyleSheet.create({
     cursor: 'pointer',
   } as ViewStyle,
 });
-

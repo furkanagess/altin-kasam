@@ -54,11 +54,9 @@ export default function AddHoldingScreen() {
         quantity: qty,
         costBasisPerUnit: costBasis,
       });
-      if (router.canGoBack()) {
-        router.back();
-      } else {
-        router.replace('/(tabs)/portfolio');
-      }
+      // Her zaman portföy sekmesine dön — history bazen Piyasa'ya düşüyor.
+      router.replace('/(tabs)/portfolio');
+
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Kayıt başarısız');
     } finally {
