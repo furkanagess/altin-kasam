@@ -1,6 +1,7 @@
-import { HISTORY_POINTS, type Timeframe } from '@/src/core/constants/app';
+import { HISTORY_POINTS, TIMEFRAME_SPAN_MS, type Timeframe } from '@/src/core/constants/app';
+import type { IMarketDatasource } from '@/src/data/datasources/marketDatasource';
 import { MetalSymbol } from '@/src/domain/enums';
-import type { CandlePoint, MetalQuote } from '@/src/domain/models';
+import type { CandlePoint, MarketQuotes } from '@/src/domain/models';
 
 type Seed = {
   symbol: MetalSymbol;
@@ -11,11 +12,8 @@ type Seed = {
 };
 
 const SEEDS: Seed[] = [
-  { symbol: MetalSymbol.XAU, name: 'Gram Altın (24)', unit: 'TRY/g', base: 4850, volatility: 0.004 },
-  { symbol: MetalSymbol.XAG, name: 'Gümüş', unit: 'TRY/g', base: 58.4, volatility: 0.006 },
-  { symbol: MetalSymbol.XCU, name: 'Bakır', unit: 'TRY/kg', base: 412, volatility: 0.005 },
-  { symbol: MetalSymbol.XPT, name: 'Platin', unit: 'TRY/g', base: 1620, volatility: 0.005 },
-  { symbol: MetalSymbol.OIL, name: 'Brent Petrol', unit: 'TRY/varil', base: 2680, volatility: 0.008 },
+  { symbol: MetalSymbol.XAU, name: 'Gram Altın (24)', unit: 'g', base: 4850, volatility: 0.004 },
+  { symbol: MetalSymbol.XAG, name: 'Gümüş', unit: 'g', base: 58.4, volatility: 0.006 },
 ];
 
 const state = new Map<MetalSymbol, { price: number; open: number }>();
@@ -36,16 +34,11 @@ function walk(seed: Seed): number {
   return current.price;
 }
 
-export interface IMarketDatasource {
-  fetchQuotes(): Promise<MetalQuote[]>;
-  fetchHistory(symbol: MetalSymbol, timeframe: Timeframe): Promise<CandlePoint[]>;
-}
-
 export class MockMarketDatasource implements IMarketDatasource {
-  async fetchQuotes(): Promise<MetalQuote[]> {
+  async fetchQuotes(): Promise<MarketQuotes> {
     ensureState();
     const now = Date.now();
-    return SEEDS.map((seed) => {
+    const quotes = SEEDS.map((seed) => {
       const bid = walk(seed);
       const open = state.get(seed.symbol)!.open;
       const changePercent = ((bid - open) / open) * 100;
@@ -58,21 +51,18 @@ export class MockMarketDatasource implements IMarketDatasource {
         changePercent: Number(changePercent.toFixed(2)),
         currency: 'TRY' as const,
         timestamp: now,
+        source: 'simulated' as const,
       };
     });
+    return { quotes, goldRates: [], fxRates: { TRY: 1 } };
   }
 
+  /** Kur bilgisi olmadığından her zaman TRY üretir. */
   async fetchHistory(symbol: MetalSymbol, timeframe: Timeframe): Promise<CandlePoint[]> {
     ensureState();
     const seed = SEEDS.find((s) => s.symbol === symbol) ?? SEEDS[0];
     const current = state.get(seed.symbol)?.price ?? seed.base;
-    const spanMs: Record<Timeframe, number> = {
-      '1D': 24 * 60 * 60 * 1000,
-      '1W': 7 * 24 * 60 * 60 * 1000,
-      '1M': 30 * 24 * 60 * 60 * 1000,
-      '1Y': 365 * 24 * 60 * 60 * 1000,
-    };
-    const step = spanMs[timeframe] / HISTORY_POINTS;
+    const step = TIMEFRAME_SPAN_MS[timeframe] / HISTORY_POINTS;
     const points: CandlePoint[] = [];
     let cursor = current * (1 - seed.volatility * 8);
     const now = Date.now();

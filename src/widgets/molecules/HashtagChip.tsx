@@ -1,7 +1,7 @@
-import { colors, paddings, radii } from '@/src/core/theme';
+import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable } from 'react-native';
 
 type Props = {
   label: string;
@@ -10,6 +10,8 @@ type Props = {
 };
 
 export function HashtagChip({ label, active, onPress }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -27,7 +29,7 @@ export function HashtagChip({ label, active, onPress }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   chip: {
     paddingHorizontal: paddings.sm,
     paddingVertical: paddings.xs,
@@ -40,4 +42,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand.gold,
     borderColor: colors.brand.gold,
   },
-});
+}));

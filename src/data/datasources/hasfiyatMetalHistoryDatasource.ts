@@ -1,0 +1,54 @@
+import type { Currency, Timeframe } from '@/src/core/constants/app';
+import { fetchHasfiyatHistory } from '@/src/data/datasources/hasfiyatHistoryDatasource';
+import type { IHistoryDatasource } from '@/src/data/datasources/marketDatasource';
+import { MetalSymbol } from '@/src/domain/enums';
+import type { CandlePoint } from '@/src/domain/models';
+import { usdPerOunceToTryPerGram } from '@/src/utils/metal';
+
+/**
+ * Metal grafikleri için Harem kalemleri. Altın ve gümüş doğrudan TL/gram; platin ve paladyum
+ * USD/ons olduğu için aynı anın USD/TL değeriyle gram TL'ye çevrilir. Geçmiş Harem'in alış
+ * kapanışlarıdır (uygulamanın geri kalanıyla aynı taraf).
+ */
+const SERIES: Record<MetalSymbol, { title: string; unit: 'tryPerGram' | 'usdPerOunce' }> = {
+  [MetalSymbol.XAU]: { title: 'KÜLÇE ALTIN', unit: 'tryPerGram' },
+  [MetalSymbol.XAG]: { title: 'GÜMÜŞ TL', unit: 'tryPerGram' },
+  [MetalSymbol.XPT]: { title: 'PLATİN ONS', unit: 'usdPerOunce' },
+  [MetalSymbol.XPD]: { title: 'PALADYUM ONS', unit: 'usdPerOunce' },
+};
+
+/** Zaman sıralı seride `t` anındaki (ya da hemen önceki) değer; seri başlamadan önce ilk değer. */
+function valueAt(series: CandlePoint[]): (t: number) => number | undefined {
+  return (t) => {
+    let found: number | undefined = series[0]?.v;
+    for (const p of series) {
+      if (p.t > t) break;
+      found = p.v;
+    }
+    return found;
+  };
+}
+
+export class HasfiyatMetalHistoryDatasource implements IHistoryDatasource {
+  async fetchHistory(symbol: MetalSymbol, timeframe: Timeframe, currency: Currency): Promise<CandlePoint[]> {
+    const spec = SERIES[symbol];
+    if (!spec) return [];
+    const needUsd = spec.unit === 'usdPerOunce' || currency === 'USD';
+    const [base, usd, eur] = await Promise.all([
+      fetchHasfiyatHistory(spec.title, 1, timeframe),
+      needUsd ? fetchHasfiyatHistory('USD/TL', 1, timeframe) : Promise.resolve(null),
+      currency === 'EUR' ? fetchHasfiyatHistory('EUR/TL', 1, timeframe) : Promise.resolve(null),
+    ]);
+    const usdTry = usd ? valueAt(usd) : null;
+    const eurTry = eur ? valueAt(eur) : null;
+
+    return base.flatMap((p) => {
+      const rate = usdTry?.(p.t);
+      const tryPerGram = spec.unit === 'usdPerOunce' ? (rate ? usdPerOunceToTryPerGram(p.v, rate) : undefined) : p.v;
+      if (!tryPerGram) return [];
+      if (currency === 'TRY') return [{ t: p.t, v: tryPerGram }];
+      const fx = currency === 'USD' ? rate : eurTry?.(p.t);
+      return fx ? [{ t: p.t, v: tryPerGram / fx }] : [];
+    });
+  }
+}

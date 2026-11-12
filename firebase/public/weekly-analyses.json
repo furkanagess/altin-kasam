@@ -1,0 +1,144 @@
+[
+  {
+    "id": "2026-w46",
+    "weekStart": "2026-11-09",
+    "title": "Fed sonrası ilk hafta: altında kâr satışları, gümüş baskı altında",
+    "summary": "Ons altın 4.150 dolar direncinden geri döndü; yurt içinde gram altın 6.500 lira bandına geriledi. Hafta boyunca ABD enflasyon verisi ve dolar endeksi yönü belirleyecek.",
+    "author": "Altın Kasam Analiz",
+    "publishedAt": "2026-11-09T07:00:00.000Z",
+    "outlook": [
+      {
+        "metal": "gold",
+        "direction": "neutral",
+        "note": "6.450–6.700 ₺ bandında yatay"
+      },
+      {
+        "metal": "silver",
+        "direction": "down",
+        "note": "80 ₺ altı kapanış zayıflık sinyali"
+      }
+    ],
+    "levels": [
+      {
+        "label": "Gram altın",
+        "support": "₺6.450",
+        "resistance": "₺6.700"
+      },
+      {
+        "label": "Gram gümüş",
+        "support": "₺80",
+        "resistance": "₺84"
+      },
+      {
+        "label": "Ons altın",
+        "support": "$4.020",
+        "resistance": "$4.150"
+      }
+    ],
+    "sections": [
+      {
+        "heading": "Geçen hafta",
+        "body": "Fed faiz kararının ardından dolar endeksinin toparlanmasıyla ons altın haftayı %1,5 düşüşle tamamladı. Yurt içinde kurun yatay seyri, gram altındaki düşüşü onsa paralel tuttu. Gümüşte sanayi talebine dair zayıf veriler kayıpları derinleştirdi."
+      },
+      {
+        "heading": "Bu hafta takvim",
+        "body": "Çarşamba ABD TÜFE, perşembe ÜFE ve haftalık işsizlik başvuruları, cuma perakende satışlar. Yurt içinde TCMB piyasa katılımcıları anketi takip edilecek."
+      },
+      {
+        "heading": "Teknik görünüm",
+        "body": "Gram altın 20 günlük ortalamanın altına sarktı; 6.450 lira desteği korunduğu sürece düşüşler sınırlı kalabilir. 6.700 lira üzerinde kapanışlar yeniden yükseliş eğilimine işaret eder."
+      },
+      {
+        "heading": "Senaryolar",
+        "body": "Beklentinin altında gelecek enflasyon verisi dolar zayıflığıyla birlikte altını 6.700 lira direncine taşıyabilir. Güçlü veri ise 6.450 liranın test edilmesine yol açabilir."
+      }
+    ]
+  },
+  {
+    "id": "2026-w45",
+    "weekStart": "2026-11-02",
+    "title": "Faiz kararı öncesi temkin: altın yüksek seviyelerde tutunuyor",
+    "summary": "Fed toplantısı öncesinde piyasalar bekle-gör modunda. Ons altın 4.100 doların üzerinde tutunurken gram altın 6.650 lira civarında dengelendi.",
+    "author": "Altın Kasam Analiz",
+    "publishedAt": "2026-11-02T07:00:00.000Z",
+    "outlook": [
+      {
+        "metal": "gold",
+        "direction": "up",
+        "note": "Faiz indirimi fiyatlaması destekleyici"
+      },
+      {
+        "metal": "silver",
+        "direction": "neutral",
+        "note": "82–86 ₺ aralığında"
+      }
+    ],
+    "levels": [
+      {
+        "label": "Gram altın",
+        "support": "₺6.550",
+        "resistance": "₺6.750"
+      },
+      {
+        "label": "Gram gümüş",
+        "support": "₺82",
+        "resistance": "₺86"
+      }
+    ],
+    "sections": [
+      {
+        "heading": "Geçen hafta",
+        "body": "Jeopolitik gerginliklerin sürmesi güvenli liman talebini canlı tuttu. Merkez bankalarının alımlarına ilişkin raporlar altını destekledi."
+      },
+      {
+        "heading": "Bu hafta takvim",
+        "body": "Çarşamba Fed faiz kararı ve basın toplantısı, cuma ABD tarım dışı istihdam verisi."
+      },
+      {
+        "heading": "Senaryolar",
+        "body": "Güvercin bir Fed mesajı ons altında yeni zirve denemesini getirebilir. Şahin ton ise kâr satışlarını tetikleyebilir."
+      }
+    ]
+  },
+  {
+    "id": "2026-w44",
+    "weekStart": "2026-10-26",
+    "title": "Rekor sonrası konsolidasyon",
+    "summary": "Ekim ortasındaki rekorların ardından altın yatay bir banda girdi. Gümüş, altına göre daha oynak bir seyir izledi; altın/gümüş rasyosu 78 civarında.",
+    "author": "Altın Kasam Analiz",
+    "publishedAt": "2026-10-26T07:00:00.000Z",
+    "outlook": [
+      {
+        "metal": "gold",
+        "direction": "neutral"
+      },
+      {
+        "metal": "silver",
+        "direction": "up",
+        "note": "Rasyo yüksek, gümüş görece ucuz"
+      }
+    ],
+    "levels": [
+      {
+        "label": "Gram altın",
+        "support": "₺6.500",
+        "resistance": "₺6.800"
+      },
+      {
+        "label": "Gram gümüş",
+        "support": "₺79",
+        "resistance": "₺84"
+      }
+    ],
+    "sections": [
+      {
+        "heading": "Geçen hafta",
+        "body": "Yüksek seviyelerde kâr satışları görüldü ancak düşüşler alım fırsatı olarak değerlendirildi."
+      },
+      {
+        "heading": "Teknik görünüm",
+        "body": "Fiyat 6.500–6.800 lira bandında; bandın kırıldığı yön kısa vadeli eğilimi belirleyecek."
+      }
+    ]
+  }
+]

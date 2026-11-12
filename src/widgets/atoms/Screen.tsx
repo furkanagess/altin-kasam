@@ -1,5 +1,6 @@
-import { colors, paddings } from '@/src/core/theme';
-import React from 'react';
+import { makeStyles, paddings, useTheme } from '@/src/core/theme';
+import { HeaderShownContext } from 'expo-router/react-navigation';
+import React, { useContext } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -8,7 +9,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = {
   children: React.ReactNode;
@@ -17,6 +18,15 @@ type Props = {
   refreshing?: boolean;
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
+  /**
+   * Ekranın altına sabitlenen ana işlem (ör. "Alarm kur"); içerik kaydırılsa da yerinde kalır,
+   * içerikle arasında boşluk bırakılır.
+   */
+  footer?: React.ReactNode;
+  /**
+   * Alt güvenli alan footer'a eklenir. Sekme ekranlarında `false`: alt boşluğu sekme çubuğu bırakır.
+   */
+  footerSafeArea?: boolean;
 };
 
 export function Screen({
@@ -26,11 +36,32 @@ export function Screen({
   refreshing,
   style,
   contentStyle,
+  footer,
+  footerSafeArea = true,
 }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  // Başlık çubuğu varsa üst güvenli alanı o zaten bırakır; ikinci kez eklenmez.
+  const headerShown = useContext(HeaderShownContext);
+  const edges = headerShown ? (['left', 'right'] as const) : (['top', 'left', 'right'] as const);
+
+  const footerView = footer ? (
+    <View
+      style={[
+        styles.footer,
+        { paddingBottom: footerSafeArea ? Math.max(insets.bottom, paddings.sm) : paddings.sm },
+      ]}
+    >
+      {footer}
+    </View>
+  ) : null;
+
   if (scroll) {
     return (
-      <SafeAreaView style={[styles.safe, style]} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={[styles.safe, style]} edges={edges}>
         <ScrollView
+          style={styles.flex}
           contentContainerStyle={[styles.content, contentStyle]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
@@ -42,25 +73,37 @@ export function Screen({
         >
           {children}
         </ScrollView>
+        {footerView}
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.safe, style]} edges={['top', 'left', 'right']}>
-      <View style={[styles.content, contentStyle]}>{children}</View>
+    <SafeAreaView style={[styles.safe, style]} edges={edges}>
+      <View style={[styles.content, footer ? styles.flex : null, contentStyle]}>{children}</View>
+      {footerView}
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   safe: {
     flex: 1,
     backgroundColor: colors.surface.canvas,
   },
+  flex: { flex: 1 },
   content: {
     paddingHorizontal: paddings.screen,
+    paddingTop: paddings.sm,
     paddingBottom: paddings.xl,
     gap: 16,
   },
-});
+  footer: {
+    gap: paddings.xs,
+    paddingHorizontal: paddings.screen,
+    paddingTop: paddings.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border.subtle,
+    backgroundColor: colors.surface.canvas,
+  },
+}));

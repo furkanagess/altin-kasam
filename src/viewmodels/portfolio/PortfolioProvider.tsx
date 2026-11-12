@@ -2,7 +2,7 @@ import {
   portfolioRepository,
   type AddHoldingInput,
 } from '@/src/data/repositories/portfolioRepository';
-import type { Holding, MetalQuote, PortfolioSnapshot } from '@/src/domain/models';
+import type { Holding, PortfolioSnapshot } from '@/src/domain/models';
 import { useMarketViewModel } from '@/src/viewmodels/market/MarketProvider';
 import React, {
   createContext,
@@ -10,7 +10,6 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
@@ -29,42 +28,42 @@ type PortfolioContextValue = {
 const PortfolioContext = createContext<PortfolioContextValue | null>(null);
 
 export function PortfolioProvider({ children }: { children: React.ReactNode }) {
-  const { quotes } = useMarketViewModel();
-  const quotesRef = useRef<MetalQuote[]>(quotes);
-  quotesRef.current = quotes;
+  const { quotes, goldRates, currency, fxRates, snapshot: market } = useMarketViewModel();
+  const ticker = market?.ticker;
+  const fxChangePercent = useMemo(() => {
+    const change = (id: string) => ticker?.find((t) => t.id === id)?.changePercent ?? undefined;
+    return { USD: change('usd'), EUR: change('eur') };
+  }, [ticker]);
 
   const [state, setState] = useState<LoadState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [holdings, setHoldings] = useState<Holding[]>([]);
-  const [snapshot, setSnapshot] = useState<PortfolioSnapshot | null>(null);
-
-  const revalue = useCallback((list: Holding[], nextQuotes: MetalQuote[]) => {
-    setSnapshot(portfolioRepository.valuePortfolio(list, nextQuotes));
-  }, []);
 
   const refresh = useCallback(async () => {
     setState((prev) => (prev === 'ready' ? 'ready' : 'loading'));
     try {
       const list = await portfolioRepository.listHoldings();
       setHoldings(list);
-      revalue(list, quotesRef.current);
       setError(null);
       setState('ready');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Portföy yüklenemedi');
+      setError(e instanceof Error ? e.message : 'Kasan yüklenemedi');
       setState('error');
     }
-  }, [revalue]);
+  }, []);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  // Canlı fiyat gelince mevcut holdingleri yeniden değerle (listeyi tekrar çekmeden).
-  useEffect(() => {
-    if (state !== 'ready') return;
-    revalue(holdings, quotes);
-  }, [quotes, holdings, revalue, state]);
+  // Canlı fiyat gelince mevcut holdingler yeniden değerlenir (listeyi tekrar çekmeden).
+  const snapshot = useMemo<PortfolioSnapshot | null>(
+    () =>
+      state === 'idle' || state === 'loading'
+        ? null
+        : portfolioRepository.valuePortfolio(holdings, quotes, goldRates, currency, fxRates, fxChangePercent),
+    [state, holdings, quotes, goldRates, currency, fxRates, fxChangePercent],
+  );
 
   const addHolding = useCallback(
     async (input: AddHoldingInput) => {

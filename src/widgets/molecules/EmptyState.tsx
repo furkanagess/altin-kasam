@@ -1,8 +1,8 @@
-import { colors, paddings, radii } from '@/src/core/theme';
+import { makeStyles, paddings, radii } from '@/src/core/theme';
 import { AppButton } from '@/src/widgets/atoms/AppButton';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 type Props = {
   title: string;
@@ -12,6 +12,7 @@ type Props = {
 };
 
 export function EmptyState({ title, message, actionLabel, onAction }: Props) {
+  const styles = useStyles();
   return (
     <View style={styles.box}>
       <AppText variant="h3">{title}</AppText>
@@ -25,7 +26,7 @@ export function EmptyState({ title, message, actionLabel, onAction }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   box: {
     gap: 10,
     padding: paddings.lg,
@@ -34,4 +35,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border.subtle,
   },
-});
+}));

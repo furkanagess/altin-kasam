@@ -1,4 +1,4 @@
-import { colors, paddings, radii, typography } from '@/src/core/theme';
+import { makeStyles, paddings, radii, typography, useTheme, type AppColors } from '@/src/core/theme';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -21,12 +21,12 @@ type Props = Omit<PressableProps, 'children' | 'style'> & {
   style?: StyleProp<ViewStyle>;
 };
 
-const labelColor: Record<Variant, string> = {
+const labelColors = (colors: AppColors): Record<Variant, string> => ({
   primary: colors.text.onGold,
   secondary: colors.brand.goldDeep,
   ghost: colors.brand.goldDeep,
   danger: colors.semantic.down,
-};
+});
 
 export function AppButton({
   label,
@@ -37,6 +37,14 @@ export function AppButton({
   onPress,
   ...rest
 }: Props) {
+  const styles = useStyles();
+  const { colors, fontFactor } = useTheme();
+  const labelColor = labelColors(colors);
+  // Buton metni de yazı boyutu tercihine uyar.
+  const labelScale = {
+    fontSize: typography.bodyStrong.fontSize * fontFactor,
+    lineHeight: typography.bodyStrong.lineHeight * fontFactor,
+  };
   const isDisabled = Boolean(disabled || loading);
 
   const handlePress = (event?: GestureResponderEvent) => {
@@ -74,7 +82,7 @@ export function AppButton({
         {loading ? (
           <ActivityIndicator color={labelColor[variant]} />
         ) : (
-          <Text style={[typography.bodyStrong, { color: labelColor[variant] }]}>
+          <Text style={[typography.bodyStrong, labelScale, { color: labelColor[variant] }]}>
             {label}
           </Text>
         )}
@@ -103,7 +111,7 @@ export function AppButton({
       ) : (
         <Text
           pointerEvents="none"
-          style={[typography.bodyStrong, { color: labelColor[variant] }]}
+          style={[typography.bodyStrong, labelScale, { color: labelColor[variant] }]}
         >
           {label}
         </Text>
@@ -112,7 +120,7 @@ export function AppButton({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   base: {
     minHeight: 48,
     paddingHorizontal: paddings.lg,
@@ -143,4 +151,4 @@ const styles = StyleSheet.create({
   webCursor: {
     cursor: 'pointer',
   } as ViewStyle,
-});
+}));

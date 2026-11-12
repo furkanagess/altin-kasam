@@ -12,20 +12,25 @@ export enum GoldForm {
   Full = 'tam',
   Resat = 'resat',
   Cumhuriyet = 'cumhuriyet',
+  Gremse = 'gremse',
+  Ata5 = 'ata5',
+  Bilezik = 'bilezik',
 }
 
 export enum MetalSymbol {
   XAU = 'XAU',
   XAG = 'XAG',
-  XCU = 'XCU',
   XPT = 'XPT',
-  OIL = 'OIL',
+  XPD = 'XPD',
 }
 
 export enum CommunityPostKind {
   Tweet = 'tweet',
   Blog = 'blog',
   Article = 'article',
+  /** Bluesky vb. sosyal ağ gönderisi. */
+  Post = 'post',
+  News = 'news',
 }
 
 export const GOLD_PURITY: Record<GoldKarat, number> = {

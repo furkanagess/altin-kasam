@@ -1,9 +1,10 @@
 import { Link, Stack } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { AppText } from '@/src/widgets/atoms/AppText';
-import { colors } from '@/src/core/theme';
+import { makeStyles } from '@/src/core/theme';
 
 export default function NotFoundScreen() {
+  const styles = useStyles();
   return (
     <>
       <Stack.Screen options={{ title: 'Bulunamadı' }} />
@@ -17,7 +18,7 @@ export default function NotFoundScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   container: {
     flex: 1,
     alignItems: 'center',
@@ -29,4 +30,4 @@ const styles = StyleSheet.create({
   link: {
     marginTop: 8,
   },
-});
+}));

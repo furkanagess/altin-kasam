@@ -39,3 +39,39 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Firebase Hosting (haftalık analiz) önbelleği
+firebase/.firebase/
+
+# Yerel release APK çıktıları (scripts/build-android-apk.sh)
+/builds/
+
+# Android yükleme anahtarı ve şifreleri (scripts/create-android-upload-key.sh)
+/credentials/
+
+# Firebase istemci yapılandırması (proje başına; EAS dosya ortam değişkeni olarak da verilebilir)
+google-services.json
+GoogleService-Info.plist
+
+# Firebase / Google servis hesabı anahtarları (gizli)
+*-firebase-adminsdk-*.json
+*service-account*.json
+
+# Editör yerel geçmişi (Local History eklentisi)
+.history/
+
+# Tüm yerel env dosyaları (yalnızca .env.example takip edilir)
+.env
+.env.*
+!.env.example
+
+# Derleme çıktıları ve paketler
+*.aab
+*.apk
+*.ipa
+firebase/functions/node_modules/
+firebase/functions/lib/
+.firebase/
+
+# Claude Code yerel ayarları
+.claude/

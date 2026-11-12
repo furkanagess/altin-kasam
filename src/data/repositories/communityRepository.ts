@@ -1,12 +1,10 @@
-import {
-  MockCommunityDatasource,
-  type ICommunityDatasource,
-} from '@/src/data/datasources/mockCommunityDatasource';
+import type { ICommunityDatasource } from '@/src/data/datasources/communityDatasource';
+import { LiveCommunityDatasource } from '@/src/data/datasources/liveCommunityDatasource';
 import type { CommunityPost } from '@/src/domain/models';
 
 export class CommunityRepository {
   constructor(
-    private readonly datasource: ICommunityDatasource = new MockCommunityDatasource(),
+    private readonly datasource: ICommunityDatasource = new LiveCommunityDatasource(),
   ) {}
 
   listHashtags(): string[] {

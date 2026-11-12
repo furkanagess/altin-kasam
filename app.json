@@ -1,33 +1,45 @@
 {
   "expo": {
-    "name": "Altın Kasam",
+    "name": "Altin Kasam",
     "slug": "altin-kasam",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "altinkasam",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.altinkasam.app"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.furkanages.altinkasam",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#F3F0EA",
+        "backgroundColor": "#12161D",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "package": "com.altinkasam.app",
+      "package": "com.furkanages.altinkasam",
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "bundler": "metro",
-      "output": "single",
+      "output": "server",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "expo-localization",
       "expo-router",
+      [
+        "expo-notifications",
+        {
+          "color": "#B8893B",
+          "enableRemoteNotifications": true,
+          "sounds": ["./assets/sounds/coin_chlinc.wav"]
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -35,10 +47,77 @@
           "resizeMode": "contain",
           "backgroundColor": "#F3F0EA"
         }
-      ]
+      ],
+      [
+        "expo-widgets",
+        {
+          "enableAndroid": true,
+          "widgets": [
+            {
+              "name": "PriceWidget",
+              "displayName": "Altın Kasam",
+              "description": "Seçtiğin altın çeşidinin veya gümüşün fiyatı",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium"
+                ],
+                "initialLayout": "src/homeWidgets/PriceWidget.ios.tsx"
+              },
+              "android": {
+                "targetCellWidth": 2,
+                "targetCellHeight": 2,
+                "minWidth": 110,
+                "minHeight": 110,
+                "initialLayout": "src/homeWidgets/PriceWidget.android.tsx"
+              }
+            }
+          ]
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
+        }
+      ],
+      "./plugins/withAndroidReleaseSigning",
+      "./plugins/withAppDisplayName",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "ExpoWidgetsTarget",
+                  "bundleIdentifier": "com.furkanages.altinkasam.ExpoWidgetsTarget",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.furkanages.altinkasam"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "f362495c-f24c-4c68-ac2e-b363bc2c0d72"
+      }
+    },
+    "owner": "furkanages"
   }
 }
