@@ -1,8 +1,7 @@
-import { SUPPORT_EMAIL } from '@/src/core/constants/app';
 import { LEGAL_LINKS } from '@/src/core/constants/premium';
-import { supportDatasource, type SupportTopic } from '@/src/data/datasources/supportDatasource';
 import { FONT_SCALES, makeStyles, paddings, radii, useTheme, type ThemePreference } from '@/src/core/theme';
 import { useGoal } from '@/src/viewmodels/goal/GoalProvider';
+import { useTour } from '@/src/viewmodels/tour/TourProvider';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
 import { AppButton } from '@/src/widgets/atoms/AppButton';
 import { AppText } from '@/src/widgets/atoms/AppText';
@@ -14,7 +13,7 @@ import { ThemePreferenceIcon } from '@/src/widgets/atoms/ThemePreferenceIcon';
 import { useCommunityViewModel } from '@/src/viewmodels/community/CommunityProvider';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 function SettingsRow({
   title,
@@ -87,7 +86,7 @@ function ThemePicker() {
   );
 }
 
-/** Yazı boyutu: dört seçenek ve seçili boyutta canlı örnek metin. */
+/** Yazı boyutu: seçenekler kendi boyutunda gösterilir. */
 function FontScalePicker() {
   const styles = useStyles();
   const { fontScale, setFontScale } = useTheme();
@@ -114,17 +113,15 @@ function FontScalePicker() {
           );
         })}
       </View>
-      <AppText variant="body" tone="secondary">
-        Örnek: Gram altın bugün güne yükselişle başladı.
-      </AppText>
     </View>
   );
 }
 
 export default function SettingsScreen() {
   const styles = useStyles();
-  const { isPremium, configured, openPaywall, restore, managementUrl, debugPremium, setDebugPremium } = useSubscription();
+  const { isPremium, configured, openPaywall, restore, managementUrl } = useSubscription();
   const { goal } = useGoal();
+  const { start: startTour } = useTour();
   const [restoring, setRestoring] = useState(false);
   const { followedSources } = useCommunityViewModel();
   const accountLinking = useAccount();
@@ -145,13 +142,6 @@ export default function SettingsScreen() {
     }
   };
 
-  const openSupport = async (topic: SupportTopic) => {
-    const opened = await supportDatasource.openMail(topic);
-    if (!opened) {
-      Alert.alert('Mail uygulaması açılamadı', `Bize ${SUPPORT_EMAIL} adresinden ulaşabilirsin.`);
-    }
-  };
-
   return (
     <Screen scroll>
       {showAccount ? (
@@ -166,41 +156,6 @@ export default function SettingsScreen() {
 
       <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>YAZI BOYUTU</AppText>
       <FontScalePicker />
-
-      <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>UYGULAMA</AppText>
-      <View style={styles.card}>
-        <SettingsRow
-          title="Ana ekran widget’ı"
-          detail="Seçtiğin birimin fiyatı ana ekranında"
-          pro
-          onPress={() => router.push('/widget')}
-        />
-        <View style={styles.divider} />
-        <SettingsRow
-          title="Haber kaynakları"
-          detail={followedSources.size ? `${followedSources.size} kaynak takip ediliyor` : 'Takip ettiğin kaynaktan haber gelince bildirim'}
-          onPress={() => router.push('/sources')}
-        />
-        <View style={styles.divider} />
-        <SettingsRow
-          title="Tanıtımı yeniden izle"
-          detail="Karşılama ekranlarını tekrar gör; hedefin ve kayıtların değişmez"
-          onPress={() => router.push({ pathname: '/onboarding', params: { replay: '1' } })}
-        />
-        <View style={styles.divider} />
-        <SettingsRow
-          title="Pro ekranını önizle"
-          detail="Satın alma ekranını demo olarak gör; ödeme alınmaz"
-          pro
-          onPress={() => router.push({ pathname: '/paywall', params: { demo: '1' } })}
-        />
-        <View style={styles.divider} />
-        <SettingsRow
-          title="Yatırım hedefi"
-          detail={goal ? `${goal.grams} g · ${goal.period === 'yearly' ? 'yıllık' : 'aylık'}` : 'Hedef belirlenmedi'}
-          onPress={() => router.push('/goal')}
-        />
-      </View>
 
       <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>ÜYELİK</AppText>
       <View style={styles.membership}>
@@ -240,39 +195,40 @@ export default function SettingsScreen() {
         ) : null}
       </View>
 
-      {__DEV__ ? (
-        <>
-          <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>GELİŞTİRİCİ</AppText>
-          <View style={styles.card}>
-            <View style={styles.row}>
-              <View style={styles.rowText}>
-                <AppText variant="bodyStrong">Pro’yu zorla aç</AppText>
-                <AppText variant="caption" tone="secondary">Yalnızca geliştirme derlemesi; gerçek aboneliği ezer</AppText>
-              </View>
-              <Switch value={debugPremium} onValueChange={setDebugPremium} accessibilityLabel="Pro’yu zorla aç" />
-            </View>
-          </View>
-        </>
-      ) : null}
+      <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>UYGULAMA</AppText>
+      <View style={styles.card}>
+        <SettingsRow
+          title="Ana ekran widget’ı"
+          detail="Seçtiğin birimin fiyatı ana ekranında"
+          pro
+          onPress={() => router.push('/widget')}
+        />
+        <View style={styles.divider} />
+        <SettingsRow
+          title="Haber kaynakları"
+          detail={followedSources.size ? `${followedSources.size} kaynak takip ediliyor` : 'Takip ettiğin kaynaktan haber gelince bildirim'}
+          onPress={() => router.push('/sources')}
+        />
+        <View style={styles.divider} />
+        <SettingsRow
+          title="Yatırım hedefi"
+          detail={goal ? `${goal.grams} g · ${goal.period === 'yearly' ? 'yıllık' : 'aylık'}` : 'Hedef belirlenmedi'}
+          onPress={() => router.push('/goal')}
+        />
+        <View style={styles.divider} />
+        <SettingsRow
+          title="Uygulama turu"
+          detail="Özellikleri adım adım yeniden gez"
+          onPress={startTour}
+        />
+      </View>
 
       <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>DESTEK</AppText>
       <View style={styles.card}>
         <SettingsRow
-          title="Sorun bildir"
-          detail="Bir hata mı var? Uygulamadan bize yaz"
-          onPress={() => router.push({ pathname: '/support', params: { topic: 'problem' } })}
-        />
-        <View style={styles.divider} />
-        <SettingsRow
-          title="Öneri veya soru gönder"
-          detail="Fikirlerini ve sorularını bekliyoruz"
-          onPress={() => router.push({ pathname: '/support', params: { topic: 'suggestion' } })}
-        />
-        <View style={styles.divider} />
-        <SettingsRow
-          title="Mail uygulamasıyla yaz"
-          detail={SUPPORT_EMAIL}
-          onPress={() => void openSupport('problem')}
+          title="Öneri veya sorun gönder"
+          detail="Fikirlerini, sorularını ve karşılaştığın hataları yaz"
+          onPress={() => router.push('/support')}
         />
       </View>
 

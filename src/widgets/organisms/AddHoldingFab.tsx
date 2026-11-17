@@ -1,7 +1,8 @@
 import { makeStyles, useTheme } from '@/src/core/theme';
 import { storageGet, storageSet } from '@/src/core/storage/storage';
+import { registerTourTarget } from '@/src/viewmodels/tour/tourTargets';
 import { router, usePathname } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Animated, PanResponder, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { G, Path } from 'react-native-svg';
@@ -42,6 +43,8 @@ export function AddHoldingFab() {
   const [ready, setReady] = useState(false);
   const [drag] = useState(() => new DragStore());
   const { pan } = drag;
+  const fabRef = useRef<ComponentRef<typeof Animated.View>>(null);
+  useEffect(() => registerTourTarget('fab', fabRef), []);
 
   useEffect(() => {
     drag.setBounds({
@@ -117,6 +120,8 @@ export function AddHoldingFab() {
 
   return (
     <Animated.View
+      ref={fabRef}
+      collapsable={false}
       {...responder.panHandlers}
       style={[styles.fab, { transform: pan.getTranslateTransform() }]}
       accessible

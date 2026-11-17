@@ -1,7 +1,10 @@
 import { HeaderCloseButton } from '@/src/widgets/atoms/HeaderCloseButton';
+import { HeaderSupportButton } from '@/src/widgets/atoms/HeaderSupportButton';
 import { AppProviders } from '@/src/providers/AppProviders';
 import { ThemeProvider, useTheme } from '@/src/core/theme';
 import { AddHoldingFab } from '@/src/widgets/organisms/AddHoldingFab';
+import { TourOverlay } from '@/src/widgets/organisms/TourOverlay';
+import { TourProvider } from '@/src/viewmodels/tour/TourProvider';
 import { NetworkBanner } from '@/src/widgets/organisms/NetworkBanner';
 import { notificationsDatasource } from '@/src/data/datasources/notificationsDatasource';
 import {
@@ -66,6 +69,7 @@ function RootNavigator() {
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
+      <TourProvider>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
@@ -91,7 +95,7 @@ function RootNavigator() {
         />
         <Stack.Screen
           name="settings"
-          options={{ title: 'Ayarlar', presentation: 'card' }}
+          options={{ title: 'Ayarlar', presentation: 'card', headerRight: () => <HeaderSupportButton /> }}
         />
         <Stack.Screen
           name="widget"
@@ -159,6 +163,8 @@ function RootNavigator() {
       </Stack>
       <AddHoldingFab />
       <NetworkBanner />
+      <TourOverlay />
+      </TourProvider>
     </NavigationThemeProvider>
   );
 }

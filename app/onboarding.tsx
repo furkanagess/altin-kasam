@@ -2,6 +2,7 @@ import { makeStyles, paddings, useTheme } from '@/src/core/theme';
 import { analyticsDatasource } from '@/src/data/datasources/analyticsDatasource';
 import { engagementDatasource } from '@/src/data/datasources/engagementDatasource';
 import { useGoal } from '@/src/viewmodels/goal/GoalProvider';
+import { useTour } from '@/src/viewmodels/tour/TourProvider';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
 import { useGramAskPrice } from '@/src/viewmodels/goal/useGoalProgress';
 import { AppButton } from '@/src/widgets/atoms/AppButton';
@@ -57,6 +58,7 @@ export default function OnboardingScreen() {
   const isReplay = replay === '1';
   const { saveGoal, completeOnboarding } = useGoal();
   const { isPremium, openPaywall } = useSubscription();
+  const { queue: queueTour } = useTour();
   const price = useGramAskPrice();
   const pager = useRef<ComponentRef<typeof ScrollView>>(null);
   const [saving, setSaving] = useState(false);
@@ -70,6 +72,8 @@ export default function OnboardingScreen() {
     try {
       if (goal) await saveGoal(goal);
       await completeOnboarding();
+      // Uygulama turu, ilk paywall kapandıktan sonra ana ekranda kendiliğinden başlar.
+      if (!isReplay) queueTour();
       analyticsDatasource.track({ name: 'onboarding_completed', goalSet: Boolean(goal) });
       router.replace('/(tabs)');
       // Hedefle içeri alınan kullanıcıya Pro tanıtımı: ana ekran açıldıktan sonra bir kez.

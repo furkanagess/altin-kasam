@@ -26,39 +26,19 @@ type SubscriptionContextValue = {
   managementUrl: () => Promise<string | null>;
   openPaywall: (reason?: PaywallReason) => void;
   simulatePremium: (premium: boolean) => void;
-  /** Yalnızca geliştirme derlemesi: gerçek aboneliği ezen Pro anahtarı (kalıcı). */
-  debugPremium: boolean;
-  setDebugPremium: (on: boolean) => void;
 };
 
 /** Son bilinen premium durumu; çevrimdışı ya da yavaş açılışta ücretsiz moda düşmemek için. */
 const PREMIUM_CACHE_KEY = 'altin_kasam_premium_v1';
 
-/** Geliştirme derlemesinde Pro'yu zorla açma anahtarı; yayın derlemesinde hiç okunmaz. */
-const DEBUG_PREMIUM_KEY = 'altin_kasam_debug_premium_v1';
-
 const SubscriptionContext = createContext<SubscriptionContextValue | null>(null);
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
   const [realPremium, setIsPremium] = useState(false);
-  const [debugPremium, setDebugPremiumState] = useState(false);
   const [packages, setPackages] = useState<SubscriptionPackage[]>([]);
   const [packagesLoading, setPackagesLoading] = useState(false);
 
-  useEffect(() => {
-    if (!__DEV__) return;
-    storageGet<boolean>(DEBUG_PREMIUM_KEY)
-      .then((on) => setDebugPremiumState(on === true))
-      .catch(() => {});
-  }, []);
-
-  const setDebugPremium = useCallback((on: boolean) => {
-    if (!__DEV__) return;
-    setDebugPremiumState(on);
-    void storageSet(DEBUG_PREMIUM_KEY, on).catch(() => {});
-  }, []);
-
-  const isPremium = realPremium || (__DEV__ && debugPremium);
+  const isPremium = realPremium;
 
   // RevenueCat hesap gerçeğidir; yanıt gelene kadar (ya da çevrimdışıyken) önbellekteki değer kullanılır.
   // Anahtarsız önizleme modunda simüle edilen Pro kalıcılaştırılmaz.
@@ -138,12 +118,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       managementUrl,
       openPaywall,
       simulatePremium,
-      debugPremium: __DEV__ && debugPremium,
-      setDebugPremium,
     }),
     [
-      debugPremium,
-      setDebugPremium,
       isPremium,
       packages,
       packagesLoading,

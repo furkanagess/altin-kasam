@@ -1,6 +1,7 @@
 import { useTheme } from '@/src/core/theme';
 import { useGoal } from '@/src/viewmodels/goal/GoalProvider';
 import { TabIcon } from '@/src/widgets/atoms/TabIcon';
+import { TourTarget } from '@/src/widgets/atoms/TourTarget';
 import { HeaderActions } from '@/src/widgets/molecules/HeaderActions';
 import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
@@ -72,7 +73,11 @@ export default function TabLayout() {
         options={{
           title: 'Analiz',
           tabBarLabel: ({ focused }) => <TabLabel title="Analiz" focused={focused} />,
-          tabBarIcon: ({ color, focused }) => <TabIcon name="analysis" color={color} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TourTarget id="tab-analytics">
+              <TabIcon name="analysis" color={color} focused={focused} />
+            </TourTarget>
+          ),
         }}
       />
       <Tabs.Screen
@@ -80,7 +85,11 @@ export default function TabLayout() {
         options={{
           title: 'Topluluk',
           tabBarLabel: ({ focused }) => <TabLabel title="Topluluk" focused={focused} />,
-          tabBarIcon: ({ color, focused }) => <TabIcon name="community" color={color} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TourTarget id="tab-community">
+              <TabIcon name="community" color={color} focused={focused} />
+            </TourTarget>
+          ),
         }}
       />
       <Tabs.Screen
@@ -88,7 +97,11 @@ export default function TabLayout() {
         options={{
           title: 'Kasam',
           tabBarLabel: ({ focused }) => <TabLabel title="Kasam" focused={focused} />,
-          tabBarIcon: ({ color, focused }) => <TabIcon name="portfolio" color={color} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TourTarget id="tab-portfolio">
+              <TabIcon name="portfolio" color={color} focused={focused} />
+            </TourTarget>
+          ),
         }}
       />
     </Tabs>

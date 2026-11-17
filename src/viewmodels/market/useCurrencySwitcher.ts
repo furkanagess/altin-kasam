@@ -44,3 +44,22 @@ export function useChartCurrencySwitcher() {
     [chartCurrency, currencies, setChartCurrency, fxRates, lockedChartCurrencies, onLocked],
   );
 }
+
+/** Brent petrol grafiğinin para birimi seçicisi: ons gibi USD ana birimdir, gram/ons geçişinden bağımsızdır. */
+export function useBrentCurrencySwitcher() {
+  const { currencies, fxRates } = useMarketViewModel();
+  const { brentCurrency, lockedBrentCurrencies, setBrentCurrency } = useMarketChart();
+  const { openPaywall } = useSubscription();
+  const onLocked = useCallback(() => openPaywall('currency'), [openPaywall]);
+  return useMemo(
+    () => ({
+      value: brentCurrency,
+      options: currencies,
+      onChange: setBrentCurrency,
+      fxRates,
+      lockedOptions: lockedBrentCurrencies,
+      onLocked,
+    }),
+    [brentCurrency, currencies, setBrentCurrency, fxRates, lockedBrentCurrencies, onLocked],
+  );
+}

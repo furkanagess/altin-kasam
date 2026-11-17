@@ -26,15 +26,11 @@ import { View } from 'react-native';
 const TITLES: Record<MetalChartSymbol, string> = {
   [MetalSymbol.XAU]: 'Gram Altın (24 ayar)',
   [MetalSymbol.XAG]: 'Gram Gümüş',
-  [MetalSymbol.XPT]: 'Gram Platin',
-  [MetalSymbol.XPD]: 'Gram Paladyum',
 };
 
 const OUNCE_TITLES: Record<MetalChartSymbol, string> = {
   [MetalSymbol.XAU]: 'Ons Altın',
   [MetalSymbol.XAG]: 'Ons Gümüş',
-  [MetalSymbol.XPT]: 'Ons Platin',
-  [MetalSymbol.XPD]: 'Ons Paladyum',
 };
 
 const EMPTY_POINTS: never[] = [];

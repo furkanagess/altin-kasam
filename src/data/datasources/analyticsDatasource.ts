@@ -19,7 +19,10 @@ export type AnalyticsEvent =
   | { name: 'prompt_shown'; kind: 'paywall' | 'review'; moment: string }
   | { name: 'onboarding_step'; step: number }
   | { name: 'account_linked'; provider: 'google' | 'apple'; restored: boolean }
-  | { name: 'account_deleted' };
+  | { name: 'account_deleted' }
+  | { name: 'tour_started' }
+  | { name: 'tour_step'; step: number }
+  | { name: 'tour_finished'; completed: boolean; step: number };
 
 const KEY = process.env.EXPO_PUBLIC_POSTHOG_KEY;
 const HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com';

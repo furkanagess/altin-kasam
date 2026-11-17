@@ -13,7 +13,7 @@ import {
   useMarketViewModel,
   type ChartSymbol,
 } from '@/src/viewmodels/market/MarketProvider';
-import { useChartCurrencySwitcher } from '@/src/viewmodels/market/useCurrencySwitcher';
+import { useBrentCurrencySwitcher, useChartCurrencySwitcher } from '@/src/viewmodels/market/useCurrencySwitcher';
 import { useMarketTicker } from '@/src/viewmodels/market/useMarketTicker';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
 import { AppText } from '@/src/widgets/atoms/AppText';
@@ -24,6 +24,7 @@ import { FullscreenButton } from '@/src/widgets/molecules/FullscreenButton';
 import { METAL_ALARM_ASSET, OUNCE_ALARM_ASSET } from '@/src/core/constants/alarmAssets';
 import { ProMark } from '@/src/widgets/atoms/ProMark';
 import { Screen } from '@/src/widgets/atoms/Screen';
+import { TourTarget } from '@/src/widgets/atoms/TourTarget';
 import { CurrencySwitcher } from '@/src/widgets/molecules/CurrencySwitcher';
 import { EmptyState } from '@/src/widgets/molecules/EmptyState';
 import { ExpandablePriceRow } from '@/src/widgets/molecules/ExpandablePriceRow';
@@ -153,8 +154,6 @@ const PAGE_NAMES: Record<ChartSymbol, string> = {
   [BRENT]: 'Brent Petrol',
   [MetalSymbol.XAU]: 'Altın',
   [MetalSymbol.XAG]: 'Gümüş',
-  [MetalSymbol.XPT]: 'Platin',
-  [MetalSymbol.XPD]: 'Paladyum',
 };
 
 const CHART_TABS = CHART_SYMBOLS.map((symbol) => ({ id: symbol, label: PAGE_NAMES[symbol] }));
@@ -163,8 +162,9 @@ const CHART_TABS = CHART_SYMBOLS.map((symbol) => ({ id: symbol, label: PAGE_NAME
 function MarketChartSection() {
   const styles = useStyles();
   const { displayQuotes, displayOunceQuotes, timeframes, lockedTimeframes } = useMarketViewModel();
-  const { timeframe, setTimeframe, unit, setUnit, chartCurrency: currency, charts, chartLoading } = useMarketChart();
+  const { timeframe, setTimeframe, unit, setUnit, chartCurrency, brentCurrency, charts, chartLoading } = useMarketChart();
   const currencySwitcher = useChartCurrencySwitcher();
+  const brentSwitcher = useBrentCurrencySwitcher();
   const { openPaywall } = useSubscription();
   const onLockedTimeframe = useCallback(() => openPaywall('timeframe'), [openPaywall]);
 
@@ -206,18 +206,24 @@ function MarketChartSection() {
   return (
     <View style={styles.chartSection}>
 
-      <TopTabs
-        tabs={CHART_TABS}
-        value={CHART_SYMBOLS[page]}
-        onChange={(symbol) => goTo(CHART_SYMBOLS.indexOf(symbol))}
-        style={styles.chartTabs}
-      />
+      <TourTarget id="chart-tabs" style={styles.chartTabs}>
+        <TopTabs
+          tabs={CHART_TABS}
+          value={CHART_SYMBOLS[page]}
+          onChange={(symbol) => goTo(CHART_SYMBOLS.indexOf(symbol))}
+        />
+      </TourTarget>
 
-      <View style={styles.unitRow}>
-        <UnitSwitcher value={unit} onChange={setUnit} />
-      </View>
+      {/* Brent varil fiyatıdır; gram/ons ayrımı olmadığı için birim seçici gösterilmez. */}
+      {CHART_SYMBOLS[page] === BRENT ? null : (
+        <View style={styles.unitRow}>
+          <TourTarget id="unit-switcher">
+            <UnitSwitcher value={unit} onChange={setUnit} />
+          </TourTarget>
+        </View>
+      )}
 
-      <View style={styles.pager}>
+      <TourTarget id="chart" style={styles.pager}>
         <ScrollView
           ref={pagerRef}
           horizontal
@@ -241,18 +247,18 @@ function MarketChartSection() {
               points={charts[symbol]?.points}
               loading={chartLoading[symbol]}
               livePrice={(unit === 'ounce' ? displayOunceQuotes : displayQuotes).find((q) => q.symbol === symbol)?.bid}
-              currency={currency}
+              currency={symbol === BRENT ? brentCurrency : chartCurrency}
               unit={unit}
               timeframe={timeframe}
               timeframes={timeframes}
               lockedTimeframes={lockedTimeframes}
               onTimeframeChange={setTimeframe}
               onLockedTimeframe={onLockedTimeframe}
-              currencySwitcher={currencySwitcher}
+              currencySwitcher={symbol === BRENT ? brentSwitcher : currencySwitcher}
             />
           ))}
         </ScrollView>
-      </View>
+      </TourTarget>
 
     </View>
   );
@@ -263,8 +269,8 @@ export default function MarketScreen() {
   const { state, error, displayGoldRates: goldRates, currency, refresh } = useMarketViewModel();
   const ticker = useMarketTicker();
   const [info, setInfo] = useState<MarketInfoId | null>(null);
-  // Listede aynı anda tek satır açık: başka satıra dokununca önceki kapanır.
-  const [openGoldId, setOpenGoldId] = useState<string | null>(null);
+  // Listede aynı anda tek satır açık: başka satıra dokununca önceki kapanır. İlk açılışta 24 ayar gram altın açıktır.
+  const [openGoldId, setOpenGoldId] = useState<string | null>('gram-24');
   const toggleGold = useCallback((id: string) => setOpenGoldId((current) => (current === id ? null : id)), []);
 
   const goldProducts = GOLD_ASSETS.flatMap((asset) => {
@@ -273,7 +279,9 @@ export default function MarketScreen() {
   });
   return (
     <View style={styles.root}>
-      <MarketTicker items={ticker} />
+      <TourTarget id="ticker">
+        <MarketTicker items={ticker} />
+      </TourTarget>
       <Screen scroll onRefresh={() => void refresh()} refreshing={state === 'loading'}>
         <MarketChartSection />
 
