@@ -10,10 +10,10 @@ Son güncelleme: 16 Kasım 2026
 
 | Alan | Metin | Karakter |
 | --- | --- | --- |
-| Name (30) | `Altın Kasam: Altın Fiyatları` | 28 |
-| Subtitle (30) | `Gram, Çeyrek Takip ve Alarm` | 27 |
+| Name (30) | `Altın Kasam: Gram Altın Fiyatı` | 30 |
+| Subtitle (30) | `Çeyrek, Gümüş, Alarm, Portföy` | 29 |
 
-> Apple ad ve alt başlıktaki kelimeleri zaten aramaya dahil eder. Bu yüzden "altın", "fiyatları", "gram", "çeyrek", "takip" ve "alarm" aşağıdaki Keywords alanında tekrar edilmedi; 100 karakter başka kelimelere ayrıldı.
+> Ad, alt başlık, anahtar kelimeler, kategori kararları ve gerekçeleri [MAGAZA_ASO.md](MAGAZA_ASO.md) içinde. Apple bu üç alandaki kelimeleri birlikte aradığı için hiçbir kelime tekrar edilmedi.
 
 ---
 
@@ -28,7 +28,7 @@ Gram altın, çeyrek ve gümüş fiyatlarını canlı izle, birikimini kasanda t
 ## Keywords (100 karakter)
 
 ```
-gümüş,bilezik,cumhuriyet,yarım,ons,canlı,kasa,birikim,portföy,kuyumcu,döviz,dolar,takvim,analiz,fed
+canlı,ons,dolar,döviz,takvim,fed,tcmb,faiz,enflasyon,analiz,birikim,bilezik,kuyumcu,yarım,widget
 ```
 
 ---
