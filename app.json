@@ -2,7 +2,7 @@
   "expo": {
     "name": "Altin Kasam",
     "slug": "altin-kasam",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "altinkasam",
@@ -24,6 +24,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "package": "com.furkanages.altinkasam",
+      "versionCode": 3,
       "predictiveBackGestureEnabled": false
     },
     "web": {

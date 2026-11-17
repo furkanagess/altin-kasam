@@ -282,7 +282,7 @@ export default function MarketScreen() {
       <TourTarget id="ticker">
         <MarketTicker items={ticker} />
       </TourTarget>
-      <Screen scroll onRefresh={() => void refresh()} refreshing={state === 'loading'}>
+      <Screen scroll scrollId="market" onRefresh={() => void refresh()} refreshing={state === 'loading'}>
         <MarketChartSection />
 
         {state === 'error' ? (
@@ -313,7 +313,7 @@ export default function MarketScreen() {
         </Pressable>
 
         {goldProducts.length ? (
-          <>
+          <TourTarget id="gold-list" style={styles.goldBlock}>
             <SectionHeader
               title="Altın çeşitleri"
               right={<InfoButton label="Altın çeşitleri nedir?" onPress={() => setInfo('goldTypes')} />}
@@ -338,7 +338,7 @@ export default function MarketScreen() {
                 />
               ))}
             </View>
-          </>
+          </TourTarget>
         ) : null}
       </Screen>
       {info ? <InfoSheet visible {...MARKET_INFO[info]} onClose={() => setInfo(null)} /> : null}
@@ -349,6 +349,7 @@ export default function MarketScreen() {
 const useStyles = makeStyles((colors) => ({
   root: { flex: 1, backgroundColor: colors.surface.canvas },
   chartSection: { gap: paddings.sm },
+  goldBlock: { gap: 16 },
   flex: { flex: 1 },
   // Sayfalar ekran kenarına kadar kayar; her sayfa kendi kenar boşluğunu taşır.
   chartTabs: { marginHorizontal: -paddings.screen },

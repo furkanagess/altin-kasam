@@ -14,6 +14,7 @@ import { AppText } from '@/src/widgets/atoms/AppText';
 import { ProMark } from '@/src/widgets/atoms/ProMark';
 import { FREE_EXPORT_USES } from '@/src/core/constants/premium';
 import { Screen } from '@/src/widgets/atoms/Screen';
+import { TourTarget } from '@/src/widgets/atoms/TourTarget';
 import { AlarmButton } from '@/src/widgets/molecules/AlarmButton';
 import { CurrencySwitcher } from '@/src/widgets/molecules/CurrencySwitcher';
 import { PORTFOLIO_ALARM_ID } from '@/src/core/constants/alarmAssets';
@@ -169,7 +170,7 @@ export default function PortfolioScreen() {
 
   if (!snapshot || !breakdown || !snapshot.holdings.length) {
     return (
-      <Screen scroll onRefresh={() => void refresh()} refreshing={state === 'loading'}>
+      <Screen scroll scrollId="portfolio" onRefresh={() => void refresh()} refreshing={state === 'loading'}>
         {goal}
         <CurrencySwitcher {...currencySwitcher} />
         {state === 'loading' && !snapshot ? <ActivityIndicator color={colors.brand.gold} /> : null}
@@ -181,7 +182,11 @@ export default function PortfolioScreen() {
             onAction={() => void refresh()}
           />
         ) : null}
-        {state === 'ready' ? <VaultEmptyState onAdd={() => router.push('/add-holding')} /> : null}
+        {state === 'ready' ? (
+          <TourTarget id="vault-body">
+            <VaultEmptyState onAdd={() => router.push('/add-holding')} />
+          </TourTarget>
+        ) : null}
         {withdrawalAnimation}
       </Screen>
     );
@@ -192,11 +197,14 @@ export default function PortfolioScreen() {
   return (
     <Screen
       scroll
+      scrollId="portfolio"
       onRefresh={() => void refresh()}
       refreshing={state === 'loading'}
     >
       {goal}
-      <PortfolioChartSection snapshot={snapshot} />
+      <TourTarget id="vault-body">
+        <PortfolioChartSection snapshot={snapshot} />
+      </TourTarget>
 
       <View style={styles.grid}>
         <StatTile

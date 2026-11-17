@@ -30,3 +30,29 @@ export function measureTourTarget(id: string): Promise<TourRect | null> {
     }
   });
 }
+
+type Scroller = { scrollTo: (y: number, animated: boolean) => void; offset: () => number };
+
+/** Turun kaydırabildiği ekranlar (ör. Piyasa); `Screen` kendini `scrollId` ile kaydeder. */
+const scrollers = new Map<string, Scroller>();
+
+export function registerTourScroller(id: string, scroller: Scroller): () => void {
+  scrollers.set(id, scroller);
+  return () => {
+    if (scrollers.get(id) === scroller) scrollers.delete(id);
+  };
+}
+
+/** Hedef verilmezse en üste, verilirse hedefi `topInset` hizasına gelecek şekilde kaydırır. */
+export async function scrollTourTo(scrollerId: string, targetId: string | undefined, topInset: number): Promise<boolean> {
+  const scroller = scrollers.get(scrollerId);
+  if (!scroller) return false;
+  if (!targetId) {
+    scroller.scrollTo(0, true);
+    return true;
+  }
+  const rect = await measureTourTarget(targetId);
+  if (!rect) return false;
+  scroller.scrollTo(Math.max(0, scroller.offset() + rect.y - topInset), true);
+  return true;
+}

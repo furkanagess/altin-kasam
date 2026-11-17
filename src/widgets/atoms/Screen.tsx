@@ -1,6 +1,7 @@
 import { makeStyles, paddings, useTheme } from '@/src/core/theme';
 import { HeaderShownContext } from 'expo-router/react-navigation';
-import React, { useContext } from 'react';
+import { registerTourScroller } from '@/src/viewmodels/tour/tourTargets';
+import React, { useContext, useEffect, useRef, type ComponentRef } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -27,6 +28,8 @@ type Props = {
    * Alt güvenli alan footer'a eklenir. Sekme ekranlarında `false`: alt boşluğu sekme çubuğu bırakır.
    */
   footerSafeArea?: boolean;
+  /** Uygulama turu bu ekranı kaydırabilsin diye verilen kimlik. */
+  scrollId?: string;
 };
 
 export function Screen({
@@ -38,7 +41,17 @@ export function Screen({
   contentStyle,
   footer,
   footerSafeArea = true,
+  scrollId,
 }: Props) {
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const offsetRef = useRef(0);
+  useEffect(() => {
+    if (!scrollId) return;
+    return registerTourScroller(scrollId, {
+      scrollTo: (y, animated) => scrollRef.current?.scrollTo({ y, animated }),
+      offset: () => offsetRef.current,
+    });
+  }, [scrollId]);
   const styles = useStyles();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -61,6 +74,9 @@ export function Screen({
     return (
       <SafeAreaView style={[styles.safe, style]} edges={edges}>
         <ScrollView
+          ref={scrollRef}
+          scrollEventThrottle={scrollId ? 16 : undefined}
+          onScroll={scrollId ? (e) => { offsetRef.current = e.nativeEvent.contentOffset.y; } : undefined}
           style={styles.flex}
           contentContainerStyle={[styles.content, contentStyle]}
           keyboardShouldPersistTaps="handled"

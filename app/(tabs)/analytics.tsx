@@ -14,6 +14,7 @@ import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvi
 import { AppText } from '@/src/widgets/atoms/AppText';
 import { GoldSilverRatioIcon } from '@/src/widgets/atoms/MetalIcon';
 import { Screen } from '@/src/widgets/atoms/Screen';
+import { TourTarget } from '@/src/widgets/atoms/TourTarget';
 import { InfoButton } from '@/src/widgets/molecules/InfoButton';
 import { ReportBadge } from '@/src/widgets/molecules/ReportBadge';
 import { SectionHeader } from '@/src/widgets/molecules/SectionHeader';
@@ -56,12 +57,14 @@ export default function AnalyticsScreen() {
       <MarketTicker items={ticker} />
       <Screen
         scroll
+        scrollId="analytics"
         onRefresh={() => {
           void refresh();
           void calendar.refresh();
         }}
         refreshing={state === 'loading'}
       >
+        <TourTarget id="analysis-ratio">
         <PriceChart
           points={ratioChart.points}
           currency="USD"
@@ -86,6 +89,8 @@ export default function AnalyticsScreen() {
           bare
           titleRight={<InfoButton label="Altın/Gümüş rasyosu nedir?" onPress={() => setInfo('goldSilverRatio')} />}
         />
+        </TourTarget>
+        <TourTarget id="analysis-calendar" style={styles.tourBlock}>
         <SectionHeader
           title="Ekonomik takvim"
           right={<InfoButton label="Ekonomik takvim nedir?" onPress={() => setInfo('economicCalendar')} />}
@@ -133,7 +138,10 @@ export default function AnalyticsScreen() {
           </AppText>
         )}
 
+        </TourTarget>
+
         {/* Yayımlanmış analiz yoksa bölüm hiç gösterilmez. */}
+        <TourTarget id="analysis-weekly" style={styles.tourBlock}>
         {loading || latest ? (
           <SectionHeader
             title="Haftalık analiz"
@@ -170,6 +178,8 @@ export default function AnalyticsScreen() {
           </>
         ) : null}
 
+        </TourTarget>
+
         <AppText variant="caption" tone="tertiary" style={styles.disclaimer}>
           Yatırım tavsiyesi değildir
         </AppText>
@@ -188,6 +198,7 @@ export default function AnalyticsScreen() {
 const useStyles = makeStyles((colors) => ({
   root: { flex: 1, backgroundColor: colors.surface.canvas },
   link: { fontWeight: '600' },
+  tourBlock: { gap: 16 },
   // Önceki haftalar: kart yerine ince çizgilerle ayrılmış düz liste.
   list: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border.subtle },
   calendarLink: { alignSelf: 'center', paddingVertical: paddings.xs, marginTop: -paddings.xs },

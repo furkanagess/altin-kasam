@@ -1,6 +1,5 @@
 import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
-import { TourTarget } from '@/src/widgets/atoms/TourTarget';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import { router } from 'expo-router';
 import React from 'react';
@@ -45,7 +44,6 @@ export function HeaderActions() {
   const { isPremium, openPaywall } = useSubscription();
   return (
     <View style={styles.row}>
-      <TourTarget id="header-pro">
       {isPremium ? (
         // Pro üye: satın alma butonu yerine üyeliğin aktif olduğunu söyleyen durum alanı; dokununca avantajlar açılır.
         <Pressable
@@ -79,8 +77,6 @@ export function HeaderActions() {
           </AppText>
         </Pressable>
       )}
-      </TourTarget>
-      <TourTarget id="header-settings">
       <Pressable
         onPress={() => router.push('/settings')}
         style={styles.settings}
@@ -90,7 +86,6 @@ export function HeaderActions() {
       >
         <GearIcon color={colors.brand.ink} />
       </Pressable>
-      </TourTarget>
     </View>
   );
 }

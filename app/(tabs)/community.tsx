@@ -11,6 +11,7 @@ import { useMarketInsights } from '@/src/viewmodels/insight/useMarketInsights';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import { Screen } from '@/src/widgets/atoms/Screen';
+import { TourTarget } from '@/src/widgets/atoms/TourTarget';
 import { EmptyState } from '@/src/widgets/molecules/EmptyState';
 import { FilterButton } from '@/src/widgets/molecules/FilterButton';
 import { HashtagChip } from '@/src/widgets/molecules/HashtagChip';
@@ -105,7 +106,8 @@ export default function CommunityScreen() {
   ].filter((f) => f !== null);
 
   return (
-    <Screen scroll onRefresh={() => void refresh()} refreshing={feed.refreshing}>
+    <Screen scroll scrollId="community" onRefresh={() => void refresh()} refreshing={feed.refreshing}>
+      <TourTarget id="community-insight">
       <InsightCard
         gold={insights.gold}
         silver={insights.silver}
@@ -114,6 +116,7 @@ export default function CommunityScreen() {
         onLockedPress={() => openPaywall('insight')}
         onOpen={(topic) => router.push({ pathname: '/insight', params: { topic } })}
       />
+      </TourTarget>
 
       <View style={styles.toolbar}>
         <View style={styles.toolbarLeft}>
