@@ -159,3 +159,20 @@ Alarm bildiriminin ve widget'ın çalıştığını gösteren 30–60 saniyelik 
 - Notes'taki adımları gerçek build'de bir kez izle (özellikle alarm bildirimi ve widget). Menü adları değişirse metni güncelle.
 - "Pro ekranını önizle" satırı yayında kalacaksa Notes'taki açıklama yeterli; kaldırılırsa o cümleyi sil.
 - `docs/UYUMLULUK_RISKLERI.md` içindeki açık engeller (API sunucusu, RevenueCat, yasal metinler, topluluk moderasyonu) inceleme öncesinde kapatılmalı.
+
+---
+
+## Ekran görüntüsü başlıkları (gerçek uygulama ekranları)
+
+Dosyalar `store-assets/screenshots/` altında, 1206×2622 (6,3" iPhone; App Store 6,9" için de kabul edilir). Ekranlar iPhone 17 simülatöründen alınan gerçek ekranlardır (`src/raw/`). Her görselde ekranın en önemli özelliğini anlatan, uygulamadaki verilerle tutarlı özel tasarım kartlar telefonun dışına taşar (canlı fiyat panosu, hedef halkası ve kâr kartı, alarm merdiveni, Fed geri sayımı ve takvim zaman çizgisi, destek/direnç merdiveni, 24 saatlik tepki çubukları); başlık çevresinde rozet ya da çip kullanılmaz. `node store-assets/screenshots/src/build-real.mjs` ile üretilir. Mağazada görünme sırası 1 → 6'dır; ilk üçü kullanıcının aramada ve sayfada en çok gördüğü ekranlardır.
+
+| # | Başlık | Alt başlık | Hedef kelimeler |
+| --- | --- | --- | --- |
+| 1 | Canlı Altın Fiyatları | Gram altın ve gümüş fiyatları saniyeler içinde güncel | canlı altın fiyatları, gram altın, çeyrek altın, ons, gümüş |
+| 2 | Altın Portföyün Cebinde | Gram, çeyrek ve gümüş birikimin; kâr, zarar ve hedefinle tek yerde | altın portföyü, birikim, kâr zarar, hedef |
+| 3 | Hedef Fiyatta Alarm Çalsın | Altın ya da gümüş istediğin fiyata gelince anında haber al | altın alarmı, fiyat alarmı, bildirim |
+| 4 | Fed ve TCMB Kararını Kaçırma | Faiz, enflasyon ve istihdam takvimi, altına etkisiyle birlikte | Fed, TCMB, faiz kararı, ekonomik takvim, enflasyon |
+| 5 | Haftalık Altın Analizi | Piyasanın yönünü, destek ve direnç seviyelerini her hafta oku | altın analizi, haftalık analiz, destek direnç |
+| 6 | Veri Altını Nasıl Etkiledi? | Her açıklamadan sonra altın ve gümüşün tepkisini gör | altın etkisi, gümüş, TÜFE, istihdam |
+
+> Not: Üçüncü ekrandaki bildirim bandı, alarm özelliğini anlatan örnek bir görseldir (gerçek ekran yakalaması değildir). 2. ekrandaki "Toplam kâr" rozeti uygulamadaki gerçek değerden alınmıştır, demo kasadır. Fiyatlar çekim anındaki canlı verilerdir.
