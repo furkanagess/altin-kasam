@@ -58,6 +58,13 @@ type PricedItem = { title: string; bid: number; ask: number };
 
 const SILVER_TITLES = ['GÜMÜŞ TL'];
 const OUNCE_ALARM_METALS: Record<string, string> = { 'platin-gram': 'PLATİN ONS', 'paladyum-gram': 'PALADYUM ONS' };
+/** Ons alarmları: alarm kimliği → Harem ons kalemi (USD/ons, çevrimsiz). */
+const OUNCE_ALARM_TITLES: Record<string, string> = {
+  'ons-altin': 'ONS',
+  'ons-gumus': 'GÜMÜŞ ONS',
+  'ons-platin': 'PLATİN ONS',
+  'ons-paladyum': 'PALADYUM ONS',
+};
 const RATIO_ALARM_TITLES = ['ALTIN/GÜMÜŞ'];
 const TROY_OUNCE_GRAMS = 31.1034768;
 
@@ -82,6 +89,10 @@ export function alarmValuesFromItems(items: readonly PricedItem[]): Record<strin
       const item = find([title]);
       if (item) values[assetId] = (item.bid * rate) / TROY_OUNCE_GRAMS;
     }
+  }
+  for (const [assetId, title] of Object.entries(OUNCE_ALARM_TITLES)) {
+    const item = find([title]);
+    if (item) values[assetId] = item.bid;
   }
   const ratio = find(RATIO_ALARM_TITLES);
   const gold = values['gram-24'];

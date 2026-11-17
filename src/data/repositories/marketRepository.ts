@@ -1,7 +1,8 @@
-import type { Currency, Timeframe } from '@/src/core/constants/app';
+import type { ChartUnit, Currency, Timeframe } from '@/src/core/constants/app';
 import type { IMarketDatasource } from '@/src/data/datasources/marketDatasource';
 import { HasfiyatMarketDatasource } from '@/src/data/datasources/hasfiyatMarketDatasource';
-import type { MetalSymbol } from '@/src/domain/enums';
+import { BRENT, type BrentSymbol, type MetalSymbol } from '@/src/domain/enums';
+import { fetchBrentHistory } from '@/src/data/datasources/brentHistoryDatasource';
 import type { ChartSeries, MarketSnapshot } from '@/src/domain/models';
 
 /**
@@ -24,9 +25,16 @@ export class MarketRepository {
     }
   }
 
-  async getHistory(symbol: MetalSymbol, timeframe: Timeframe, currency: Currency): Promise<ChartSeries> {
-    const points = await this.datasource.fetchHistory(symbol, timeframe, currency);
-    return { symbol, timeframe, currency, points };
+  async getHistory(
+    symbol: MetalSymbol | BrentSymbol,
+    timeframe: Timeframe,
+    currency: Currency,
+    unit: ChartUnit = 'gram',
+  ): Promise<ChartSeries> {
+    // Brent varil fiyatıdır; gram/ons ayrımı yoktur, seri her iki birimde de aynıdır.
+    if (symbol === BRENT) return { symbol, timeframe, currency, unit, points: await fetchBrentHistory(timeframe, currency) };
+    const points = await this.datasource.fetchHistory(symbol, timeframe, currency, unit);
+    return { symbol, timeframe, currency, unit, points };
   }
 }
 

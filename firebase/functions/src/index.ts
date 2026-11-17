@@ -1,9 +1,11 @@
 import { initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { defineSecret, defineString } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import nodemailer from 'nodemailer';
 
 initializeApp();
 const db = getFirestore();
@@ -19,7 +21,7 @@ const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 const CHANNEL_ID = 'price-alarms-chlinc';
 
 type Direction = 'above' | 'below';
-type Unit = 'try' | 'ratio';
+type Unit = 'try' | 'usd' | 'ratio';
 
 type AlarmDoc = {
   installId: string;
@@ -53,7 +55,7 @@ function parseAlarm(raw: unknown): IncomingAlarm | null {
   if (a.direction !== 'above' && a.direction !== 'below') return null;
   if (typeof a.target !== 'number' || !Number.isFinite(a.target) || a.target <= 0) return null;
   if (!isText(a.label) || !isText(a.noun, 20)) return null;
-  const unit: Unit = a.unit === 'ratio' ? 'ratio' : 'try';
+  const unit: Unit = a.unit === 'ratio' ? 'ratio' : a.unit === 'usd' ? 'usd' : 'try';
   return {
     id: a.id,
     assetId: a.assetId,
@@ -266,3 +268,247 @@ export const cleanupAlarms = onSchedule({ schedule: 'every 24 hours', maxInstanc
   const snap = await db.collection('alarms').where('triggeredAt', '<', cutoff).get();
   await Promise.all(snap.docs.map((d) => d.ref.delete()));
 });
+
+/**
+ * Haftalık analizler: Firestore `weeklyAnalyses/{id}` belgelerini (Firebase Console'dan elle girilir)
+ * `published == true` olanlarla herkese açık JSON olarak döner. Şema: docs/HAFTALIK_ANALIZ_FIREBASE.md.
+ */
+export const weeklyAnalyses = onRequest({ cors: true, maxInstances: 5 }, async (req, res) => {
+  if (req.method !== 'GET') {
+    res.status(405).json({ error: 'method' });
+    return;
+  }
+  const snap = await db.collection('weeklyAnalyses').where('published', '==', true).get();
+  const items = snap.docs
+    .map((d) => {
+      const { published: _published, ...data } = d.data();
+      return { id: d.id, ...data };
+    })
+    .sort((a, b) => String((b as { weekStart?: string }).weekStart).localeCompare(String((a as { weekStart?: string }).weekStart)))
+    .slice(0, 60);
+  res.set('Cache-Control', 'public, max-age=300, s-maxage=300');
+  res.json(items);
+});
+
+// --- Bağlı hesap (Google/Apple) ------------------------------------------------------------
+
+/**
+ * Hesaba yedeklenen yerel anahtarlar; uygulamadaki `ACCOUNT_SYNC_KEYS` ile aynı olmalı.
+ * Listede olmayan anahtarlar yok sayılır.
+ */
+const ACCOUNT_KEYS = new Set([
+  'altin_kasam_holdings_v1',
+  'altin_kasam_goal_v2',
+  'altin_kasam_onboarding_v1',
+  'altin_kasam_alarms_v1',
+  'altin_kasam_premium_v1',
+  'altin_kasam_free_uses_v1',
+  'altin_kasam_event_reminders_v1',
+  'altin_kasam_followed_sources_v1',
+  'altin_kasam_notified_news_v1',
+  'altin_kasam_read_posts_v1',
+  'altin_kasam_currency_v1',
+  'altin_kasam_home_widget_v1',
+]);
+/** Firestore belge sınırı 1 MiB; alan adları ve zaman damgası için pay bırakılır. */
+const MAX_ACCOUNT_BYTES = 900_000;
+
+type AccountDoc = { data: Record<string, string>; updatedAt: string };
+
+async function verifiedUid(header: string | undefined): Promise<string | null> {
+  const match = /^Bearer (.+)$/.exec(header ?? '');
+  if (!match) return null;
+  try {
+    return (await getAuth().verifyIdToken(match[1], true)).uid;
+  } catch {
+    return null;
+  }
+}
+
+function parseAccountData(raw: unknown): Record<string, string> | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const out: Record<string, string> = {};
+  let size = 0;
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!ACCOUNT_KEYS.has(key) || typeof value !== 'string') continue;
+    try {
+      JSON.parse(value);
+    } catch {
+      continue;
+    }
+    size += key.length + value.length;
+    out[key] = value;
+  }
+  return size <= MAX_ACCOUNT_BYTES ? out : null;
+}
+
+/**
+ * Bağlı hesabın verisi: `GET` yedeği döner, `PUT { data }` yedeği değiştirir, `DELETE` hesabı
+ * (Firebase Auth kullanıcısı) ve yedeği kalıcı olarak siler. Her istek Firebase kimlik jetonu ister.
+ */
+export const account = onRequest({ cors: false, maxInstances: 10 }, async (req, res) => {
+  const uid = await verifiedUid(req.get('authorization'));
+  if (!uid) {
+    res.status(401).json({ error: 'auth' });
+    return;
+  }
+  const ref = db.collection('users').doc(uid);
+
+  if (req.method === 'GET') {
+    const snap = await ref.get();
+    res.json({ snapshot: snap.exists ? (snap.data() as AccountDoc) : null });
+    return;
+  }
+
+  if (req.method === 'PUT') {
+    const data = parseAccountData((req.body as { data?: unknown } | undefined)?.data);
+    if (!data) {
+      res.status(400).json({ error: 'invalid' });
+      return;
+    }
+    const doc: AccountDoc = { data, updatedAt: new Date().toISOString() };
+    await ref.set(doc);
+    res.json({ snapshot: doc });
+    return;
+  }
+
+  if (req.method === 'DELETE') {
+    await ref.delete();
+    await getAuth()
+      .deleteUser(uid)
+      .catch((error: unknown) => logger.warn('account delete: auth user', { uid, error: String(error) }));
+    res.json({ ok: true });
+    return;
+  }
+
+  res.status(405).json({ error: 'method' });
+});
+
+/** Destek mesajlarının gönderildiği ve geldiği Gmail hesabı; şifre bu hesabın uygulama şifresidir. */
+const SUPPORT_EMAIL = 'altinkasamapp@gmail.com';
+const SUPPORT_SMTP_PASSWORD = defineSecret('SUPPORT_SMTP_PASSWORD');
+const SUPPORT_MESSAGE_MAX = 2000;
+/** Bir kurulumdan ve bir IP'den saatte kabul edilen en fazla mesaj. */
+const SUPPORT_LIMIT_PER_HOUR = 5;
+const HOUR_MS = 60 * 60 * 1000;
+
+const SUPPORT_TOPICS: Record<string, string> = {
+  problem: 'Sorun bildirimi',
+  suggestion: 'Öneri / soru',
+};
+
+const EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
+
+function cleanLine(v: unknown, max: number): string {
+  return typeof v === 'string' ? v.replace(/[\r\n]+/g, ' ').trim().slice(0, max) : '';
+}
+
+/**
+ * Sabit pencereli sayaç: anahtar başına saatte `SUPPORT_LIMIT_PER_HOUR` istek. Sınır aşıldıysa `false`.
+ * Kayıtlar `supportRate` koleksiyonunda tutulur; süresi geçen pencere yeni istekle sıfırlanır.
+ */
+async function takeSupportQuota(key: string): Promise<boolean> {
+  const ref = db.collection('supportRate').doc(key);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const now = Date.now();
+    const data = snap.data() as { windowStart: number; count: number } | undefined;
+    if (!data || now - data.windowStart >= HOUR_MS) {
+      tx.set(ref, { windowStart: now, count: 1 });
+      return true;
+    }
+    if (data.count >= SUPPORT_LIMIT_PER_HOUR) return false;
+    tx.update(ref, { count: data.count + 1 });
+    return true;
+  });
+}
+
+/**
+ * Uygulama içi destek formu. Gövde: `{ installId, topic, message, email?, meta? }`. Mesaj Firestore'a
+ * (`supportMessages`) kaydedilir ve destek adresine e-postayla gönderilir; kullanıcı e-posta yazdıysa
+ * "Yanıtla" ona gider. Mail gönderilemese de kayıt kalır.
+ */
+export const support = onRequest(
+  { cors: false, maxInstances: 3, secrets: [SUPPORT_SMTP_PASSWORD] },
+  async (req, res) => {
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'method' });
+      return;
+    }
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const installId = body.installId;
+    const topic = typeof body.topic === 'string' && body.topic in SUPPORT_TOPICS ? body.topic : null;
+    const message = typeof body.message === 'string' ? body.message.trim() : '';
+    const email = cleanLine(body.email, 120);
+    if (!isText(installId, 64) || !/^[\w-]{16,}$/.test(installId) || !topic) {
+      res.status(400).json({ error: 'invalid' });
+      return;
+    }
+    if (message.length < 5 || message.length > SUPPORT_MESSAGE_MAX) {
+      res.status(400).json({ error: 'message' });
+      return;
+    }
+    if (email && !EMAIL_RE.test(email)) {
+      res.status(400).json({ error: 'email' });
+      return;
+    }
+
+    const ip = (req.ip ?? 'unknown').replace(/[^\w.:-]/g, '_');
+    const [installOk, ipOk] = await Promise.all([
+      takeSupportQuota(`i_${installId}`),
+      takeSupportQuota(`ip_${ip}`),
+    ]);
+    if (!installOk || !ipOk) {
+      res.status(429).json({ error: 'rate' });
+      return;
+    }
+
+    const rawMeta = (body.meta ?? {}) as Record<string, unknown>;
+    const meta = {
+      appVersion: cleanLine(rawMeta.appVersion, 40),
+      os: cleanLine(rawMeta.os, 60),
+      model: cleanLine(rawMeta.model, 80),
+      premium: rawMeta.premium === true,
+    };
+    const ref = await db.collection('supportMessages').add({
+      installId,
+      topic,
+      message,
+      email: email || null,
+      meta,
+      createdAt: new Date().toISOString(),
+      mailed: false,
+    });
+
+    try {
+      const transport = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: SUPPORT_EMAIL, pass: SUPPORT_SMTP_PASSWORD.value() },
+      });
+      await transport.sendMail({
+        from: `"Altın Kasam Destek" <${SUPPORT_EMAIL}>`,
+        to: SUPPORT_EMAIL,
+        replyTo: email || undefined,
+        subject: `[${SUPPORT_TOPICS[topic]}] ${message.replace(/\s+/g, ' ').slice(0, 60)}`,
+        text: [
+          message,
+          '',
+          '---',
+          `Konu: ${SUPPORT_TOPICS[topic]}`,
+          `Dönüş adresi: ${email || '(yazılmadı)'}`,
+          `Uygulama: ${meta.appVersion || '?'}`,
+          `Sistem: ${meta.os || '?'}`,
+          `Cihaz: ${meta.model || '?'}`,
+          `Pro: ${meta.premium ? 'evet' : 'hayır'}`,
+          `Kurulum: ${installId}`,
+          `Kayıt: supportMessages/${ref.id}`,
+        ].join('\n'),
+      });
+      await ref.update({ mailed: true });
+    } catch (error) {
+      // Kayıt Firestore'da kaldığı için kullanıcıya başarılı dönülür; mail sorunu loglardan izlenir.
+      logger.error('support: mail gönderilemedi', { id: ref.id, error: String(error) });
+    }
+    res.json({ ok: true });
+  },
+);

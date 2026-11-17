@@ -1,6 +1,7 @@
 import { EVENT_REMINDER_LEAD_MINUTES } from '@/src/core/constants/economicCalendar';
 import { makeStyles, paddings, useTheme } from '@/src/core/theme';
 import { useEconomicCalendar } from '@/src/viewmodels/analysis/EconomicCalendarProvider';
+import { useNetworkStatus } from '@/src/viewmodels/network/useNetworkStatus';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import { Screen } from '@/src/widgets/atoms/Screen';
 import { EmptyState } from '@/src/widgets/molecules/EmptyState';
@@ -28,6 +29,7 @@ export default function EconomicCalendarScreen() {
     useEconomicCalendar();
   const [refreshing, setRefreshing] = useState(false);
   const { isPremium, openPaywall } = useSubscription();
+  const { isOffline } = useNetworkStatus();
   const openReport = (event: EconomicEvent) =>
     router.push({ pathname: '/economic-event/[id]', params: { id: event.id } });
   const reportBadge = (event: EconomicEvent) => (event.result ? <ReportBadge /> : null);
@@ -94,7 +96,11 @@ export default function EconomicCalendarScreen() {
       ) : error ? (
         <EmptyState
           title="Takvim alınamadı"
-          message="Kurum takvimlerine şu an ulaşılamıyor. Biraz sonra tekrar dene."
+          message={
+            isOffline
+              ? 'İnternet bağlantın yok. Bağlantı gelince takvim kendiliğinden yüklenecek.'
+              : 'Kurum takvimlerine şu an ulaşılamıyor. Biraz sonra tekrar dene.'
+          }
           actionLabel="Tekrar dene"
           onAction={() => void refresh()}
         />

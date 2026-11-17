@@ -41,6 +41,14 @@ export class SubscriptionRepository {
     return this.datasource.onPremiumChange(listener);
   }
 
+  identify(userId: string): Promise<boolean> {
+    return this.datasource.identify(userId);
+  }
+
+  reset(): Promise<void> {
+    return this.datasource.reset();
+  }
+
   simulatePremium(premium: boolean) {
     if (this.canSimulate) (this.datasource as PreviewPurchasesDatasource).simulate(premium);
   }

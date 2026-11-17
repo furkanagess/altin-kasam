@@ -1,4 +1,4 @@
-import type { Currency, Timeframe } from '@/src/core/constants/app';
+import type { ChartUnit, Currency, Timeframe } from '@/src/core/constants/app';
 import type { MetalSymbol } from '@/src/domain/enums';
 import type { CandlePoint, MarketQuotes } from '@/src/domain/models';
 
@@ -8,6 +8,7 @@ export interface IHistoryDatasource {
     symbol: MetalSymbol,
     timeframe: Timeframe,
     currency: Currency,
+    unit?: ChartUnit,
   ): Promise<CandlePoint[]>;
 }
 

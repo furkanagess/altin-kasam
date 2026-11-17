@@ -73,7 +73,7 @@ function AssetIcon({ asset }: { asset: AlarmAsset }) {
   const styles = useStyles();
   const { colors } = useTheme();
   if (asset.kind === 'gold') return <GoldAssetIcon asset={asset.gold} size={30} maxWidth={64} />;
-  if (asset.kind === 'metal') return <MetalIcon symbol={asset.metal} size={40} />;
+  if (asset.kind === 'metal' || asset.kind === 'ounce') return <MetalIcon symbol={asset.metal} size={40} />;
   if (asset.kind === 'ratio') return <GoldSilverRatioIcon size={40} />;
   return (
     <View style={styles.portfolioIcon}>
@@ -447,7 +447,7 @@ export default function AlarmScreen() {
           <View style={styles.lineRow}>
             {asset.kind !== 'ratio' ? (
               <AppText style={[styles.lineSymbol, tone]} accessibilityElementsHidden>
-                ₺
+                {asset.kind === 'ounce' ? '$' : '₺'}
               </AppText>
             ) : null}
             <TextInput

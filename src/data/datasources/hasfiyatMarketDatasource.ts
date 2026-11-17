@@ -1,7 +1,9 @@
-import type { Currency, Timeframe } from '@/src/core/constants/app';
+import type { ChartUnit, Currency, Timeframe } from '@/src/core/constants/app';
 import type { HasfiyatItem, HasfiyatPricesResponse } from '@/src/data/datasources/hasfiyatTypes';
 import { usdPerOunceToTryPerGram } from '@/src/utils/metal';
 import { fetchJson } from '@/src/data/datasources/http';
+import { isNetworkError } from '@/src/core/network/networkErrors';
+import { networkMonitor } from '@/src/core/network/networkMonitor';
 import type { IMarketDatasource } from '@/src/data/datasources/marketDatasource';
 import { ChartHistoryDatasource } from '@/src/data/datasources/chartHistoryDatasource';
 import { GOLD_RATES, GRAM_GOLD_TITLES, normalizeTitle } from '@/src/core/constants/hasfiyatPriceMap';
@@ -35,6 +37,14 @@ const FX = { USD: ['USD/TL'], EUR: ['EUR/TL'] } as const;
 const OUNCE_METALS = [
   { symbol: MetalSymbol.XPT, name: 'Gram Platin', titles: ['PLATİN ONS'] },
   { symbol: MetalSymbol.XPD, name: 'Gram Paladyum', titles: ['PALADYUM ONS'] },
+] as const;
+
+/** Ons görünümü: uluslararası spot, USD/ons; Hasfiyat'ın doğrudan ons kalemleri. */
+const OUNCE_QUOTES = [
+  { symbol: MetalSymbol.XAU, name: 'Ons Altın', titles: ['ONS'] },
+  { symbol: MetalSymbol.XAG, name: 'Ons Gümüş', titles: ['GÜMÜŞ ONS'] },
+  { symbol: MetalSymbol.XPT, name: 'Ons Platin', titles: ['PLATİN ONS'] },
+  { symbol: MetalSymbol.XPD, name: 'Ons Paladyum', titles: ['PALADYUM ONS'] },
 ] as const;
 
 const RATIO_TITLES = ['ALTIN/GÜMÜŞ'];
@@ -161,7 +171,27 @@ export class HasfiyatMarketDatasource implements IMarketDatasource {
       : [];
     const merged = { ...base, quotes: [...base.quotes, ...ounceQuotes] };
 
-    await this.chartHistory.remember(merged.quotes, merged.fxRates);
+    const spotOunce: MetalQuote[] = OUNCE_QUOTES.flatMap((metal) => {
+      const item = find(metal.titles);
+      if (!item) return [];
+      return [
+        {
+          symbol: metal.symbol,
+          name: metal.name,
+          unit: 'ons',
+          bid: item.bid,
+          ask: item.ask,
+          changePercent: item.changePercent ?? 0,
+          currency: 'USD' as const,
+          timestamp,
+          source: 'live' as const,
+          provider: 'hasfiyat' as const,
+          day: scaleDay(item.day, 1),
+        },
+      ];
+    });
+
+    await this.chartHistory.remember(merged.quotes, merged.fxRates, spotOunce);
     const ratio = find(RATIO_TITLES);
     const ticker = TICKER.flatMap(({ id, label, titles, currency }) => {
       const item = find(titles);
@@ -170,13 +200,14 @@ export class HasfiyatMarketDatasource implements IMarketDatasource {
     });
     return {
       ...merged,
+      ounceQuotes: spotOunce.length ? spotOunce : undefined,
       goldSilverRatio: ratio ? (ratio.bid + ratio.ask) / 2 : undefined,
       ticker: ticker.length ? ticker : undefined,
     };
   }
 
-  fetchHistory(symbol: MetalSymbol, timeframe: Timeframe, currency: Currency): Promise<CandlePoint[]> {
-    return this.chartHistory.fetchHistory(symbol, timeframe, currency);
+  fetchHistory(symbol: MetalSymbol, timeframe: Timeframe, currency: Currency, unit?: ChartUnit): Promise<CandlePoint[]> {
+    return this.chartHistory.fetchHistory(symbol, timeframe, currency, unit);
   }
 
   private async fetchPrimary(): Promise<HasfiyatPricesResponse> {
@@ -187,9 +218,13 @@ export class HasfiyatMarketDatasource implements IMarketDatasource {
       return response;
     } catch (e) {
       // 503: anahtar tanımlı değil; 404/ağ hatası: sunucu ucu yok (ör. üretimde `origin` ayarlanmamış).
-      if (e instanceof Error && /HTTP (503|404)|Network request failed|Failed to fetch/.test(e.message)) {
-        this.unavailableUntil = Date.now() + UNAVAILABLE_BACKOFF_MS;
-      }
+      // Çevrimdışı, zaman aşımı ya da zayıf bağlantıdaki kopmalar uç yokluğu sayılmaz; aksi halde
+      // bağlantı geri gelse bile birincil kaynak 5 dakika boyunca kullanılmazdı.
+      const endpointMissing =
+        isNetworkError(e) &&
+        ((e.kind === 'http' && (e.status === 503 || e.status === 404)) ||
+          (e.kind === 'network' && !networkMonitor.isWeak()));
+      if (endpointMissing) this.unavailableUntil = Date.now() + UNAVAILABLE_BACKOFF_MS;
       throw e;
     }
   }

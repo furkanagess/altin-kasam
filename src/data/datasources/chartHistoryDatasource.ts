@@ -1,4 +1,4 @@
-import { HISTORY_POINTS, TIMEFRAME_SPAN_MS, type Currency, type Timeframe } from '@/src/core/constants/app';
+import { HISTORY_POINTS, TIMEFRAME_SPAN_MS, type ChartUnit, type Currency, type Timeframe } from '@/src/core/constants/app';
 import { HasfiyatMetalHistoryDatasource } from '@/src/data/datasources/hasfiyatMetalHistoryDatasource';
 import type { IHistoryDatasource } from '@/src/data/datasources/marketDatasource';
 import { PriceHistoryStore } from '@/src/data/datasources/priceHistoryStore';
@@ -33,6 +33,7 @@ function alignToLevel(points: CandlePoint[], level: number | undefined): CandleP
  */
 export class ChartHistoryDatasource {
   private readonly lastLive = new Map<MetalSymbol, MetalQuote>();
+  private readonly lastOunce = new Map<MetalSymbol, MetalQuote>();
   private lastFx: FxRates = { TRY: 1 };
 
   constructor(
@@ -41,8 +42,9 @@ export class ChartHistoryDatasource {
   ) {}
 
   /** Grafiğin hizalandığı güncel fiyatı ve kuru günceller, cihaz geçmişine örnek ekler. */
-  async remember(quotes: MetalQuote[], fxRates: FxRates): Promise<void> {
+  async remember(quotes: MetalQuote[], fxRates: FxRates, ounceQuotes: MetalQuote[] = []): Promise<void> {
     for (const quote of quotes) this.lastLive.set(quote.symbol, quote);
+    for (const quote of ounceQuotes) this.lastOunce.set(quote.symbol, quote);
     this.lastFx = { ...this.lastFx, ...fxRates };
     try {
       await this.history.record(quotes.map((q) => ({ symbol: q.symbol, point: { t: q.timestamp, v: q.bid } })));
@@ -51,7 +53,13 @@ export class ChartHistoryDatasource {
     }
   }
 
-  async fetchHistory(symbol: MetalSymbol, timeframe: Timeframe, currency: Currency): Promise<CandlePoint[]> {
+  async fetchHistory(
+    symbol: MetalSymbol,
+    timeframe: Timeframe,
+    currency: Currency,
+    unit: ChartUnit = 'gram',
+  ): Promise<CandlePoint[]> {
+    if (unit === 'ounce') return this.fetchOunceHistory(symbol, timeframe, currency);
     // Cihazdaki örnekler TRY'dir; uzak geçmiş yoksa güncel kurla çevrilir.
     const fromTryNow = (points: CandlePoint[]) =>
       currency === 'TRY' ? points : points.map((p) => ({ t: p.t, v: fromTry(p.v, currency, this.lastFx) }));
@@ -74,5 +82,25 @@ export class ChartHistoryDatasource {
       series.push({ t: latest.timestamp, v: latest.bid });
     }
     return fromTryNow(series);
+  }
+
+  /**
+   * Ons serisi yalnızca uzak kaynaktan gelir (cihazda ons örneği biriktirilmez); ulaşılamazsa boş döner
+   * ve arayüz "veri yok" gösterir. Seri, güncel ons fiyatına hizalanır.
+   */
+  private async fetchOunceHistory(symbol: MetalSymbol, timeframe: Timeframe, currency: Currency): Promise<CandlePoint[]> {
+    const remote = await this.remoteHistory.fetchHistory(symbol, timeframe, currency, 'ounce');
+    if (remote.length < 2) return [];
+    const latest = this.lastOunce.get(symbol);
+    // Ons fiyatı USD'dir; seri hangi para birimindeyse güncel kurla o birime çevrilir.
+    const usdTry = this.lastFx.USD;
+    const level = latest
+      ? currency === 'USD'
+        ? latest.bid
+        : usdTry
+          ? fromTry(latest.bid * usdTry, currency, this.lastFx)
+          : undefined
+      : undefined;
+    return alignToLevel(remote, level);
   }
 }

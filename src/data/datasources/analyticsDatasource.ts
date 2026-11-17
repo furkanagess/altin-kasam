@@ -17,7 +17,9 @@ export type AnalyticsEvent =
   | { name: 'pro_restored' }
   | { name: 'screen_viewed'; path: string }
   | { name: 'prompt_shown'; kind: 'paywall' | 'review'; moment: string }
-  | { name: 'onboarding_step'; step: number };
+  | { name: 'onboarding_step'; step: number }
+  | { name: 'account_linked'; provider: 'google' | 'apple'; restored: boolean }
+  | { name: 'account_deleted' };
 
 const KEY = process.env.EXPO_PUBLIC_POSTHOG_KEY;
 const HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com';

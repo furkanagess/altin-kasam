@@ -15,6 +15,9 @@ type Period = keyof typeof CACHE_TTL_MS;
 type UpstreamBar = { ts?: number; close?: number; buy?: { close?: number } };
 
 const cache = new Map<string, { at: number; body: HasfiyatHistoryResponse }>();
+/** Aynı anahtar için süren istek varsa yenisi açılmaz (önbellek süresi dolduğu anda gelen yığılma). */
+type Loaded = { ok: true; body: HasfiyatHistoryResponse } | { ok: false; status: number; error: Record<string, unknown> };
+const inflight = new Map<string, Promise<Loaded>>();
 
 const isPeriod = (value: string | null): value is Period => value === '1h' || value === '1d';
 const isDate = (value: string | null): value is string => !!value && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -37,6 +40,17 @@ export async function GET(request: Request): Promise<Response> {
     return Response.json(cached.body, { headers: cdnCacheHeaders(HISTORY_TTL_S[period]) });
   }
 
+  let pending = inflight.get(cacheKey);
+  if (!pending) {
+    pending = loadUpstream(key, symbol, period, from, cacheKey).finally(() => inflight.delete(cacheKey));
+    inflight.set(cacheKey, pending);
+  }
+  const result = await pending;
+  if (!result.ok) return Response.json(result.error, { status: result.status, headers: NO_STORE_HEADERS });
+  return Response.json(result.body, { headers: cdnCacheHeaders(HISTORY_TTL_S[period]) });
+}
+
+async function loadUpstream(key: string, symbol: string, period: Period, from: string | null, cacheKey: string): Promise<Loaded> {
   const query = new URLSearchParams({ symbol, period, source: 'harem' });
   if (from) query.set('from', from);
 
@@ -50,7 +64,7 @@ export async function GET(request: Request): Promise<Response> {
     });
     if (!res.ok) {
       const detail = (await res.json().catch(() => null)) as { reason?: string } | null;
-      return Response.json({ error: 'upstream', status: res.status, reason: detail?.reason ?? null }, { status: 502, headers: NO_STORE_HEADERS });
+      return { ok: false, status: 502, error: { error: 'upstream', status: res.status, reason: detail?.reason ?? null } };
     }
     const data = (await res.json()) as { data?: unknown };
     const bars = Array.isArray(data.data) ? (data.data as UpstreamBar[]) : [];
@@ -61,9 +75,9 @@ export async function GET(request: Request): Promise<Response> {
     const body: HasfiyatHistoryResponse = { points };
     if (cache.size >= MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value as string);
     cache.set(cacheKey, { at: Date.now(), body });
-    return Response.json(body, { headers: cdnCacheHeaders(HISTORY_TTL_S[period]) });
+    return { ok: true, body };
   } catch {
-    return Response.json({ error: 'unreachable' }, { status: 504, headers: NO_STORE_HEADERS });
+    return { ok: false, status: 504, error: { error: 'unreachable' } };
   } finally {
     clearTimeout(timeout);
   }

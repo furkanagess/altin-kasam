@@ -3,6 +3,7 @@ import { getHomeWidgetOption } from '@/src/core/constants/homeWidget';
 import {
   FREE_ALARM_LIMIT,
   FREE_HOLDING_LIMIT,
+  PREMIUM_FEATURE_ICONS,
   PREMIUM_FEATURES,
   type PremiumFeatureId,
 } from '@/src/core/constants/premium';
@@ -22,17 +23,7 @@ import React from 'react';
 import { Linking, Pressable, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-const ICONS: Record<PremiumFeatureId, string> = {
-  insight: 'M3 12h4l3-8 4 16 3-8h4',
-  vaultExport: 'M12 3v12M7 10l5 5 5-5M5 20h14',
-  weekly: 'M6 3h9l4 4v14H6zM9 12h7M9 16h5M9 8h3',
-  calendar: 'M4 6h16v14H4zM4 10h16M8 3v5M16 3v5M8 14h3M8 17h6',
-  widget: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
-  currencies:
-    'M12 3v18M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3',
-  holdings: 'M4 5h16v13H4zM9 12a3 3 0 1 0 6 0 3 3 0 1 0-6 0M6 18v2M18 18v2',
-  alarms: 'M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0',
-};
+const ICONS = PREMIUM_FEATURE_ICONS;
 
 type FeatureState = {
   /** Kullanıcının bu özelliği şu an nasıl kullandığı. */

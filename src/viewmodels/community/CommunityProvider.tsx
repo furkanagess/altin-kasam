@@ -1,5 +1,8 @@
 import { COMMUNITY_TOPICS, dayKey, type CommunityTopic } from '@/src/core/constants/community';
+import { userMessageForError } from '@/src/core/network/networkErrors';
+import { networkMonitor } from '@/src/core/network/networkMonitor';
 import { notificationsDatasource } from '@/src/data/datasources/notificationsDatasource';
+import { useNetworkRecovery } from '@/src/viewmodels/network/useNetworkStatus';
 import { communityRepository } from '@/src/data/repositories/communityRepository';
 import { readPostRepository } from '@/src/data/repositories/readPostRepository';
 import {
@@ -141,7 +144,7 @@ export function CommunityProvider({ children }: { children: React.ReactNode }) {
       const posts = await communityRepository.getFeed(TOPIC_HASHTAG[topic]);
       setFeeds((prev) => ({ ...prev, [topic]: { state: 'ready', error: null, posts } }));
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Haberler alınamadı';
+      const message = userMessageForError(e, 'Haberler şu an alınamadı. Biraz sonra tekrar dene.');
       setFeeds((prev) => ({
         ...prev,
         // Önceden liste yüklendiyse o liste korunur.
@@ -187,10 +190,13 @@ export function CommunityProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!hasFollows) return;
     const timer = setInterval(() => {
-      if (AppState.currentState === 'active') void loadAll();
+      if (AppState.currentState === 'active' && !networkMonitor.isOffline()) void loadAll();
     }, FOLLOW_POLL_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [hasFollows, loadAll]);
+
+  // Kopukluk bitince akış kendiliğinden yenilenir.
+  useNetworkRecovery(() => void loadAll());
 
   const refresh = useCallback(async () => {
     setRefreshing(true);

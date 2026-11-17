@@ -1,143 +1,65 @@
 [
   {
-    "id": "2026-w46",
-    "weekStart": "2026-11-09",
-    "title": "Fed sonrası ilk hafta: altında kâr satışları, gümüş baskı altında",
-    "summary": "Ons altın 4.150 dolar direncinden geri döndü; yurt içinde gram altın 6.500 lira bandına geriledi. Hafta boyunca ABD enflasyon verisi ve dolar endeksi yönü belirleyecek.",
-    "author": "Altın Kasam Analiz",
-    "publishedAt": "2026-11-09T07:00:00.000Z",
-    "outlook": [
-      {
-        "metal": "gold",
-        "direction": "neutral",
-        "note": "6.450–6.700 ₺ bandında yatay"
-      },
-      {
-        "metal": "silver",
-        "direction": "down",
-        "note": "80 ₺ altı kapanış zayıflık sinyali"
-      }
-    ],
-    "levels": [
-      {
-        "label": "Gram altın",
-        "support": "₺6.450",
-        "resistance": "₺6.700"
-      },
-      {
-        "label": "Gram gümüş",
-        "support": "₺80",
-        "resistance": "₺84"
-      },
-      {
-        "label": "Ons altın",
-        "support": "$4.020",
-        "resistance": "$4.150"
-      }
-    ],
-    "sections": [
-      {
-        "heading": "Geçen hafta",
-        "body": "Fed faiz kararının ardından dolar endeksinin toparlanmasıyla ons altın haftayı %1,5 düşüşle tamamladı. Yurt içinde kurun yatay seyri, gram altındaki düşüşü onsa paralel tuttu. Gümüşte sanayi talebine dair zayıf veriler kayıpları derinleştirdi."
-      },
-      {
-        "heading": "Bu hafta takvim",
-        "body": "Çarşamba ABD TÜFE, perşembe ÜFE ve haftalık işsizlik başvuruları, cuma perakende satışlar. Yurt içinde TCMB piyasa katılımcıları anketi takip edilecek."
-      },
-      {
-        "heading": "Teknik görünüm",
-        "body": "Gram altın 20 günlük ortalamanın altına sarktı; 6.450 lira desteği korunduğu sürece düşüşler sınırlı kalabilir. 6.700 lira üzerinde kapanışlar yeniden yükseliş eğilimine işaret eder."
-      },
-      {
-        "heading": "Senaryolar",
-        "body": "Beklentinin altında gelecek enflasyon verisi dolar zayıflığıyla birlikte altını 6.700 lira direncine taşıyabilir. Güçlü veri ise 6.450 liranın test edilmesine yol açabilir."
-      }
-    ]
-  },
-  {
-    "id": "2026-w45",
-    "weekStart": "2026-11-02",
-    "title": "Faiz kararı öncesi temkin: altın yüksek seviyelerde tutunuyor",
-    "summary": "Fed toplantısı öncesinde piyasalar bekle-gör modunda. Ons altın 4.100 doların üzerinde tutunurken gram altın 6.650 lira civarında dengelendi.",
-    "author": "Altın Kasam Analiz",
-    "publishedAt": "2026-11-02T07:00:00.000Z",
+    "id": "2026-w47",
+    "weekStart": "2026-11-16",
+    "publishedAt": "2026-11-16T07:00:00.000Z",
+    "summary": "Altın şu an satıcıların elinde; ancak dolar endeksi ile ABD tahvil faizi kısa süre içinde zirve yaparsa bu hafta bir toparlanma görebiliriz.",
     "outlook": [
       {
         "metal": "gold",
         "direction": "up",
-        "note": "Faiz indirimi fiyatlaması destekleyici"
+        "note": "Hafta içinde yukarı tepki beklentisi; yeni alım için acele yok, 3.950 $ üstünde kalıcılık aranıyor"
       },
       {
         "metal": "silver",
         "direction": "neutral",
-        "note": "82–86 ₺ aralığında"
+        "note": "Altının yönünü izler; geri çekilmede 45 $ civarı sınanabilir"
       }
     ],
     "levels": [
       {
-        "label": "Gram altın",
-        "support": "₺6.550",
-        "resistance": "₺6.750"
+        "label": "Ons altın alım eşiği",
+        "value": "3.950 $ üzerinde kalıcı kapanış"
       },
       {
-        "label": "Gram gümüş",
-        "support": "₺82",
-        "resistance": "₺86"
+        "label": "Ons altın olası dip bandı",
+        "support": "3.750 $ (zirveden ~%33)",
+        "resistance": "3.850–3.900 $"
+      },
+      {
+        "label": "Dolar endeksi (DXY) tepe bölgesi",
+        "support": "103",
+        "resistance": "104"
+      },
+      {
+        "label": "Ons gümüş",
+        "support": "45 $"
+      },
+      {
+        "label": "Altın/gümüş rasyosu",
+        "resistance": "84"
       }
     ],
     "sections": [
       {
-        "heading": "Geçen hafta",
-        "body": "Jeopolitik gerginliklerin sürmesi güvenli liman talebini canlı tuttu. Merkez bankalarının alımlarına ilişkin raporlar altını destekledi."
+        "title": "Dolar endeksi ve tahvil faizi",
+        "comment": "Günlük grafikte dolar endeksinin 103-104 aralığında, büyük olasılıkla haftanın ilk günlerinde bir zirve oluşturması bekleniyor. Bunun ardından 105’e yeniden uzanmak mümkün olsa da önce bir geri çekilme gelebilir. ABD 10 yıllık faizi de hızlı yükselişin sonunda yorulma belirtileri gösteriyor. Dolar ve faiz birlikte aşağı dönerse altın için en elverişli zemin oluşur; doların hızla 105’e koşması ise altını yeniden baskılayabilir."
       },
       {
-        "heading": "Bu hafta takvim",
-        "body": "Çarşamba Fed faiz kararı ve basın toplantısı, cuma ABD tarım dışı istihdam verisi."
+        "title": "Petrol ve enflasyon beklentisi",
+        "comment": "Petrol, savaş döneminin 120 dolar civarındaki zirvesinden uzaklaşıp 95 dolar çevresine indi. İran’ın Umman açıklarındaki gemilere yönelik saldırıları fiyatı hâlâ yüksek tutuyor; buna karşılık ABD’nin deniz güvenliğini sürdürmesi ve bölgeden daha fazla ihracat yapılabilmesi fiyatın zamanla gevşemesine işaret ediyor. Petrol geriledikçe enflasyon baskısı azalır, Fed’in yeniden faiz indirimine başlama ihtimali güçlenir; bu da altına destek olur."
       },
       {
-        "heading": "Senaryolar",
-        "body": "Güvercin bir Fed mesajı ons altında yeni zirve denemesini getirebilir. Şahin ton ise kâr satışlarını tetikleyebilir."
-      }
-    ]
-  },
-  {
-    "id": "2026-w44",
-    "weekStart": "2026-10-26",
-    "title": "Rekor sonrası konsolidasyon",
-    "summary": "Ekim ortasındaki rekorların ardından altın yatay bir banda girdi. Gümüş, altına göre daha oynak bir seyir izledi; altın/gümüş rasyosu 78 civarında.",
-    "author": "Altın Kasam Analiz",
-    "publishedAt": "2026-10-26T07:00:00.000Z",
-    "outlook": [
-      {
-        "metal": "gold",
-        "direction": "neutral"
+        "title": "Daha derin düşüş ihtimali",
+        "comment": "Piyasada ons altının 3.500 dolara kadar inebileceğini savunanlar var; bu, zirveye göre yaklaşık %37,5’lik bir kayıp demek. Oysa 2009 krizinde, piyasadan likiditenin çekildiği dönemde bile düşüş yaklaşık %34’te durmuştu. Altın bugün zirvesinin yaklaşık %31 altında; %33 civarında küçük bir ek sarkmanın ardından dip oluşması daha makul görünüyor. 2011 sonrasındaki gibi yıllara yayılan bir ayı dönemi beklenmiyor."
       },
       {
-        "metal": "silver",
-        "direction": "up",
-        "note": "Rasyo yüksek, gümüş görece ucuz"
-      }
-    ],
-    "levels": [
-      {
-        "label": "Gram altın",
-        "support": "₺6.500",
-        "resistance": "₺6.800"
+        "title": "\"Dolar çöküyor\" anlatısına bakış",
+        "comment": "ABD’nin yüksek borcu üzerinden kurulan \"dolar rezerv gücünü yitiriyor, herkes altına yönelecek\" hikâyesi fazla iyimser. Borç sorunu yalnızca ABD’ye ait değil; Avrupa, İngiltere ve Japonya da benzer sıkıntılar taşıyor ve doların konumu bu ülkelere göre değerlendirilmeli. Ayrıca altın, savaş çıktığında düşebildiği için klasik anlamda bir güvenli liman sayılmaz. Yatırım kararı duygulara ya da senaryolara değil, verilere dayanmalı."
       },
       {
-        "label": "Gram gümüş",
-        "support": "₺79",
-        "resistance": "₺84"
-      }
-    ],
-    "sections": [
-      {
-        "heading": "Geçen hafta",
-        "body": "Yüksek seviyelerde kâr satışları görüldü ancak düşüşler alım fırsatı olarak değerlendirildi."
-      },
-      {
-        "heading": "Teknik görünüm",
-        "body": "Fiyat 6.500–6.800 lira bandında; bandın kırıldığı yön kısa vadeli eğilimi belirleyecek."
+        "title": "Bu seviyede ne yapmalı?",
+        "comment": "Elinde altın olanlar için dipten satmak yerine, önümüzdeki 10 gün içinde gelmesi beklenen tepkiyi beklemek ve daha iyi bir fiyattan çıkmayı düşünmek mantıklı olabilir; zararın tamamı kapanmasa da küçülür. Yeni alım düşünenler için acele edilecek bir durum yok, 3.950 doların üzerinde kalıcılık görülene kadar beklemek daha sağlıklı. Orta vadede, yaz 2027 civarında enflasyon düşüp faiz indirimleri başlarsa altının kazandırması bekleniyor; o zamana kadar %15 yükselip %20 gerilemek gibi dalgalı bir seyir normal. Kısa vadeli tahminlerin yanılma payı yüksektir. Yatırım tavsiyesi değildir."
       }
     ]
   }

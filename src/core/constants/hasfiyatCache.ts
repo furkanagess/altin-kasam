@@ -12,7 +12,7 @@ export const PRICES_ERROR_BACKOFF_S = 10;
 export const PRICES_TTL_CLOSED_S = 300;
 
 /** Saatlik ve günlük geçmiş çubukları; çubuk saatte / günde bir kapanır, son nokta canlı fiyatla güncellenir. */
-export const HISTORY_TTL_S = { '1h': 600, '1d': 7200 } as const;
+export const HISTORY_TTL_S = { '1h': 1800, '1d': 21600 } as const;
 
 /** Yahoo tabanlı uzun dönem tamamlama (Hasfiyat kotasına girmez ama aynı mantıkla önbelleklenir). */
 export const HISTORY_LONG_TTL_S = 6 * 60 * 60;

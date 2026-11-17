@@ -135,3 +135,7 @@ src/
   providers/         # AppProviders
 docs/CALISMA_PLANI.md   # çalışma planı ve yol haritası
 ```
+
+## Gizlilik
+
+[Gizlilik politikası](docs/legal/gizlilik-politikasi.md) · [Kullanım koşulları](docs/legal/kullanim-kosullari.md). Yayımlanan sayfanın adresi `EXPO_PUBLIC_PRIVACY_URL` olarak ve mağaza sayfalarına girilir.

@@ -24,6 +24,10 @@ export enum MetalSymbol {
   XPD = 'XPD',
 }
 
+/** Metal olmayan grafik varlığı: Brent petrol (USD/varil). */
+export const BRENT = 'BRENT' as const;
+export type BrentSymbol = typeof BRENT;
+
 export enum CommunityPostKind {
   Tweet = 'tweet',
   Blog = 'blog',

@@ -41,8 +41,8 @@ export function SentimentBar({
         {total
           ? segments
               .filter((s) => s.value)
-              .map((s) => (
-                <View key={s.key} style={{ flex: s.value, backgroundColor: s.color }} />
+              .map(({ key, value: weight, color }) => (
+                <View key={key} style={{ flex: weight, backgroundColor: color }} />
               ))
           : null}
       </View>

@@ -48,6 +48,9 @@ const TickerEntry = memo(function TickerEntry({ item, strip }: { item: TickerIte
   const styles = useStyles();
   const change = item.changePercent;
   const pressable = item.id in TICKER_TARGETS;
+  // `strip.value` doğrudan style içinde yazılırsa Reanimated Babel eklentisi her render'da
+  // "shared value .value" uyarısı basar (yanlış alarm); rengi önce yerel değişkene al.
+  const valueColor = strip.value;
   return (
     <Pressable
       disabled={!pressable}
@@ -58,7 +61,7 @@ const TickerEntry = memo(function TickerEntry({ item, strip }: { item: TickerIte
       accessibilityLabel={pressable ? `${item.label} detayı` : undefined}
     >
       <Text style={[styles.label, { color: strip.label }]}>{item.label}</Text>
-      <Text style={[styles.value, { color: strip.value }]}>
+      <Text style={[styles.value, { color: valueColor }]}>
         {item.currency === 'USD' ? `$${formatNumber(item.value)}` : formatNumber(item.value)}
       </Text>
       {change != null && change !== 0 ? (

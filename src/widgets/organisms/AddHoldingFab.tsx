@@ -1,4 +1,4 @@
-import { makeStyles } from '@/src/core/theme';
+import { makeStyles, useTheme } from '@/src/core/theme';
 import { storageGet, storageSet } from '@/src/core/storage/storage';
 import { router, usePathname } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -35,6 +35,7 @@ class DragStore {
 /** Uygulamanın her yerinde gezdirilebilen "Varlık ekle" butonu; son konumu hatırlar. */
 export function AddHoldingFab() {
   const styles = useStyles();
+  const { colors } = useTheme();
   const pathname = usePathname();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -128,11 +129,11 @@ export function AddHoldingFab() {
         <G transform="translate(0 -1.67)">
           <Path
             d="M3.5 18.5 6.2 8.8a1 1 0 0 1 .96-.73h9.68a1 1 0 0 1 .96.73l2.7 9.7a.6.6 0 0 1-.58.76H4.08a.6.6 0 0 1-.58-.76Z"
-            stroke="#1A1408"
+            stroke={colors.surface.canvas}
             strokeWidth={1.7}
             strokeLinejoin="round"
           />
-          <Path d="M12 11.2v5M9.5 13.7h5" stroke="#1A1408" strokeWidth={1.9} strokeLinecap="round" />
+          <Path d="M12 11.2v5M9.5 13.7h5" stroke={colors.surface.canvas} strokeWidth={1.9} strokeLinecap="round" />
         </G>
       </Svg>
     </Animated.View>

@@ -1,10 +1,11 @@
 import {
+  type ChartUnit,
   type Currency,
   type Timeframe,
 } from '@/src/core/constants/app';
 import { GOLD_ASSETS, goldAssetRowText } from '@/src/core/constants/goldAssets';
 import { makeStyles, paddings, radii } from '@/src/core/theme';
-import { MetalSymbol } from '@/src/domain/enums';
+import { BRENT, MetalSymbol } from '@/src/domain/enums';
 import type { CandlePoint } from '@/src/domain/models';
 import {
   CHART_SYMBOLS,
@@ -12,15 +13,15 @@ import {
   useMarketViewModel,
   type ChartSymbol,
 } from '@/src/viewmodels/market/MarketProvider';
-import { useCurrencySwitcher } from '@/src/viewmodels/market/useCurrencySwitcher';
+import { useChartCurrencySwitcher } from '@/src/viewmodels/market/useCurrencySwitcher';
 import { useMarketTicker } from '@/src/viewmodels/market/useMarketTicker';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import { GoldAssetIcon } from '@/src/widgets/atoms/GoldAssetIcon';
-import { MetalIcon } from '@/src/widgets/atoms/MetalIcon';
+import { MetalIcon, OilIcon } from '@/src/widgets/atoms/MetalIcon';
 import { AlarmButton } from '@/src/widgets/molecules/AlarmButton';
 import { FullscreenButton } from '@/src/widgets/molecules/FullscreenButton';
-import { METAL_ALARM_ASSET } from '@/src/core/constants/alarmAssets';
+import { METAL_ALARM_ASSET, OUNCE_ALARM_ASSET } from '@/src/core/constants/alarmAssets';
 import { ProMark } from '@/src/widgets/atoms/ProMark';
 import { Screen } from '@/src/widgets/atoms/Screen';
 import { CurrencySwitcher } from '@/src/widgets/molecules/CurrencySwitcher';
@@ -28,6 +29,7 @@ import { EmptyState } from '@/src/widgets/molecules/EmptyState';
 import { ExpandablePriceRow } from '@/src/widgets/molecules/ExpandablePriceRow';
 import { SectionHeader } from '@/src/widgets/molecules/SectionHeader';
 import { TopTabs } from '@/src/widgets/molecules/TopTabs';
+import { UnitSwitcher } from '@/src/widgets/molecules/UnitSwitcher';
 import { MarketTicker } from '@/src/widgets/organisms/MarketTicker';
 import { InfoSheet } from '@/src/widgets/organisms/InfoSheet';
 import { InfoButton } from '@/src/widgets/molecules/InfoButton';
@@ -73,12 +75,13 @@ type ChartPageProps = {
   loading: boolean;
   livePrice: number | undefined;
   currency: Currency;
+  unit: ChartUnit;
   timeframe: Timeframe;
   timeframes: readonly Timeframe[];
   lockedTimeframes: readonly Timeframe[];
   onTimeframeChange: (tf: Timeframe) => void;
   onLockedTimeframe: () => void;
-  currencySwitcher: ReturnType<typeof useCurrencySwitcher>;
+  currencySwitcher: ReturnType<typeof useChartCurrencySwitcher>;
 };
 
 /** Yalnızca kendi metalinin verisi değişince çizilir; diğer sayfanın yüklemesi ve kaydırma etkilemez. */
@@ -89,6 +92,7 @@ const ChartPage = memo(function ChartPage({
   loading,
   livePrice,
   currency,
+  unit,
   timeframe,
   timeframes,
   lockedTimeframes,
@@ -97,6 +101,9 @@ const ChartPage = memo(function ChartPage({
   currencySwitcher,
 }: ChartPageProps) {
   const styles = useStyles();
+  const isBrent = symbol === BRENT;
+  // Brent'te alarm, ons ve metal detayı yoktur; fiyat son grafik noktasıdır.
+  const alarmAssetId = isBrent ? undefined : (unit === 'ounce' ? OUNCE_ALARM_ASSET : METAL_ALARM_ASSET)[symbol];
   return (
     <View style={[styles.page, { width }]}>
       <PriceChart
@@ -110,22 +117,28 @@ const ChartPage = memo(function ChartPage({
         lockedTimeframes={lockedTimeframes}
         onLockedTimeframe={onLockedTimeframe}
         loading={loading}
-        headerLeft={<MetalIcon symbol={symbol} />}
+        headerLeft={symbol === BRENT ? <OilIcon /> : <MetalIcon symbol={symbol} />}
         headerRight={
           <View style={styles.chartActions}>
             <CurrencySwitcher {...currencySwitcher} compact />
-            <AlarmButton
-              assetId={METAL_ALARM_ASSET[symbol]}
-              onPress={() => openAlarm(METAL_ALARM_ASSET[symbol])}
-              accessibilityLabel={`${PAGE_NAMES[symbol]} için fiyat alarmı`}
-            />
-            <FullscreenButton
-              onPress={() => router.push({ pathname: '/metal/[symbol]', params: { symbol } })}
-              accessibilityLabel={`${PAGE_NAMES[symbol]} detayı`}
-            />
+            {/* Gramda gram fiyatına, onsta ons (USD) fiyatına alarm kurulur. */}
+            {alarmAssetId ? (
+              <AlarmButton
+                assetId={alarmAssetId}
+                onPress={() => openAlarm(alarmAssetId)}
+                accessibilityLabel={`${PAGE_NAMES[symbol]}${unit === 'ounce' ? ' onsu' : ''} için fiyat alarmı`}
+              />
+            ) : null}
+            {isBrent ? null : (
+              <FullscreenButton
+                onPress={() => router.push({ pathname: '/metal/[symbol]', params: { symbol } })}
+                accessibilityLabel={`${PAGE_NAMES[symbol]} detayı`}
+              />
+            )}
           </View>
         }
         flashOnLiveChange
+        flashKey={`${currency}-${unit}`}
         bare
       />
     </View>
@@ -137,6 +150,7 @@ const openAlarm = (assetId: string) => router.push({ pathname: '/alarm', params:
 const openDetail = (id: string) => router.push({ pathname: '/gold/[id]', params: { id } });
 
 const PAGE_NAMES: Record<ChartSymbol, string> = {
+  [BRENT]: 'Brent Petrol',
   [MetalSymbol.XAU]: 'Altın',
   [MetalSymbol.XAG]: 'Gümüş',
   [MetalSymbol.XPT]: 'Platin',
@@ -148,9 +162,9 @@ const CHART_TABS = CHART_SYMBOLS.map((symbol) => ({ id: symbol, label: PAGE_NAME
 /** Metal grafikleri yan yana sayfalardır; hepsinin verisi hazır tutulur. */
 function MarketChartSection() {
   const styles = useStyles();
-  const { displayQuotes, currency, timeframes, lockedTimeframes } = useMarketViewModel();
-  const { timeframe, setTimeframe, charts, chartLoading } = useMarketChart();
-  const currencySwitcher = useCurrencySwitcher();
+  const { displayQuotes, displayOunceQuotes, timeframes, lockedTimeframes } = useMarketViewModel();
+  const { timeframe, setTimeframe, unit, setUnit, chartCurrency: currency, charts, chartLoading } = useMarketChart();
+  const currencySwitcher = useChartCurrencySwitcher();
   const { openPaywall } = useSubscription();
   const onLockedTimeframe = useCallback(() => openPaywall('timeframe'), [openPaywall]);
 
@@ -199,6 +213,10 @@ function MarketChartSection() {
         style={styles.chartTabs}
       />
 
+      <View style={styles.unitRow}>
+        <UnitSwitcher value={unit} onChange={setUnit} />
+      </View>
+
       <View style={styles.pager}>
         <ScrollView
           ref={pagerRef}
@@ -222,8 +240,9 @@ function MarketChartSection() {
             width={pageWidth}
               points={charts[symbol]?.points}
               loading={chartLoading[symbol]}
-              livePrice={displayQuotes.find((q) => q.symbol === symbol)?.bid}
+              livePrice={(unit === 'ounce' ? displayOunceQuotes : displayQuotes).find((q) => q.symbol === symbol)?.bid}
               currency={currency}
+              unit={unit}
               timeframe={timeframe}
               timeframes={timeframes}
               lockedTimeframes={lockedTimeframes}
@@ -325,6 +344,7 @@ const useStyles = makeStyles((colors) => ({
   flex: { flex: 1 },
   // Sayfalar ekran kenarına kadar kayar; her sayfa kendi kenar boşluğunu taşır.
   chartTabs: { marginHorizontal: -paddings.screen },
+  unitRow: { alignItems: 'flex-end' },
   pager: { marginHorizontal: -paddings.screen },
   page: { paddingHorizontal: paddings.screen },
   chartActions: { flexDirection: 'row', alignItems: 'center', gap: paddings.xs },

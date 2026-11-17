@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#1C2029"/><stop offset="1" stop-color="#0D1014"/>
+  </linearGradient>
+  <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#F2C862"/><stop offset="1" stop-color="#C38C2C"/>
+  </linearGradient>
+  <linearGradient id="top" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#FBE7AE"/><stop offset="1" stop-color="#EECF7E"/>
+  </linearGradient></defs><rect width="1024" height="1024" fill="url(#bg)"/>
+  <g transform="translate(512 512) scale(1.16) translate(-512 -518)">
+    <polygon points="292,442 732,442 680,360 344,360" fill="url(#top)" stroke="url(#top)" stroke-width="28" stroke-linejoin="round"/>
+    <polygon points="236,676 788,676 732,442 292,442" fill="url(#front)" stroke="url(#front)" stroke-width="28" stroke-linejoin="round"/>
+    
+  <circle cx="512" cy="536" r="40" fill="#14171D"/>
+  <polygon points="497,556 527,556 541,622 483,622" fill="#14171D" stroke="#14171D" stroke-width="10" stroke-linejoin="round"/>
+  </g></svg>

@@ -103,15 +103,11 @@ export default function WeeklyAnalysisScreen() {
               {formatWeekRange(analysis.weekStart).toLocaleUpperCase('tr-TR')}
             </AppText>
           </View>
-          <AppText variant="h1">{analysis.title}</AppText>
+          <AppText variant="h2">{analysis.summary}</AppText>
           <AppText variant="caption" tone="tertiary">
-            {`${analysis.author} · ${publishedFormatter.format(new Date(analysis.publishedAt))}`}
+            {publishedFormatter.format(new Date(analysis.publishedAt))}
           </AppText>
         </View>
-
-        <AppText variant="body" style={styles.lead}>
-          {analysis.summary}
-        </AppText>
 
         <Section title="Haftalık beklenti">
           <View>
@@ -170,9 +166,9 @@ export default function WeeklyAnalysisScreen() {
         ) : null}
 
         {analysis.sections.map((s) => (
-          <Section key={s.heading} title={s.heading}>
+          <Section key={s.title} title={s.title}>
             <AppText variant="body" style={styles.paragraph}>
-              {s.body}
+              {s.comment}
             </AppText>
           </Section>
         ))}
@@ -212,7 +208,6 @@ const useStyles = makeStyles((colors) => ({
   header: { gap: 6 },
   meta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: paddings.xs },
   week: { letterSpacing: 0.6, fontWeight: '700' },
-  lead: { fontWeight: '600', lineHeight: 23 },
   section: { gap: paddings.xs },
   sectionTitle: {
     fontWeight: '700',

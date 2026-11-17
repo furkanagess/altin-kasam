@@ -1,16 +1,20 @@
+import { SUPPORT_EMAIL } from '@/src/core/constants/app';
 import { LEGAL_LINKS } from '@/src/core/constants/premium';
+import { supportDatasource, type SupportTopic } from '@/src/data/datasources/supportDatasource';
 import { FONT_SCALES, makeStyles, paddings, radii, useTheme, type ThemePreference } from '@/src/core/theme';
 import { useGoal } from '@/src/viewmodels/goal/GoalProvider';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
 import { AppButton } from '@/src/widgets/atoms/AppButton';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import { ProMark } from '@/src/widgets/atoms/ProMark';
+import { AccountLinkSection } from '@/src/widgets/organisms/AccountLinkSection';
+import { useAccount } from '@/src/viewmodels/account/AccountProvider';
 import { Screen } from '@/src/widgets/atoms/Screen';
 import { ThemePreferenceIcon } from '@/src/widgets/atoms/ThemePreferenceIcon';
 import { useCommunityViewModel } from '@/src/viewmodels/community/CommunityProvider';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 function SettingsRow({
   title,
@@ -119,10 +123,14 @@ function FontScalePicker() {
 
 export default function SettingsScreen() {
   const styles = useStyles();
-  const { isPremium, configured, openPaywall, restore, managementUrl } = useSubscription();
+  const { isPremium, configured, openPaywall, restore, managementUrl, debugPremium, setDebugPremium } = useSubscription();
   const { goal } = useGoal();
   const [restoring, setRestoring] = useState(false);
   const { followedSources } = useCommunityViewModel();
+  const accountLinking = useAccount();
+  const showAccount =
+    accountLinking.configured &&
+    (accountLinking.account !== null || accountLinking.googleAvailable || accountLinking.appleAvailable);
 
   const onRestore = async () => {
     setRestoring(true);
@@ -137,8 +145,22 @@ export default function SettingsScreen() {
     }
   };
 
+  const openSupport = async (topic: SupportTopic) => {
+    const opened = await supportDatasource.openMail(topic);
+    if (!opened) {
+      Alert.alert('Mail uygulaması açılamadı', `Bize ${SUPPORT_EMAIL} adresinden ulaşabilirsin.`);
+    }
+  };
+
   return (
     <Screen scroll>
+      {showAccount ? (
+        <>
+          <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>HESAP</AppText>
+          <AccountLinkSection />
+        </>
+      ) : null}
+
       <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>GÖRÜNÜM</AppText>
       <ThemePicker />
 
@@ -164,6 +186,13 @@ export default function SettingsScreen() {
           title="Tanıtımı yeniden izle"
           detail="Karşılama ekranlarını tekrar gör; hedefin ve kayıtların değişmez"
           onPress={() => router.push({ pathname: '/onboarding', params: { replay: '1' } })}
+        />
+        <View style={styles.divider} />
+        <SettingsRow
+          title="Pro ekranını önizle"
+          detail="Satın alma ekranını demo olarak gör; ödeme alınmaz"
+          pro
+          onPress={() => router.push({ pathname: '/paywall', params: { demo: '1' } })}
         />
         <View style={styles.divider} />
         <SettingsRow
@@ -209,6 +238,42 @@ export default function SettingsScreen() {
             onPress={() => void onRestore()}
           />
         ) : null}
+      </View>
+
+      {__DEV__ ? (
+        <>
+          <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>GELİŞTİRİCİ</AppText>
+          <View style={styles.card}>
+            <View style={styles.row}>
+              <View style={styles.rowText}>
+                <AppText variant="bodyStrong">Pro’yu zorla aç</AppText>
+                <AppText variant="caption" tone="secondary">Yalnızca geliştirme derlemesi; gerçek aboneliği ezer</AppText>
+              </View>
+              <Switch value={debugPremium} onValueChange={setDebugPremium} accessibilityLabel="Pro’yu zorla aç" />
+            </View>
+          </View>
+        </>
+      ) : null}
+
+      <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>DESTEK</AppText>
+      <View style={styles.card}>
+        <SettingsRow
+          title="Sorun bildir"
+          detail="Bir hata mı var? Uygulamadan bize yaz"
+          onPress={() => router.push({ pathname: '/support', params: { topic: 'problem' } })}
+        />
+        <View style={styles.divider} />
+        <SettingsRow
+          title="Öneri veya soru gönder"
+          detail="Fikirlerini ve sorularını bekliyoruz"
+          onPress={() => router.push({ pathname: '/support', params: { topic: 'suggestion' } })}
+        />
+        <View style={styles.divider} />
+        <SettingsRow
+          title="Mail uygulamasıyla yaz"
+          detail={SUPPORT_EMAIL}
+          onPress={() => void openSupport('problem')}
+        />
       </View>
 
       <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>HAKKINDA</AppText>

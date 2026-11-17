@@ -1,5 +1,5 @@
-import type { Currency, Timeframe } from "@/src/core/constants/app";
-import type { CommunityPostKind, MetalSymbol } from "@/src/domain/enums";
+import type { ChartUnit, Currency, Timeframe } from "@/src/core/constants/app";
+import type { BrentSymbol, CommunityPostKind, MetalSymbol } from "@/src/domain/enums";
 
 export type QuoteSource = "live" | "simulated";
 
@@ -45,6 +45,8 @@ export type GoldRate = {
 
 export type MarketQuotes = {
   quotes: MetalQuote[];
+  /** Ons fiyatları (USD/ons, uluslararası spot); `symbol` gram fiyatıyla aynı metaldir. */
+  ounceQuotes?: MetalQuote[];
   goldRates: GoldRate[];
   fxRates: FxRates;
   /** Ons altın / ons gümüş; kaynak vermezse yok. */
@@ -75,9 +77,11 @@ export type MarketSnapshot = MarketQuotes & {
 };
 
 export type ChartSeries = {
-  symbol: MetalSymbol;
+  symbol: MetalSymbol | BrentSymbol;
   timeframe: Timeframe;
   currency: Currency;
+  /** Verilmezse gram. */
+  unit?: ChartUnit;
   points: CandlePoint[];
 };
 
@@ -133,14 +137,16 @@ export type EconomicEventResult = {
 };
 
 /** Geliştiricinin her hafta yayımladığı piyasa analizi. */
+/**
+ * Haftalık analiz şablonu: 1) tek cümlelik özet, 2) haftalık beklenti + takip seviyeleri,
+ * 3) serbest başlık/yorum bölümleri. Firestore `weeklyAnalyses/{id}` belgesiyle birebir aynıdır.
+ */
 export type WeeklyAnalysis = {
   id: string;
   /** Haftanın ilk günü (pazartesi), YYYY-MM-DD. */
   weekStart: string;
-  title: string;
-  /** Kartta gösterilen iki üç cümlelik özet. */
+  /** Tek cümlelik özet; kartta ve detay başında gösterilir. */
   summary: string;
-  author: string;
   publishedAt: string;
   /** Metal başına haftalık beklenti. */
   outlook: {
@@ -150,7 +156,8 @@ export type WeeklyAnalysis = {
   }[];
   /** Birim başına takip edilen seviyeler; destek/direnç yoksa tek değer (`value`). */
   levels: { label: string; support?: string; resistance?: string; value?: string }[];
-  sections: { heading: string; body: string }[];
+  /** Geri kalan bölümler: başlık + yorum. */
+  sections: { title: string; comment: string }[];
 };
 
 /** Bir altın çeşidinin alış fiyatı hedefe ulaşınca bir kez bildirim gönderen alarm. */

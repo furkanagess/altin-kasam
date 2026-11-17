@@ -1,3 +1,4 @@
+import { AccountProvider } from '@/src/viewmodels/account/AccountProvider';
 import { AlarmProvider } from '@/src/viewmodels/alarm/AlarmProvider';
 import { EconomicCalendarProvider } from '@/src/viewmodels/analysis/EconomicCalendarProvider';
 import { CommunityProvider } from '@/src/viewmodels/community/CommunityProvider';
@@ -10,11 +11,15 @@ import { HomeWidgetProvider } from '@/src/viewmodels/widget/HomeWidgetProvider';
 import { AnalyticsTracker } from '@/src/providers/AnalyticsTracker';
 import React from 'react';
 
-/** Piyasa görünümü (para birimi, periyot) Pro durumuna bağlı olduğu için abonelik en dışta. */
+/**
+ * Piyasa görünümü (para birimi, periyot) Pro durumuna bağlı olduğu için abonelik en dışta.
+ * Bağlı hesap hepsinin dışında: hesaptan veri geri yüklenince içteki sağlayıcıları yeniden kurar.
+ */
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <SnackbarProvider>
     <AnalyticsTracker />
+    <AccountProvider>
     <SubscriptionProvider>
       <GoalProvider>
         <MarketProvider>
@@ -31,6 +36,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         </MarketProvider>
       </GoalProvider>
     </SubscriptionProvider>
+    </AccountProvider>
     </SnackbarProvider>
   );
 }

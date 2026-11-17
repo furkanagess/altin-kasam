@@ -1,14 +1,20 @@
 export const APP_NAME = 'Altın Kasam';
+/** Kullanıcıların sorun ve önerileri için destek adresi (Ayarlar → Destek). */
+export const SUPPORT_EMAIL = 'altinkasamapp@gmail.com';
 /**
  * Fiyat yenileme aralığı (piyasa açıkken). Sunucu yanıtı CDN'de aynı süre tutulur
  * (`PRICES_TTL_OPEN_S`), daha sık sormak yeni veri getirmez.
  */
 export const POLL_INTERVAL_MS = 20_000;
 /** Piyasa kapalıyken (hafta sonu) fiyat değişmediği için seyrek yoklanır. */
-export const POLL_INTERVAL_CLOSED_MS = 60_000;
+export const POLL_INTERVAL_CLOSED_MS = 5 * 60_000;
 /** Grafik serileri bu aralıkla yeniden çekilir; son nokta arada canlı fiyatla güncellenir. */
-export const CHART_REFRESH_MS = 10 * 60_000;
+export const CHART_REFRESH_MS = 30 * 60_000;
 export const HISTORY_POINTS = 48;
+
+/** Grafik ve fiyat birimi: gram (kuyumcu, TL/g) ya da ons (uluslararası spot, USD/ons). */
+export const CHART_UNITS = ['gram', 'ounce'] as const;
+export type ChartUnit = (typeof CHART_UNITS)[number];
 
 export const CURRENCIES = ['TRY', 'USD', 'EUR'] as const;
 export type Currency = (typeof CURRENCIES)[number];

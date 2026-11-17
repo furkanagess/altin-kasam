@@ -1,4 +1,6 @@
+import { networkMonitor } from '@/src/core/network/networkMonitor';
 import { notificationsDatasource } from '@/src/data/datasources/notificationsDatasource';
+import { useNetworkRecovery } from '@/src/viewmodels/network/useNetworkStatus';
 import { economicCalendarRepository } from '@/src/data/repositories/economicCalendarRepository';
 import type { EconomicEvent } from '@/src/domain/models';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -72,7 +74,7 @@ export function EconomicCalendarProvider({ children }: { children: React.ReactNo
     let active = AppState.currentState !== 'background';
     load(isAlive).catch(() => undefined);
     const interval = setInterval(() => {
-      if (active) load(isAlive).catch(() => undefined);
+      if (active && !networkMonitor.isOffline()) load(isAlive).catch(() => undefined);
     }, REFRESH_MS);
     const subscription = AppState.addEventListener('change', (state) => {
       const resumed = state === 'active' && !active;
@@ -100,6 +102,9 @@ export function EconomicCalendarProvider({ children }: { children: React.ReactNo
   }, [nextEventAt, load]);
 
   const refresh = useCallback(() => load(), [load]);
+
+  // Kopukluk bitince takvim kendiliğinden yenilenir.
+  useNetworkRecovery(() => void load());
 
   const toggleReminder = useCallback(async (event: EconomicEvent) => {
     const result = await economicCalendarRepository.toggleReminder(event);

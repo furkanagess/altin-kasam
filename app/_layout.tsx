@@ -1,6 +1,8 @@
+import { HeaderCloseButton } from '@/src/widgets/atoms/HeaderCloseButton';
 import { AppProviders } from '@/src/providers/AppProviders';
 import { ThemeProvider, useTheme } from '@/src/core/theme';
 import { AddHoldingFab } from '@/src/widgets/organisms/AddHoldingFab';
+import { NetworkBanner } from '@/src/widgets/organisms/NetworkBanner';
 import { notificationsDatasource } from '@/src/data/datasources/notificationsDatasource';
 import {
   DarkTheme,
@@ -101,15 +103,15 @@ function RootNavigator() {
         />
         <Stack.Screen
           name="paywall"
-          options={{ title: 'Pro', presentation: 'modal' }}
+          options={{ title: 'Pro', presentation: 'fullScreenModal', headerShown: false }}
         />
         <Stack.Screen
           name="add-holding/index"
-          options={{ title: 'Varlık ekle', presentation: 'modal' }}
+          options={{ title: 'Varlık ekle', presentation: 'modal', headerRight: () => <HeaderCloseButton /> }}
         />
         <Stack.Screen
           name="alarm"
-          options={{ title: 'Fiyat alarmı', presentation: 'modal' }}
+          options={{ title: 'Fiyat alarmı', presentation: 'modal', headerRight: () => <HeaderCloseButton /> }}
         />
         <Stack.Screen
           name="gold/[id]"
@@ -145,6 +147,7 @@ function RootNavigator() {
           options={{ title: 'Haber kaynakları', presentation: 'card' }}
         />
         <Stack.Screen name="data-sources" options={{ title: 'Veri kaynakları', presentation: 'card' }} />
+        <Stack.Screen name="support" options={{ title: 'Destek', presentation: 'card' }} />
         <Stack.Screen
           name="share-vault"
           options={{ title: 'Kasamı paylaş', presentation: 'card' }}
@@ -155,6 +158,7 @@ function RootNavigator() {
         />
       </Stack>
       <AddHoldingFab />
+      <NetworkBanner />
     </NavigationThemeProvider>
   );
 }

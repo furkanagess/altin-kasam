@@ -155,6 +155,18 @@ export const notificationsDatasource = {
     }
   },
 
+  /** Kurulu (henüz gösterilmemiş) yerel bildirimlerin kimlikleri; okunamazsa `null`. */
+  async scheduledIds(): Promise<Set<string> | null> {
+    const notifications = load();
+    if (!notifications) return null;
+    try {
+      const all = await notifications.getAllScheduledNotificationsAsync();
+      return new Set(all.map((n) => n.identifier));
+    } catch {
+      return null;
+    }
+  },
+
   async cancel(identifier: string): Promise<void> {
     try {
       await load()?.cancelScheduledNotificationAsync(identifier);

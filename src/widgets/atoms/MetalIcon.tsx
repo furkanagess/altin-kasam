@@ -44,6 +44,24 @@ export function MetalIcon({ symbol, size = 36 }: Props) {
   );
 }
 
+/** Brent petrol rozeti: koyu zeminde damla. */
+export function OilIcon({ size = 36 }: { size?: number }) {
+  const { colors } = useTheme();
+  const icon = size * 0.6;
+  return (
+    <View
+      style={[styles.badge, { width: size, height: size, borderRadius: size / 2, backgroundColor: colors.surface.silverBadge }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Svg width={icon} height={icon} viewBox="0 0 24 24">
+        <Path d="M12 2.5 C12 2.5 5 10.2 5 15 a7 7 0 0 0 14 0 C19 10.2 12 2.5 12 2.5 Z" fill="#2B2F36" stroke="#111418" strokeWidth={1.5} strokeLinejoin="round" />
+        <Path d="M9 15.5 a3 3 0 0 0 2.2 2.9" stroke="#8A93A0" strokeWidth={1.6} strokeLinecap="round" fill="none" />
+      </Svg>
+    </View>
+  );
+}
+
 /** Altın/Gümüş rasyosu rozeti: arkada altın, önde gümüş külçe. */
 export function GoldSilverRatioIcon({ size = 36 }: { size?: number }) {
   const { colors } = useTheme();

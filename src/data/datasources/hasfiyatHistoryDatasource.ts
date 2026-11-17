@@ -14,13 +14,20 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * Harem geçmişinin sınırları: saatlik bar 45 gün saklanır ve istek başına en fazla 31 gün,
  * günlük bar 4 Ekim 2026'dan beri birikir; öncesi `prependBackfill` ile tamamlanır.
  */
-const PLAN: Record<Timeframe, { period: '1h' | '1d'; days: number }> = {
-  '1D': { period: '1h', days: 2 },
-  '1W': { period: '1h', days: 8 },
-  '1M': { period: '1h', days: 30 },
-  '3M': { period: '1d', days: 92 },
-  '1Y': { period: '1d', days: 366 },
+const PLAN: Record<Timeframe, { period: '1h' | '1d' }> = {
+  '1D': { period: '1h' },
+  '1W': { period: '1h' },
+  '1M': { period: '1h' },
+  '3M': { period: '1d' },
+  '1Y': { period: '1d' },
 };
+
+/**
+ * Her periyot için tek bir `from` kullanılır (o periyodun en geniş penceresi); kısa pencereler
+ * istemcide `since` ile kırpılır. Aksi halde 1D/1W/1M ve 3M/1Y ayrı CDN anahtarı, yani aynı seri
+ * için ayrı Hasfiyat isteği olurdu: periyotlar arasında gezmek istek sayısını 2-3 katına çıkarırdı.
+ */
+const FETCH_DAYS = { '1h': 30, '1d': 366 } as const;
 
 /** Hasfiyat kalemi → tamamlama serisi; listede olmayanlar (ziynet, bilezik…) altın hareketini izler. */
 const BACKFILL_SERIES: Record<string, 'silver' | 'platinum' | 'palladium' | 'usd' | 'eur'> = {
@@ -66,8 +73,8 @@ export async function fetchHasfiyatHistory(
   timeframe: Timeframe,
   now = Date.now(),
 ): Promise<CandlePoint[]> {
-  const { period, days } = PLAN[timeframe];
-  const query = new URLSearchParams({ symbol: title, period, from: istanbulDate.format(now - days * DAY_MS) });
+  const { period } = PLAN[timeframe];
+  const query = new URLSearchParams({ symbol: title, period, from: istanbulDate.format(now - FETCH_DAYS[period] * DAY_MS) });
   const { points } = await fetchSeries(`${ENDPOINT}?${query}`, HISTORY_TTL_S[period]);
   const since = now - TIMEFRAME_SPAN_MS[timeframe];
   const inRange = points.filter((p) => p.t >= since).map((p) => ({ t: p.t, v: p.v * units }));

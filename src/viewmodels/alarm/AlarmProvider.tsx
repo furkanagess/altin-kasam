@@ -60,7 +60,7 @@ function syncPayload(alarms: PriceAlarm[]): SyncableAlarm[] {
         ...alarm,
         label: asset.label,
         noun: alarmValueNoun(asset),
-        unit: asset.kind === 'ratio' ? ('ratio' as const) : ('try' as const),
+        unit: asset.kind === 'ratio' ? ('ratio' as const) : asset.kind === 'ounce' ? ('usd' as const) : ('try' as const),
       },
     ];
   });

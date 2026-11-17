@@ -2,18 +2,20 @@ import { getGoldAsset, type GoldAssetDefinition } from '@/src/core/constants/gol
 import { getOtherAsset } from '@/src/core/constants/portfolioAssets';
 import { MetalSymbol } from '@/src/domain/enums';
 import type { GoldRate, MetalQuote } from '@/src/domain/models';
-import { formatNumber, formatTRY } from '@/src/utils/format';
+import { formatMoney, formatNumber, formatTRY } from '@/src/utils/format';
 
 export const PORTFOLIO_ALARM_ID = 'kasa-toplam';
 export const RATIO_ALARM_ID = 'altin-gumus-rasyosu';
 
 /**
  * Alarm kurulabilen değer: altın çeşidi (adet/gram kuru), gram metal (gümüş, platin, paladyum),
- * kasanın toplam değeri ya da altın/gümüş rasyosu.
+ * ons fiyatı (USD), kasanın toplam değeri ya da altın/gümüş rasyosu.
  */
 export type AlarmAsset =
   | { id: string; label: string; kind: 'gold'; gold: GoldAssetDefinition }
   | { id: string; label: string; kind: 'metal'; metal: MetalSymbol }
+  /** Uluslararası spot ons fiyatı; USD cinsindendir (gösterim para biriminden bağımsız). */
+  | { id: string; label: string; kind: 'ounce'; metal: MetalSymbol }
   | { id: typeof PORTFOLIO_ALARM_ID; label: string; kind: 'portfolio' }
   | { id: typeof RATIO_ALARM_ID; label: string; kind: 'ratio' };
 
@@ -25,9 +27,25 @@ export const METAL_ALARM_ASSET: Record<MetalSymbol, string> = {
   [MetalSymbol.XPD]: 'paladyum-gram',
 };
 
+/** Piyasa grafiğindeki metalin ons alarm varlığı (USD/ons). */
+export const OUNCE_ALARM_ASSET: Record<MetalSymbol, string> = {
+  [MetalSymbol.XAU]: 'ons-altin',
+  [MetalSymbol.XAG]: 'ons-gumus',
+  [MetalSymbol.XPT]: 'ons-platin',
+  [MetalSymbol.XPD]: 'ons-paladyum',
+};
+const OUNCE_ALARM_LABELS: Record<MetalSymbol, string> = {
+  [MetalSymbol.XAU]: 'Ons Altın',
+  [MetalSymbol.XAG]: 'Ons Gümüş',
+  [MetalSymbol.XPT]: 'Ons Platin',
+  [MetalSymbol.XPD]: 'Ons Paladyum',
+};
+
 export function getAlarmAsset(id: string): AlarmAsset | undefined {
   if (id === PORTFOLIO_ALARM_ID) return { id, label: 'Kasa toplam değeri', kind: 'portfolio' };
   if (id === RATIO_ALARM_ID) return { id, label: 'Altın/Gümüş rasyosu', kind: 'ratio' };
+  const ounce = (Object.entries(OUNCE_ALARM_ASSET) as [MetalSymbol, string][]).find(([, assetId]) => assetId === id);
+  if (ounce) return { id, label: OUNCE_ALARM_LABELS[ounce[0]], kind: 'ounce', metal: ounce[0] };
   const gold = getGoldAsset(id);
   if (gold) return { id, label: gold.label, kind: 'gold', gold };
   const other = getOtherAsset(id);
@@ -39,22 +57,26 @@ export function getAlarmAsset(id: string): AlarmAsset | undefined {
 export type AlarmPrices = {
   goldRates: GoldRate[];
   quotes: MetalQuote[];
+  /** Ons fiyatları (USD/ons); kaynak vermezse boş. */
+  ounceQuotes: MetalQuote[];
   portfolioValue?: number;
   ratio?: number;
 };
 
-/** Altın ve metallerde alış (bozdurma) fiyatı, TRY; metallerde gram fiyatı. */
+/** Altın ve metallerde alış (bozdurma) fiyatı: TRY (metallerde gram); onsta USD/ons. */
 export function alarmPriceOf(id: string, prices: AlarmPrices): number | undefined {
   const asset = getAlarmAsset(id);
   if (!asset) return undefined;
   if (asset.kind === 'portfolio') return prices.portfolioValue || undefined;
   if (asset.kind === 'ratio') return prices.ratio;
   if (asset.kind === 'gold') return prices.goldRates.find((r) => r.assetId === id)?.bid;
+  if (asset.kind === 'ounce') return prices.ounceQuotes.find((q) => q.symbol === asset.metal)?.bid;
   return prices.quotes.find((q) => q.symbol === asset.metal)?.bid;
 }
 
-/** Rasyo birimsizdir; diğerleri TL. */
+/** Rasyo birimsizdir, ons USD'dir; diğerleri TL. */
 export function formatAlarmValue(asset: AlarmAsset, value: number): string {
+  if (asset.kind === 'ounce') return formatMoney(value, 'USD');
   return asset.kind === 'ratio'
     ? value.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : formatTRY(value);
@@ -83,5 +105,6 @@ export function alarmTargetTitle(asset: AlarmAsset): string {
 export function alarmPlaceholder(asset: AlarmAsset): string {
   if (asset.kind === 'ratio') return `Örn. ${formatNumber(80)}`;
   if (asset.kind === 'portfolio') return 'Örn. 100.000';
+  if (asset.kind === 'ounce') return `Örn. ${formatNumber(4000)}`;
   return 'Örn. 11.000';
 }

@@ -1,4 +1,4 @@
-import { useMarketViewModel } from '@/src/viewmodels/market/MarketProvider';
+import { useMarketChart, useMarketViewModel } from '@/src/viewmodels/market/MarketProvider';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
 import { useCallback, useMemo } from 'react';
 
@@ -20,5 +20,27 @@ export function useCurrencySwitcher() {
       onLocked,
     }),
     [currency, currencies, setCurrency, fxRates, lockedCurrencies, onLocked],
+  );
+}
+
+/**
+ * Piyasa grafiğinin para birimi seçicisi. Gramda genel para birimini, onsta ons grafiğine özel
+ * seçimi (varsayılan USD) değiştirir; portföy gibi diğer ekranlar etkilenmez.
+ */
+export function useChartCurrencySwitcher() {
+  const { currencies, fxRates } = useMarketViewModel();
+  const { chartCurrency, lockedChartCurrencies, setChartCurrency } = useMarketChart();
+  const { openPaywall } = useSubscription();
+  const onLocked = useCallback(() => openPaywall('currency'), [openPaywall]);
+  return useMemo(
+    () => ({
+      value: chartCurrency,
+      options: currencies,
+      onChange: setChartCurrency,
+      fxRates,
+      lockedOptions: lockedChartCurrencies,
+      onLocked,
+    }),
+    [chartCurrency, currencies, setChartCurrency, fxRates, lockedChartCurrencies, onLocked],
   );
 }

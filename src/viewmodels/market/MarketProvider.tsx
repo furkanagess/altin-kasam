@@ -4,12 +4,16 @@ import {
   POLL_INTERVAL_CLOSED_MS,
   POLL_INTERVAL_MS,
   TIMEFRAMES,
+  type ChartUnit,
   type Currency,
   type Timeframe,
 } from '@/src/core/constants/app';
 import { storageGet, storageSet } from '@/src/core/storage/storage';
+import { userMessageForError } from '@/src/core/network/networkErrors';
+import { networkMonitor } from '@/src/core/network/networkMonitor';
+import { useNetworkRecovery } from '@/src/viewmodels/network/useNetworkStatus';
 import { marketRepository } from '@/src/data/repositories/marketRepository';
-import { MetalSymbol } from '@/src/domain/enums';
+import { BRENT, MetalSymbol } from '@/src/domain/enums';
 import type {
   ChartSeries,
   DayRange,
@@ -43,6 +47,8 @@ type MarketContextValue = {
   quotes: MetalQuote[];
   /** Gösterim para birimine çevrilmiş fiyatlar. */
   displayQuotes: MetalQuote[];
+  /** `currency` cinsinden ons fiyatları (uluslararası spot); kaynak vermezse boş. */
+  displayOunceQuotes: MetalQuote[];
   /** TRY cinsinden altın çeşidi fiyatları (portföy değerleme). */
   goldRates: GoldRate[];
   /** `currency` cinsinden altın çeşidi fiyatları. */
@@ -59,10 +65,27 @@ type MarketContextValue = {
   timeframes: readonly Timeframe[];
 };
 
-/** Grafiği gösterilen metaller; hepsinin serisi birlikte yüklenir, aralarında geçiş anlıktır. */
-export const CHART_SYMBOLS = [MetalSymbol.XAU, MetalSymbol.XAG, MetalSymbol.XPT, MetalSymbol.XPD] as const;
+/** Metal grafikleri: gram/ons fiyatı, kasa ve alarm bunlara bağlıdır. */
+export const METAL_CHART_SYMBOLS = [MetalSymbol.XAU, MetalSymbol.XAG, MetalSymbol.XPT, MetalSymbol.XPD] as const;
+export type MetalChartSymbol = (typeof METAL_CHART_SYMBOLS)[number];
+/** Grafiği gösterilen varlıklar (metaller + Brent petrol); hepsinin serisi birlikte yüklenir, aralarında geçiş anlıktır. */
+export const CHART_SYMBOLS = [...METAL_CHART_SYMBOLS, BRENT] as const;
 export type ChartSymbol = (typeof CHART_SYMBOLS)[number];
 type ChartMap = Partial<Record<ChartSymbol, ChartSeries>>;
+
+/**
+ * Yüklenen bütün seriler seçim anahtarıyla (metal, birim, periyot, para birimi) saklanır: gram ⇄ ons
+ * ve periyot geçişlerinde daha önce çekilen seri anında gösterilir, yeniden yükleme beklenmez.
+ * `latest`, o metal ve birim için en son gelen seridir; yeni seçimin serisi gelene kadar (yükleniyor
+ * göstergesiyle) ekranda kalır, grafik boşalmaz.
+ */
+type ChartStore = {
+  byKey: Record<string, ChartSeries>;
+  latest: Record<string, ChartSeries>;
+};
+const EMPTY_STORE: ChartStore = { byKey: {}, latest: {} };
+const seriesKey = (symbol: ChartSymbol, unit: ChartUnit, tf: Timeframe, currency: Currency) =>
+  `${symbol}|${unit}|${tf}|${currency}`;
 
 /**
  * Grafik durumu fiyatlardan ayrı tutulur: periyot değişince yalnızca grafiği
@@ -70,6 +93,17 @@ type ChartMap = Partial<Record<ChartSymbol, ChartSeries>>;
  */
 type MarketChartContextValue = {
   timeframe: Timeframe;
+  /** Grafiğin birimi: gram (TL/g) ya da ons (uluslararası spot). Tüm metaller için ortaktır. */
+  unit: ChartUnit;
+  setUnit: (unit: ChartUnit) => void;
+  /**
+   * Grafiğin ve üstündeki fiyatın para birimi. Gramda genel `currency`; onsta ayrı bir seçimdir ve
+   * varsayılanı USD'dir (ons dolar cinsinden işlem görür). Portföy ve diğer ekranlar etkilenmez.
+   */
+  chartCurrency: Currency;
+  /** Grafik para birimi seçicisinde Pro gerektiren seçenekler (onsta USD ücretsizdir). */
+  lockedChartCurrencies: readonly Currency[];
+  setChartCurrency: (currency: Currency) => void;
   /**
    * Her zaman `currency` cinsinden. Para birimi aynıysa sembolün seri referansı yalnızca o
    * sembolün yeni verisi gelince değişir; memo'lu grafikler diğer sembolün yüklemesinde çizilmez.
@@ -88,6 +122,8 @@ const EMPTY_GOLD_RATES: GoldRate[] = [];
 const EMPTY_FX_RATES: FxRates = { TRY: 1 };
 const NO_TIMEFRAMES: readonly Timeframe[] = [];
 const NO_CURRENCIES: readonly Currency[] = [];
+/** Onsta ücretsiz para birimleri: USD ana birimdir, TRY de açık kalır. */
+const FREE_OUNCE_CURRENCIES: readonly Currency[] = ['USD', 'TRY'];
 const CURRENCY_STORAGE_KEY = 'altin_kasam_currency_v1';
 
 function convertDay(day: DayRange | undefined, currency: Currency, fxRates: FxRates): DayRange | undefined {
@@ -100,8 +136,13 @@ function convertDay(day: DayRange | undefined, currency: Currency, fxRates: FxRa
   };
 }
 
-function isStale(series: ChartSeries | undefined, timeframe: Timeframe, currency: Currency): boolean {
-  return !series || series.timeframe !== timeframe || series.currency !== currency;
+function isStale(
+  series: ChartSeries | undefined,
+  timeframe: Timeframe,
+  currency: Currency,
+  unit: ChartUnit,
+): boolean {
+  return !series || series.timeframe !== timeframe || series.currency !== currency || (series.unit ?? 'gram') !== unit;
 }
 
 export function MarketProvider({ children }: { children: React.ReactNode }) {
@@ -110,6 +151,8 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
   const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
   const [requestedTimeframe, setTimeframe] = useState<Timeframe>('1D');
   const [preferredCurrency, setPreferredCurrency] = useState<Currency>('TRY');
+  const [unit, setUnit] = useState<ChartUnit>('gram');
+  const [ounceCurrency, setOunceCurrency] = useState<Currency>('USD');
   const { isPremium } = useSubscription();
 
   // Tercih korunur; Pro bitince görünüm ücretsiz seçeneğe düşer, alınınca kaldığı yerden sürer.
@@ -123,7 +166,8 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
     () => (isPremium ? NO_CURRENCIES : CURRENCIES.filter((c) => !FREE_CURRENCIES.includes(c))),
     [isPremium],
   );
-  const [rawCharts, setCharts] = useState<ChartMap>({});
+  const [chartStore, setChartStore] = useState<ChartStore>(EMPTY_STORE);
+  const loadedAt = useRef(new Map<string, number>());
   const mounted = useRef(true);
   const chartRequest = useRef(0);
 
@@ -134,6 +178,18 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
     lockedCurrencies.includes(preferredCurrency) ? 'TRY' : preferredCurrency,
     fxRates,
   );
+
+  const lockedOunceCurrencies = useMemo(
+    () => (isPremium ? NO_CURRENCIES : CURRENCIES.filter((c) => !FREE_OUNCE_CURRENCIES.includes(c))),
+    [isPremium],
+  );
+  // USD ons için kur gerektirmez; TL/EUR kur gelene kadar USD'de kalır.
+  const ounceDisplayCurrency: Currency =
+    ounceCurrency === 'USD' || lockedOunceCurrencies.includes(ounceCurrency)
+      ? 'USD'
+      : resolveCurrency(ounceCurrency, fxRates);
+  const chartCurrency = unit === 'ounce' ? ounceDisplayCurrency : currency;
+  const lockedChartCurrencies = unit === 'ounce' ? lockedOunceCurrencies : lockedCurrencies;
 
   const displayQuotes = useMemo(
     () =>
@@ -148,6 +204,27 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
           })),
     [quotes, currency, fxRates],
   );
+
+  // Ons fiyatı USD'dir; seçili para birimine güncel kurla çevrilir (USD'de olduğu gibi kalır).
+  const ounceQuotes = snapshot?.ounceQuotes ?? EMPTY_QUOTES;
+  const displayOunceQuotes = useMemo(() => {
+    if (ounceDisplayCurrency === 'USD') return ounceQuotes;
+    const usdTry = fxRates.USD;
+    if (!usdTry) return EMPTY_QUOTES;
+    const convert = (usd: number) => fromTry(usd * usdTry, ounceDisplayCurrency, fxRates);
+    return ounceQuotes.map((q) => ({
+      ...q,
+      bid: convert(q.bid),
+      ask: convert(q.ask),
+      day: q.day && {
+        open: convert(q.day.open),
+        high: convert(q.day.high),
+        low: convert(q.day.low),
+        previousClose: convert(q.day.previousClose),
+      },
+      currency: ounceDisplayCurrency,
+    }));
+  }, [ounceQuotes, ounceDisplayCurrency, fxRates]);
 
   const displayGoldRates = useMemo(
     () =>
@@ -166,30 +243,40 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
    * Para birimi değişince doğru seri gelene kadar mevcut grafik güncel kurla
    * çevrilerek gösterilir; ekran boşalıp yeniden çizilmez.
    */
+  const rawCharts = useMemo<ChartMap>(() => {
+    const picked: ChartMap = {};
+    for (const symbol of CHART_SYMBOLS) {
+      const series = chartStore.byKey[seriesKey(symbol, unit, timeframe, chartCurrency)] ?? chartStore.latest[`${symbol}|${unit}`];
+      if (series) picked[symbol] = series;
+    }
+    return picked;
+  }, [chartStore, unit, timeframe, chartCurrency]);
+
   const charts = useMemo<ChartMap>(() => {
     const converted: ChartMap = {};
     for (const symbol of CHART_SYMBOLS) {
       const raw = rawCharts[symbol];
-      if (!raw) continue;
-      if (raw.currency === currency) {
+      // Başka birimin serisi yeni birimde gösterilmez; doğru seri gelene kadar yükleniyor görünür.
+      if (!raw || (raw.unit ?? 'gram') !== unit) continue;
+      if (raw.currency === chartCurrency) {
         converted[symbol] = raw;
         continue;
       }
       const from = raw.currency === 'TRY' ? 1 : fxRates[raw.currency];
-      const to = currency === 'TRY' ? 1 : fxRates[currency];
+      const to = chartCurrency === 'TRY' ? 1 : fxRates[chartCurrency];
       if (!from || !to) continue;
       const factor = from / to;
       converted[symbol] = {
         ...raw,
-        currency,
+        currency: chartCurrency,
         points: raw.points.map((p) => ({ t: p.t, v: p.v * factor })),
       };
     }
     return converted;
-  }, [rawCharts, currency, fxRates]);
+  }, [rawCharts, chartCurrency, fxRates, unit]);
 
   // Bayrakların özeti: yalnızca bir sembolün durumu değişince yeni nesne üretilir.
-  const staleKey = CHART_SYMBOLS.map((s) => (isStale(rawCharts[s], timeframe, currency) ? '1' : '0')).join('');
+  const staleKey = CHART_SYMBOLS.map((s) => (isStale(rawCharts[s], timeframe, chartCurrency, unit) ? '1' : '0')).join('');
   const chartLoading = useMemo(
     () =>
       Object.fromEntries(CHART_SYMBOLS.map((s, i) => [s, staleKey[i] === '1'])) as Record<ChartSymbol, boolean>,
@@ -213,6 +300,14 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const setChartCurrency = useCallback(
+    (next: Currency) => {
+      if (unit === 'ounce') setOunceCurrency(next);
+      else setCurrency(next);
+    },
+    [unit, setCurrency],
+  );
+
   const refresh = useCallback(async () => {
     setState((prev) => (prev === 'ready' ? 'ready' : 'loading'));
     try {
@@ -223,27 +318,47 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
       setState('ready');
     } catch (e) {
       if (!mounted.current) return;
-      setError(e instanceof Error ? e.message : 'Piyasa verisi alınamadı');
+      setError(userMessageForError(e, 'Piyasa verisi şu an alınamadı. Biraz sonra tekrar dene.'));
       setState('error');
     }
   }, []);
 
-  const loadCharts = useCallback(async (tf: Timeframe, chartCurrency: Currency) => {
-    // Hızlı geçişlerde geç gelen eski yanıt yeni seçimin üzerine yazmasın.
-    const request = ++chartRequest.current;
-    await Promise.all(
-      CHART_SYMBOLS.map(async (symbol) => {
-        try {
-          const series = await marketRepository.getHistory(symbol, tf, chartCurrency);
-          if (mounted.current && request === chartRequest.current) {
-            setCharts((prev) => ({ ...prev, [symbol]: series }));
+  const loadCharts = useCallback(
+    async (tf: Timeframe, chartCurrency: Currency, chartUnit: ChartUnit, force = true) => {
+      const keys = CHART_SYMBOLS.map((symbol) => seriesKey(symbol, chartUnit, tf, chartCurrency));
+      // Seçim için seriler yakın zamanda çekildiyse (ör. gram ⇄ ons geri dönüşü) ağa da gidilmez.
+      const now = Date.now();
+      if (!force && keys.every((k) => now - (loadedAt.current.get(k) ?? 0) < CHART_REFRESH_MS)) return;
+      // Hızlı geçişlerde geç gelen eski yanıt yeni seçimin üzerine yazmasın.
+      const request = ++chartRequest.current;
+      const results = await Promise.all(
+        CHART_SYMBOLS.map(async (symbol) => {
+          try {
+            return await marketRepository.getHistory(symbol, tf, chartCurrency, chartUnit);
+          } catch {
+            // Önceki seri ekranda kalır; boş grafiğe düşmek yerine bir sonraki yenilemede tekrar denenir.
+            return null;
           }
-        } catch {
-          // Önceki seri ekranda kalır; boş grafiğe düşmek yerine bir sonraki yenilemede tekrar denenir.
+        }),
+      );
+      if (!mounted.current || request !== chartRequest.current) return;
+      const fresh = results.filter((s): s is ChartSeries => s !== null);
+      if (!fresh.length) return;
+      const stamp = Date.now();
+      // Dört metalin serisi tek durum güncellemesiyle gelir: sağlayıcı ve grafikler bir kez çizilir.
+      setChartStore((prev) => {
+        const byKey = { ...prev.byKey };
+        const latest = { ...prev.latest };
+        for (const series of fresh) {
+          byKey[seriesKey(series.symbol as ChartSymbol, chartUnit, tf, chartCurrency)] = series;
+          latest[`${series.symbol}|${chartUnit}`] = series;
+          loadedAt.current.set(seriesKey(series.symbol as ChartSymbol, chartUnit, tf, chartCurrency), stamp);
         }
-      }),
-    );
-  }, []);
+        return { byKey, latest };
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     mounted.current = true;
@@ -254,7 +369,8 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
     const schedule = () => {
       timer = setTimeout(
         () => {
-          if (AppState.currentState !== 'background') void refresh();
+          // Çevrimdışıyken yoklanmaz; bağlantı gelince `useNetworkRecovery` hemen yeniler.
+          if (AppState.currentState !== 'background' && !networkMonitor.isOffline()) void refresh();
           schedule();
         },
         isMarketClosed() ? POLL_INTERVAL_CLOSED_MS : POLL_INTERVAL_MS,
@@ -270,12 +386,18 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
   // Seriler periyot/para birimi değişince ve seyrek aralıkla çekilir; fiyat tikleri yalnızca son
   // noktayı (`livePrice`) günceller.
   useEffect(() => {
-    void loadCharts(timeframe, currency);
+    void loadCharts(timeframe, chartCurrency, unit, false);
     const id = setInterval(() => {
-      if (AppState.currentState !== 'background') void loadCharts(timeframe, currency);
+      if (AppState.currentState !== 'background' && !networkMonitor.isOffline()) void loadCharts(timeframe, chartCurrency, unit);
     }, CHART_REFRESH_MS);
     return () => clearInterval(id);
-  }, [timeframe, currency, loadCharts]);
+  }, [timeframe, chartCurrency, unit, loadCharts]);
+
+  // Kopukluk bitince fiyat ve grafikler kullanıcı yenilemeden güncellenir.
+  useNetworkRecovery(() => {
+    void refresh();
+    void loadCharts(timeframe, chartCurrency, unit);
+  });
 
   const value = useMemo<MarketContextValue>(
     () => ({
@@ -284,6 +406,7 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
       snapshot,
       quotes,
       displayQuotes,
+      displayOunceQuotes,
       goldRates,
       displayGoldRates,
       fxRates,
@@ -301,6 +424,7 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
       snapshot,
       quotes,
       displayQuotes,
+      displayOunceQuotes,
       goldRates,
       displayGoldRates,
       fxRates,
@@ -313,8 +437,18 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
   );
 
   const chartValue = useMemo<MarketChartContextValue>(
-    () => ({ timeframe, charts, chartLoading, setTimeframe }),
-    [timeframe, charts, chartLoading],
+    () => ({
+      timeframe,
+      unit,
+      setUnit,
+      chartCurrency,
+      lockedChartCurrencies,
+      setChartCurrency,
+      charts,
+      chartLoading,
+      setTimeframe,
+    }),
+    [timeframe, unit, chartCurrency, lockedChartCurrencies, setChartCurrency, charts, chartLoading],
   );
 
   return (

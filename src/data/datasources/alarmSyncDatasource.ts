@@ -1,32 +1,17 @@
-import { storageGet, storageSet } from '@/src/core/storage/storage';
+import { getInstallId as installId } from '@/src/core/storage/installId';
 import type { PriceAlarm } from '@/src/domain/models';
 
 /** Firebase `syncAlarms` ucu; boşsa sunucu tarafı alarm kapalıdır ve alarmlar yalnızca cihazda kontrol edilir. */
 const SYNC_URL = process.env.EXPO_PUBLIC_ALARM_SYNC_URL;
-const INSTALL_KEY = 'altin_kasam_install_id_v1';
 const TIMEOUT_MS = 8_000;
 
 /** Bildirim metnini sunucunun kurabilmesi için alarmla birlikte gönderilen görünen değerler. */
-export type SyncableAlarm = PriceAlarm & { label: string; noun: string; unit: 'try' | 'ratio' };
+export type SyncableAlarm = PriceAlarm & { label: string; noun: string; unit: 'try' | 'usd' | 'ratio' };
 
 export type SyncResult = {
   /** Uygulama kapalıyken sunucunun tetiklediği (ve bildirimini gönderdiği) alarmlar. */
   triggered: { id: string; at: string }[];
 };
-
-function randomId(): string {
-  const bytes = Array.from({ length: 24 }, () => Math.floor(Math.random() * 36).toString(36));
-  return `i${bytes.join('')}`;
-}
-
-/** Cihaza özgü, tahmin edilemez kimlik; sunucuda alarmların sahibini ayırır. Uygulama silinince yenilenir. */
-async function installId(): Promise<string> {
-  const saved = await storageGet<string>(INSTALL_KEY);
-  if (saved) return saved;
-  const id = randomId();
-  await storageSet(INSTALL_KEY, id);
-  return id;
-}
 
 export const alarmSyncDatasource = {
   isEnabled(): boolean {

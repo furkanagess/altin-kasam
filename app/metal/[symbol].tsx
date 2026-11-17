@@ -1,19 +1,20 @@
-import { METAL_ALARM_ASSET } from '@/src/core/constants/alarmAssets';
+import { METAL_ALARM_ASSET, OUNCE_ALARM_ASSET } from '@/src/core/constants/alarmAssets';
 import { makeStyles, paddings } from '@/src/core/theme';
 import { MetalSymbol } from '@/src/domain/enums';
 import {
-  CHART_SYMBOLS,
+  METAL_CHART_SYMBOLS,
   useMarketChart,
   useMarketViewModel,
-  type ChartSymbol,
+  type MetalChartSymbol,
 } from '@/src/viewmodels/market/MarketProvider';
-import { useCurrencySwitcher } from '@/src/viewmodels/market/useCurrencySwitcher';
+import { useChartCurrencySwitcher } from '@/src/viewmodels/market/useCurrencySwitcher';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
 import { AppButton } from '@/src/widgets/atoms/AppButton';
 import { MetalIcon } from '@/src/widgets/atoms/MetalIcon';
 import { Screen } from '@/src/widgets/atoms/Screen';
 import { AlarmButton } from '@/src/widgets/molecules/AlarmButton';
 import { CurrencySwitcher } from '@/src/widgets/molecules/CurrencySwitcher';
+import { UnitSwitcher } from '@/src/widgets/molecules/UnitSwitcher';
 import { EmptyState } from '@/src/widgets/molecules/EmptyState';
 import { PriceChart } from '@/src/widgets/organisms/PriceChart';
 import { PriceStatsTable } from '@/src/widgets/organisms/PriceStatsTable';
@@ -22,11 +23,18 @@ import React, { useCallback } from 'react';
 import { View } from 'react-native';
 
 /** Fiyatlar gram başınadır; altında 24 ayar. */
-const TITLES: Record<ChartSymbol, string> = {
+const TITLES: Record<MetalChartSymbol, string> = {
   [MetalSymbol.XAU]: 'Gram Altın (24 ayar)',
   [MetalSymbol.XAG]: 'Gram Gümüş',
   [MetalSymbol.XPT]: 'Gram Platin',
   [MetalSymbol.XPD]: 'Gram Paladyum',
+};
+
+const OUNCE_TITLES: Record<MetalChartSymbol, string> = {
+  [MetalSymbol.XAU]: 'Ons Altın',
+  [MetalSymbol.XAG]: 'Ons Gümüş',
+  [MetalSymbol.XPT]: 'Ons Platin',
+  [MetalSymbol.XPD]: 'Ons Paladyum',
 };
 
 const EMPTY_POINTS: never[] = [];
@@ -35,11 +43,11 @@ const EMPTY_POINTS: never[] = [];
 export default function MetalDetailScreen() {
   const styles = useStyles();
   const { symbol: raw } = useLocalSearchParams<{ symbol: string }>();
-  const symbol = CHART_SYMBOLS.find((s) => s === raw);
-  const { displayQuotes, currency, timeframes, lockedTimeframes } = useMarketViewModel();
+  const symbol = METAL_CHART_SYMBOLS.find((s) => s === raw);
+  const { displayQuotes, displayOunceQuotes, timeframes, lockedTimeframes } = useMarketViewModel();
   // Periyot Piyasa ekranındaki grafiklerle ortaktır; aynı seri yeniden indirilmez.
-  const { timeframe, setTimeframe, charts, chartLoading } = useMarketChart();
-  const currencySwitcher = useCurrencySwitcher();
+  const { timeframe, setTimeframe, unit, setUnit, chartCurrency: currency, charts, chartLoading } = useMarketChart();
+  const currencySwitcher = useChartCurrencySwitcher();
   const { openPaywall } = useSubscription();
   const onLockedTimeframe = useCallback(() => openPaywall('timeframe'), [openPaywall]);
 
@@ -51,15 +59,21 @@ export default function MetalDetailScreen() {
     );
   }
 
-  const quote = displayQuotes.find((q) => q.symbol === symbol);
-  const assetId = METAL_ALARM_ASSET[symbol];
+  const ounce = unit === 'ounce';
+  const quote = (ounce ? displayOunceQuotes : displayQuotes).find((q) => q.symbol === symbol);
+  // Alarm da birime uyar: gramda TL gram fiyatı, onsta USD ons fiyatı. "Ekle" (kasa) her zaman gramdır.
+  const holdingAssetId = METAL_ALARM_ASSET[symbol];
+  const assetId = ounce ? OUNCE_ALARM_ASSET[symbol] : holdingAssetId;
 
   return (
     <Screen
       scroll
-      footer={<AppButton label="Ekle" onPress={() => router.push({ pathname: '/add-holding', params: { assetId } })} />}
+      footer={<AppButton label="Ekle" onPress={() => router.push({ pathname: '/add-holding', params: { assetId: holdingAssetId } })} />}
     >
-      <Stack.Screen options={{ title: TITLES[symbol] }} />
+      <Stack.Screen options={{ title: ounce ? OUNCE_TITLES[symbol] : TITLES[symbol] }} />
+      <View style={styles.unitRow}>
+        <UnitSwitcher value={unit} onChange={setUnit} />
+      </View>
 
       <PriceChart
         points={charts[symbol]?.points ?? EMPTY_POINTS}
@@ -78,11 +92,12 @@ export default function MetalDetailScreen() {
             <AlarmButton
               assetId={assetId}
               onPress={() => router.push({ pathname: '/alarm', params: { assetId } })}
-              accessibilityLabel={`${TITLES[symbol]} için fiyat alarmı`}
+              accessibilityLabel={`${ounce ? OUNCE_TITLES[symbol] : TITLES[symbol]} için fiyat alarmı`}
             />
           </View>
         }
         flashOnLiveChange
+        flashKey={`${currency}-${unit}`}
         height={240}
         bare
       />
@@ -92,5 +107,6 @@ export default function MetalDetailScreen() {
 }
 
 const useStyles = makeStyles(() => ({
+  unitRow: { alignItems: 'flex-end' },
   chartActions: { flexDirection: 'row', alignItems: 'center', gap: paddings.xs },
 }));

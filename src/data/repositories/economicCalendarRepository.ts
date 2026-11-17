@@ -37,13 +37,36 @@ export class EconomicCalendarRepository {
     };
   }
 
-  /** Hatırlatma kurulmuş, henüz açıklanmamış olayların kimlikleri. */
+  /**
+   * Hatırlatma kurulmuş, henüz açıklanmamış olayların kimlikleri. Liste bağlı hesaptan başka bir
+   * cihaza geldiyse bildirimler o cihazda kurulu değildir; eksikler burada yeniden kurulur, kurulamayanlar
+   * (izin yok, süre geçti) listeden çıkar.
+   */
   async listReminders(events: EconomicEvent[]): Promise<string[]> {
     const saved = (await storageGet<string[]>(REMINDERS_KEY)) ?? [];
-    const upcoming = new Set(events.map((e) => e.id));
-    const active = saved.filter((id) => upcoming.has(id));
+    const byId = new Map(events.map((e) => [e.id, e]));
+    let active = saved.filter((id) => byId.has(id));
+    const scheduled = active.length ? await notificationsDatasource.scheduledIds() : null;
+    if (scheduled) {
+      const kept: string[] = [];
+      for (const id of active) {
+        if (scheduled.has(notificationId(id)) || (await this.schedule(byId.get(id)!))) kept.push(id);
+      }
+      active = kept;
+    }
     if (active.length !== saved.length) await storageSet(REMINDERS_KEY, active);
     return active;
+  }
+
+  private schedule(event: EconomicEvent): Promise<boolean> {
+    const remindAt = new Date(Date.parse(event.at) - EVENT_REMINDER_LEAD_MINUTES * 60_000);
+    return notificationsDatasource.scheduleAt(
+      notificationId(event.id),
+      remindAt,
+      `${EVENT_COUNTRY_LABELS[event.country]} · ${event.title}`,
+      eventReminderBody(event),
+      '/calendar',
+    );
   }
 
   /** Bildirim izni yoksa ya da açıklamaya hatırlatma süresinden az kaldıysa `ok: false`. */
@@ -56,14 +79,7 @@ export class EconomicCalendarRepository {
       return { reminders, ok: true };
     }
     if (!(await notificationsDatasource.ensurePermission())) return { reminders: saved, ok: false };
-    const remindAt = new Date(Date.parse(event.at) - EVENT_REMINDER_LEAD_MINUTES * 60_000);
-    const scheduled = await notificationsDatasource.scheduleAt(
-      notificationId(event.id),
-      remindAt,
-      `${EVENT_COUNTRY_LABELS[event.country]} · ${event.title}`,
-      eventReminderBody(event),
-      '/calendar',
-    );
+    const scheduled = await this.schedule(event);
     if (!scheduled) return { reminders: saved, ok: false };
     const reminders = [...saved, event.id];
     await storageSet(REMINDERS_KEY, reminders);

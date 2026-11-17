@@ -45,7 +45,7 @@ export function WeeklyAnalysisCard({ analysis, onPress, compact, dateOnly, locke
       onPress={onPress}
       style={({ pressed }) => [styles.card, !compact && styles.featured, pressed && styles.pressed]}
       accessibilityRole="button"
-      accessibilityLabel={`${formatWeekRange(analysis.weekStart)} haftalık analiz: ${analysis.title}${locked ? ', Pro' : ''}`}
+      accessibilityLabel={`${formatWeekRange(analysis.weekStart)} haftalık analiz: ${analysis.summary}${locked ? ', Pro' : ''}`}
     >
       <View style={styles.meta}>
         <AppText variant="caption" tone="gold" style={styles.week}>
@@ -53,14 +53,9 @@ export function WeeklyAnalysisCard({ analysis, onPress, compact, dateOnly, locke
         </AppText>
         {locked ? <ProMark /> : null}
       </View>
-      <AppText variant={compact ? 'bodyStrong' : 'h3'} numberOfLines={compact ? 2 : 3}>
-        {analysis.title}
+      <AppText variant={compact ? 'bodyStrong' : 'h3'} numberOfLines={compact ? 2 : 4}>
+        {analysis.summary}
       </AppText>
-      {!compact && !locked ? (
-        <AppText variant="body" tone="secondary" numberOfLines={3}>
-          {analysis.summary}
-        </AppText>
-      ) : null}
       {locked ? null : <View style={styles.outlook}>
         {analysis.outlook.map((o) => (
           <Badge

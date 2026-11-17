@@ -64,6 +64,8 @@ type Props = {
   headerRight?: ReactNode;
   /** Canlı fiyat değişince üstteki fiyat yükselişte yeşil, düşüşte kırmızı yanar. */
   flashOnLiveChange?: boolean;
+  /** Bu anahtar değişince (ör. gram → ons) fiyat değişimi yanma sayılmaz; verilmezse para birimi. */
+  flashKey?: string;
   /** Kartın en üstünde, fiyatın üstünde gösterilir (ör. "Gram Altın (24)"). */
   title?: string;
   /** Başlık satırının sağında (ör. tam ekran düğmesi). */
@@ -152,6 +154,7 @@ export function PriceChart({
   headerLeft,
   headerRight,
   flashOnLiveChange,
+  flashKey,
   title,
   titleRight,
   baseline,
@@ -302,7 +305,7 @@ export function PriceChart({
             <FlashingText
               variant="price"
               value={active ? undefined : livePrice}
-              resetKey={currency}
+              resetKey={flashKey ?? currency}
               style={styles.price}
               numberOfLines={1}
             >

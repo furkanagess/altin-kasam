@@ -109,7 +109,17 @@ export async function loadPrices(wantsRaw = false): Promise<PricesResult> {
   if (!key) return { ok: false, status: 503, error: 'not_configured' };
   if (!wantsRaw && cache && Date.now() - cache.at < pricesTtlSeconds() * 1000) return { ok: true, body: cache.body };
   if (!wantsRaw && failure && Date.now() - failure.at < PRICES_ERROR_BACKOFF_S * 1000) return failure.result;
+  if (wantsRaw) return fetchUpstream(key, true);
+  // Önbellek süresi dolduğunda aynı anda gelen istekler tek Hasfiyat çağrısını paylaşır.
+  inflight ??= fetchUpstream(key, false).finally(() => {
+    inflight = null;
+  });
+  return inflight;
+}
 
+let inflight: Promise<PricesResult> | null = null;
+
+async function fetchUpstream(key: string, wantsRaw: boolean): Promise<PricesResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {

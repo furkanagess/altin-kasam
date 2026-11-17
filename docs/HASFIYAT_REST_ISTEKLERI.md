@@ -54,12 +54,14 @@ Etki sırasıyla:
 | Değişiklik | Dosya | Etki |
 | --- | --- | --- |
 | Fiyat yanıtı CDN'de paylaşılır (`CDN-Cache-Control: max-age=20, stale-while-revalidate=40, stale-if-error=3600`) | `app/api/prices+api.ts`, `src/core/constants/hasfiyatCache.ts` | Hasfiyat'a giden istek istemci ve işçi sayısına değil süreye bağlı. Süre dolunca eski yanıt verilirken arka planda yenilenir |
-| Piyasa kapalıyken (cumartesi, pazar 22:00'a kadar) fiyat TTL'i 5 dk, istemci yoklaması 60 sn | `src/utils/marketHours.ts`, `MarketProvider.tsx` | Hafta sonu istekleri yaklaşık 15 kat azalır |
+| Piyasa kapalıyken (cumartesi, pazar 22:00'a kadar) fiyat TTL'i 5 dk, istemci yoklaması 5 dk | `src/utils/marketHours.ts`, `MarketProvider.tsx` | Hafta sonu istekleri yaklaşık 15 kat azalır |
 | İstemci yoklaması 10 sn yerine 20 sn (sunucu TTL'iyle aynı) | `src/core/constants/app.ts` | Daha sık sormak CDN'de aynı yanıtı getirirdi, yalnızca gereksiz trafik üretirdi |
-| Geçmiş serileri CDN'de: saatlik 10 dk, günlük 2 sa | `app/api/history+api.ts` | Saatlik çubuk saatte bir kapanır; son nokta canlı fiyatla zaten güncellenir |
+| Geçmiş serileri CDN'de: saatlik 30 dk, günlük 6 sa | `app/api/history+api.ts` | Saatlik çubuk saatte bir kapanır; son nokta canlı fiyatla zaten güncellenir |
 | İstemcide seri önbelleği ve aynı anda gelen aynı serinin tekilleştirilmesi | `src/data/datasources/hasfiyatHistoryDatasource.ts` | USD/TL gibi paylaşılan seriler platin, paladyum ve rasyo grafiğinde tek kez indirilir |
-| Grafik yenileme 5 dk yerine 10 dk | `src/core/constants/app.ts` (`CHART_REFRESH_MS`) | Grafik istekleri yarıya iner; son nokta canlı fiyatla güncel kalır |
+| Grafik yenileme 5 dk yerine 30 dk | `src/core/constants/app.ts` (`CHART_REFRESH_MS`) | Grafik istekleri yarıya iner; son nokta canlı fiyatla güncel kalır |
 | Altın çeşidi geçmiş önbelleği 1 dk yerine 5 dk | `goldRateHistoryRepository.ts` | Periyot arasında gidip gelirken tekrar istek atılmaz |
+| Periyot başına tek `from` (saatlik 30 gün, günlük 366 gün); kısa pencereler istemcide kırpılır | `hasfiyatHistoryDatasource.ts` | 1D/1W/1M ve 3M/1Y aynı CDN anahtarını paylaşır: bütün periyotları gezmek seri başına 5 yerine 2 istek |
+| Önbellek süresi dolduğunda eşzamanlı istekler tek Hasfiyat çağrısını paylaşır | `hasfiyatPrices.ts`, `history+api.ts` | Aynı anda gelen N istek N yerine 1 upstream isteği olur |
 | Hata önbelleği (10 sn) | `src/server/hasfiyatPrices.ts` | Kesintide yoklamalar Hasfiyat'a gitmez; CDN `stale-if-error` ile son iyi yanıt verilir |
 | Gizli ve hatalı yanıtlar `no-store` | `alarm-values`, hata yanıtları | Gizli uç ya da hata yanıtı yanlışlıkla CDN'de saklanmaz |
 | Her gerçek Hasfiyat isteği günlüğe yazılır (`[hasfiyat] upstream prices` / `history`) | `hasfiyatPrices.ts`, `history+api.ts` | Kullanım ölçülebilir |
@@ -89,8 +91,8 @@ yoklama yaptığı dakika.
 Yani küçük kullanıcı sayısında kazanç ~%50 (6 → 3 /dk), kullanıcı arttıkça çok daha büyüktür
 (istek istemci sayısıyla artmaz, konum sayısıyla sınırlanır). Hafta sonu ~15 kat azalır.
 
-Geçmiş istekleri için üst sınır, anahtar sayısı ÷ TTL × `L`: 30 temel anahtar × (60 / 10 dk)
-= saatte en çok 180 istek / konum. Gerçekte yalnızca ziyaret edilen periyotlar çekilir.
+Geçmiş istekleri için üst sınır, anahtar sayısı ÷ TTL × `L`: 12 temel anahtar (6 seri × 2 periyot) × (60 / 30 dk)
+= saatte en çok 24 istek / konum (eskiden 30 anahtar × 6 = 180). Gerçekte yalnızca ziyaret edilen periyotlar çekilir.
 
 ## 5. Ölçüm ve doğrulama (yayından sonra)
 

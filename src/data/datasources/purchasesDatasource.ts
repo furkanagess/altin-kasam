@@ -18,6 +18,13 @@ export interface IPurchasesDatasource {
   restore(): Promise<boolean>;
   managementUrl(): Promise<string | null>;
   onPremiumChange(listener: (premium: boolean) => void): () => void;
+  /**
+   * Aboneliği bağlı hesaba (Firebase uid) taşır: RevenueCat anonim kullanıcının satın alımlarını
+   * bu kimliğe aktarır; aynı hesapla giriş yapılan her cihazda Pro açılır. Premium durumunu döner.
+   */
+  identify(userId: string): Promise<boolean>;
+  /** Hesap bağlantısı kesilince anonim kullanıcıya döner. */
+  reset(): Promise<void>;
 }
 
 /**
@@ -120,6 +127,16 @@ export class RevenueCatPurchasesDatasource implements IPurchasesDatasource {
       Purchases.removeCustomerInfoUpdateListener(handler);
     };
   }
+
+  async identify(userId: string): Promise<boolean> {
+    const { customerInfo } = await Purchases.logIn(userId);
+    return hasPremium(customerInfo);
+  }
+
+  async reset(): Promise<void> {
+    if (await Purchases.isAnonymous()) return;
+    await Purchases.logOut();
+  }
 }
 
 /**
@@ -157,6 +174,12 @@ export class PreviewPurchasesDatasource implements IPurchasesDatasource {
       this.listeners.delete(listener);
     };
   }
+
+  async identify(): Promise<boolean> {
+    return this.premium;
+  }
+
+  async reset(): Promise<void> {}
 
   simulate(premium: boolean) {
     this.premium = premium;
