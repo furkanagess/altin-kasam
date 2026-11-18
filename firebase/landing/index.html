@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Altın Kasam – Gram Altın Fiyatı, Portföy ve Alarm</title>
+<meta name="description" content="Canlı gram altın fiyatları, altın portföyün, fiyat alarmları, ekonomik takvim ve haftalık analiz. Altın Kasam'ı App Store ve Google Play'den indir.">
+<meta name="theme-color" content="#0D1014">
+<link rel="icon" type="image/png" href="/img/favicon.png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Altın Kasam – Gram Altın Fiyatı">
+<meta property="og:description" content="Canlı altın fiyatları, portföy, alarm ve haftalık analiz. iOS ve Android'de ücretsiz indir.">
+<meta property="og:image" content="/img/icon.png">
+<meta name="twitter:card" content="summary">
+<style>
+:root{
+  --bg:#0D1014; --bg2:#14171D; --card:#171B23; --line:rgba(255,255,255,.08);
+  --gold:#F2C862; --gold2:#C38C2C; --cream:#FBE7AE; --text:#F3F0EA; --mut:#9AA1AE;
+  --grad:linear-gradient(180deg,#F2C862,#C38C2C);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;overflow-x:hidden;padding-bottom:env(safe-area-inset-bottom)}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+.wrap{width:100%;max-width:1040px;margin:0 auto;padding:0 20px}
+
+/* background glow + particles */
+.glow{position:fixed;inset:0;z-index:-2;background:
+  radial-gradient(60% 40% at 50% 0%,rgba(242,200,98,.16),transparent 70%),
+  radial-gradient(50% 35% at 90% 60%,rgba(195,140,44,.10),transparent 70%),var(--bg)}
+canvas#sparks{position:fixed;inset:0;z-index:-1;width:100%;height:100%;pointer-events:none}
+
+/* hero */
+.hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:64px 0 40px}
+.logo{position:relative;width:128px;height:128px;border-radius:30px;overflow:hidden;box-shadow:0 20px 60px rgba(242,200,98,.28),0 0 0 1px var(--line);animation:pop .9s cubic-bezier(.2,1.4,.4,1) both,float 5s ease-in-out .9s infinite}
+.logo img{width:100%;height:100%}
+.logo::after{content:"";position:absolute;inset:-50%;background:linear-gradient(110deg,transparent 40%,rgba(255,255,255,.45) 50%,transparent 60%);transform:translateX(-100%);animation:shine 4s ease-in-out 1.4s infinite}
+.ring{position:absolute;width:128px;height:128px;border-radius:30px;border:2px solid rgba(242,200,98,.5);animation:ring 3s ease-out infinite;pointer-events:none}
+.ring.r2{animation-delay:1.5s}
+.logo-box{position:relative;width:128px;height:128px;margin-bottom:28px}
+h1{font-size:clamp(2.4rem,9vw,4.2rem);line-height:1.05;letter-spacing:-.03em;font-weight:800;animation:up .8s .25s both}
+h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;background-size:100% 200%;animation:gold 4s ease-in-out infinite alternate}
+.lead{margin:16px auto 0;max-width:520px;color:var(--mut);font-size:clamp(1rem,3.6vw,1.2rem);animation:up .8s .4s both}
+.stores{display:flex;flex-direction:column;gap:12px;margin-top:32px;width:100%;max-width:360px;animation:up .8s .55s both}
+.btn{display:flex;align-items:center;gap:14px;padding:14px 20px;border-radius:16px;background:var(--card);border:1px solid var(--line);text-align:left;transition:transform .2s,border-color .2s,box-shadow .2s}
+.btn:hover,.btn:focus-visible{transform:translateY(-3px);border-color:rgba(242,200,98,.6);box-shadow:0 12px 30px rgba(242,200,98,.15);outline:none}
+.btn:active{transform:scale(.98)}
+.btn svg{width:30px;height:30px;flex:none}
+.btn small{display:block;font-size:.72rem;color:var(--mut);letter-spacing:.04em;text-transform:uppercase}
+.btn b{font-size:1.15rem;font-weight:700}
+.btn.primary{background:var(--grad);color:#14171D;border-color:transparent;box-shadow:0 10px 30px rgba(242,200,98,.3)}
+.btn.primary small{color:rgba(20,23,29,.7)}
+.hint{margin-top:14px;font-size:.8rem;color:var(--mut);animation:up .8s .7s both}
+.scroll{margin-top:36px;width:24px;height:38px;border:2px solid var(--line);border-radius:14px;position:relative;opacity:.8;animation:up .8s .9s both}
+.scroll::after{content:"";position:absolute;left:50%;top:7px;width:4px;height:8px;margin-left:-2px;border-radius:2px;background:var(--gold);animation:dot 1.6s infinite}
+
+/* ticker */
+.ticker{border-block:1px solid var(--line);background:rgba(23,27,35,.6);overflow:hidden;white-space:nowrap}
+.ticker div{display:inline-flex;gap:48px;padding:14px 0;animation:marquee 28s linear infinite;color:var(--mut);font-size:.9rem}
+.ticker span::before{content:"◆";color:var(--gold);margin-right:10px;font-size:.7rem}
+
+/* features */
+section{padding:72px 0}
+.eyebrow{color:var(--gold);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.78rem}
+h2{font-size:clamp(1.7rem,6vw,2.6rem);letter-spacing:-.02em;line-height:1.12;margin-top:8px;font-weight:800}
+.grid{display:grid;gap:14px;margin-top:32px;grid-template-columns:1fr}
+.feat{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;transition:transform .25s,border-color .25s}
+.feat:hover{transform:translateY(-4px);border-color:rgba(242,200,98,.4)}
+.feat i{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:rgba(242,200,98,.12);font-style:normal;font-size:1.4rem;margin-bottom:14px}
+.feat h3{font-size:1.1rem;margin-bottom:4px}
+.feat p{color:var(--mut);font-size:.95rem}
+
+/* screenshots carousel */
+.shots{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 20px 24px;margin:28px -20px 0;scrollbar-width:none}
+.shots::-webkit-scrollbar{display:none}
+.phone{flex:none;width:min(62vw,250px);scroll-snap-align:center;border-radius:34px;padding:7px;background:linear-gradient(160deg,#2a2f3a,#0f1217);box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 0 1px var(--line);transition:transform .3s}
+.phone:hover{transform:translateY(-6px) rotate(-1deg)}
+.phone img{border-radius:28px;width:100%;aspect-ratio:1206/2622;object-fit:cover}
+
+/* cta */
+.cta{text-align:center;padding:72px 0 40px}
+.cta .stores{margin-inline:auto;animation:none}
+footer{border-top:1px solid var(--line);padding:28px 0 40px;text-align:center;color:var(--mut);font-size:.82rem}
+footer a{color:var(--gold);margin:0 8px}
+
+/* sticky mobile bar */
+.bar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:10;display:flex;gap:10px;transform:translateY(140%);transition:transform .4s cubic-bezier(.2,.9,.3,1)}
+.bar.show{transform:none}
+.bar a{flex:1;text-align:center;padding:14px;border-radius:14px;font-weight:700;background:rgba(23,27,35,.92);backdrop-filter:blur(14px);border:1px solid var(--line)}
+.bar a.primary{background:var(--grad);color:#14171D;border:0}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s}
+.rv.in{opacity:1;transform:none}
+
+@keyframes pop{from{opacity:0;transform:scale(.4) rotate(-12deg)}to{opacity:1;transform:none}}
+@keyframes float{50%{transform:translateY(-10px)}}
+@keyframes shine{60%,100%{transform:translateX(100%)}}
+@keyframes ring{from{opacity:.8;transform:scale(1)}to{opacity:0;transform:scale(1.9)}}
+@keyframes up{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes gold{to{background-position:0 100%}}
+@keyframes dot{0%{opacity:0;transform:translateY(0)}40%{opacity:1}100%{opacity:0;transform:translateY(14px)}}
+@keyframes marquee{to{transform:translateX(-50%)}}
+
+@media(min-width:720px){
+  .grid{grid-template-columns:repeat(3,1fr)}
+  .stores{flex-direction:row;max-width:none;justify-content:center}
+  .btn{min-width:230px}
+  .bar{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<canvas id="sparks" aria-hidden="true"></canvas>
+
+<main>
+<header class="hero wrap">
+  <div class="logo-box">
+    <div class="ring"></div><div class="ring r2"></div>
+    <div class="logo"><img src="/img/icon.png" alt="Altın Kasam logosu" width="128" height="128"></div>
+  </div>
+  <h1>Altının kasası<br><span>cebinde.</span></h1>
+  <p class="lead">Canlı gram altın fiyatları, portföyün, fiyat alarmların ve haftalık analiz — hepsi tek uygulamada.</p>
+
+  <div class="stores" id="stores">
+    <a class="btn" id="ios" href="https://apps.apple.com/tr/app/id6833497567" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+      <span><small>Şuradan indir</small><b>App Store</b></span>
+    </a>
+    <a class="btn" id="android" href="https://play.google.com/store/apps/details?id=com.furkanages.altinkasam" rel="noopener">
+      <svg viewBox="0 0 24 24"><path fill="#34A853" d="M3.600 2.100c-.2.200-.4.600-.4 1v17.800c0 .4.100.8.400 1l.1.1 10-10v-.2L3.700 2z"/><path fill="#FBBC04" d="M17.400 15.400l-3.300-3.300v-.2l3.300-3.300.1.100 4 2.200c1.100.6 1.100 1.700 0 2.300l-4 2.200z"/><path fill="#EA4335" d="M17.500 15.300L14.100 12 3.600 22.500c.4.400 1 .4 1.700.1l12.200-7.300"/><path fill="#4285F4" d="M17.500 8.700L5.300 1.500C4.600 1.100 4 1.200 3.600 1.600L14.100 12z"/></svg>
+      <span><small>Şuradan edin</small><b>Google Play</b></span>
+    </a>
+  </div>
+  <p class="hint" id="hint">iOS ve Android'de ücretsiz indir</p>
+  <div class="scroll" aria-hidden="true"></div>
+</header>
+
+<div class="ticker" aria-hidden="true"><div>
+  <span>Canlı gram altın</span><span>Çeyrek · Yarım · Tam</span><span>Cumhuriyet altını</span><span>Gümüş ve ons</span><span>USD / EUR</span><span>Fiyat alarmı</span><span>Altın portföyü</span><span>Haftalık analiz</span>
+  <span>Canlı gram altın</span><span>Çeyrek · Yarım · Tam</span><span>Cumhuriyet altını</span><span>Gümüş ve ons</span><span>USD / EUR</span><span>Fiyat alarmı</span><span>Altın portföyü</span><span>Haftalık analiz</span>
+</div></div>
+
+<section class="wrap">
+  <div class="rv"><div class="eyebrow">Özellikler</div><h2>Altınla ilgili her şey,<br>tek dokunuşta.</h2></div>
+  <div class="grid">
+    <div class="feat rv"><i>📈</i><h3>Canlı fiyatlar</h3><p>Gram, çeyrek, yarım, tam, Cumhuriyet altını, gümüş ve ons — anlık güncellenir.</p></div>
+    <div class="feat rv"><i>🔐</i><h3>Altın kasası</h3><p>Elindeki altınları ekle; güncel değerini ve kâr/zararını canlı gör.</p></div>
+    <div class="feat rv"><i>🔔</i><h3>Fiyat alarmı</h3><p>Hedef fiyatı belirle, uygulama kapalıyken bile bildirim al.</p></div>
+    <div class="feat rv"><i>🗓️</i><h3>Ekonomik takvim</h3><p>Fed, TCMB ve piyasayı hareketlendiren tüm kritik veriler.</p></div>
+    <div class="feat rv"><i>🧠</i><h3>Haftalık analiz</h3><p>Altının yönünü etkileyen gelişmelerin sade özeti.</p></div>
+    <div class="feat rv"><i>🧩</i><h3>Ana ekran widget'ı</h3><p>Uygulamayı açmadan fiyatı ana ekranından takip et.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap rv"><div class="eyebrow">Uygulamadan</div><h2>Sade, hızlı, karanlık tema.</h2></div>
+  <div class="wrap"><div class="shots" id="shots">
+    <div class="phone"><img loading="lazy" src="/img/market.jpg" alt="Canlı altın fiyatları ekranı"></div>
+    <div class="phone"><img loading="lazy" src="/img/kasa.jpg" alt="Altın portföyü ekranı"></div>
+    <div class="phone"><img loading="lazy" src="/img/alarm.jpg" alt="Fiyat alarmı ekranı"></div>
+    <div class="phone"><img loading="lazy" src="/img/takvim.jpg" alt="Ekonomik takvim ekranı"></div>
+    <div class="phone"><img loading="lazy" src="/img/analiz.jpg" alt="Haftalık analiz ekranı"></div>
+    <div class="phone"><img loading="lazy" src="/img/rapor.jpg" alt="Rapor ekranı"></div>
+  </div></div>
+</section>
+
+<section class="cta wrap">
+  <div class="rv">
+    <h2>Altınını bugün<br>takip etmeye başla.</h2>
+    <p class="lead">Ücretsiz indir, saniyeler içinde kullanmaya başla.</p>
+    <div class="stores">
+      <a class="btn" href="https://apps.apple.com/tr/app/id6833497567" rel="noopener"><span><small>Şuradan indir</small><b>App Store</b></span></a>
+      <a class="btn" href="https://play.google.com/store/apps/details?id=com.furkanages.altinkasam" rel="noopener"><span><small>Şuradan edin</small><b>Google Play</b></span></a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div>© <span id="y"></span> Altın Kasam · Yatırım tavsiyesi değildir.</div>
+</footer>
+
+<nav class="bar" id="bar" aria-label="Uygulamayı indir">
+  <a class="primary" id="barMain" href="https://apps.apple.com/tr/app/id6833497567">İndir</a>
+</nav>
+
+<script>
+(function(){
+  document.getElementById('y').textContent=new Date().getFullYear();
+  var ua=navigator.userAgent||'';
+  var isAndroid=/Android/i.test(ua);
+  var isIOS=/iPhone|iPad|iPod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  var ios=document.getElementById('ios'),and=document.getElementById('android'),stores=document.getElementById('stores');
+  var bar=document.getElementById('barMain'),hint=document.getElementById('hint');
+  if(isAndroid){and.classList.add('primary');stores.prepend(and);bar.href=and.href;bar.textContent='Google Play\'den indir';hint.textContent='Android cihazın için önerilen';}
+  else if(isIOS){ios.classList.add('primary');bar.href=ios.href;bar.textContent='App Store\'dan indir';hint.textContent='iPhone\'un için önerilen';}
+  else{ios.classList.add('primary');}
+
+  // reveal on scroll
+  var els=document.querySelectorAll('.rv');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.15});
+    els.forEach(function(el,i){el.style.transitionDelay=((i%3)*80)+'ms';io.observe(el)});
+  }else els.forEach(function(el){el.classList.add('in')});
+
+  // sticky bar after hero
+  var hero=document.querySelector('.hero'),barEl=document.getElementById('bar');
+  window.addEventListener('scroll',function(){barEl.classList.toggle('show',window.scrollY>hero.offsetHeight*.7)},{passive:true});
+
+  // gold sparks
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var c=document.getElementById('sparks'),x=c.getContext('2d'),W,H,P=[];
+  function size(){var d=Math.min(devicePixelRatio||1,2);W=c.width=innerWidth*d;H=c.height=innerHeight*d;}
+  size();addEventListener('resize',size);
+  if(!reduce){
+    var n=innerWidth<720?26:50;
+    for(var i=0;i<n;i++)P.push({x:Math.random(),y:Math.random(),r:Math.random()*2+.6,v:Math.random()*.00035+.00012,a:Math.random()*.6+.2,p:Math.random()*6});
+    (function f(t){
+      x.clearRect(0,0,W,H);
+      P.forEach(function(p){
+        p.y-=p.v*16;if(p.y<-.02){p.y=1.02;p.x=Math.random()}
+        var tw=.5+.5*Math.sin(t/700+p.p);
+        x.beginPath();x.fillStyle='rgba(242,200,98,'+(p.a*tw)+')';
+        x.arc(p.x*W+Math.sin(t/2000+p.p)*14,p.y*H,p.r*(W/innerWidth),0,7);x.fill();
+      });
+      requestAnimationFrame(f);
+    })(0);
+  }
+
+  // auto-advance carousel (pauses on touch)
+  var s=document.getElementById('shots'),idx=0,paused=false;
+  ['touchstart','mousedown','wheel'].forEach(function(ev){s.addEventListener(ev,function(){paused=true},{passive:true})});
+  if(!reduce)setInterval(function(){
+    if(paused)return;var k=s.children;idx=(idx+1)%k.length;
+    s.scrollTo({left:k[idx].offsetLeft-(s.clientWidth-k[idx].clientWidth)/2,behavior:'smooth'});
+  },2800);
+})();
+</script>
+</body>
+</html>
