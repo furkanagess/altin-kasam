@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBF8F1"/><stop offset="1" stop-color="#EADFCB"/></linearGradient><linearGradient id="l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0C25A"/><stop offset="1" stop-color="#C99232"/></linearGradient><linearGradient id="r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B98226"/><stop offset="1" stop-color="#8E5F17"/></linearGradient></defs>
+<rect width="1024" height="1024" fill="url(#bg)"/>
+<g stroke-linejoin="round" stroke-width="12">
+<polygon points="270,440 494,540 494,690 270,590" fill="url(#l)" stroke="url(#l)"/>
+<polygon points="494,540 754,440 754,590 494,690" fill="url(#r)" stroke="url(#r)"/>
+<polygon points="270,440 530,340 754,440 494,540" fill="#FCE7A8" stroke="#FCE7A8"/>
+</g>
+<polygon points="343,440 525,370 681,440 499,510" fill="none" stroke="#FFFFFF" stroke-opacity=".6" stroke-width="8" stroke-linejoin="round"/>
+<path d="M770 230 Q778 272 820 280 Q778 288 770 330 Q762 288 720 280 Q762 272 770 230Z" fill="#C38C2C"/>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1E232D"/><stop offset="1" stop-color="#0B0E12"/></linearGradient><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="192" y1="192" x2="832" y2="832"><stop offset="0" stop-color="#FCE7A8"/><stop offset=".45" stop-color="#F0C25A"/><stop offset="1" stop-color="#B07A22"/></linearGradient></defs>
+<rect width="1024" height="1024" fill="url(#bg)"/>
+<g stroke-linejoin="round" stroke-width="24">
+<g opacity=".5"><polygon points="232,780 372,780 356,560 248,560" fill="url(#g)" stroke="url(#g)"/><polygon points="248,560 356,560 342,522 262,522" fill="#FCE7A8" stroke="#FCE7A8"/></g>
+<g opacity=".78"><polygon points="442,780 582,780 566,440 458,440" fill="url(#g)" stroke="url(#g)"/><polygon points="458,440 566,440 552,402 472,402" fill="#FCE7A8" stroke="#FCE7A8"/></g>
+<polygon points="652,780 792,780 776,300 668,300" fill="url(#g)" stroke="url(#g)"/><polygon points="668,300 776,300 762,262 682,262" fill="#FCE7A8" stroke="#FCE7A8"/>
+</g>
+<path d="M850 140 Q858 182 900 190 Q858 198 850 240 Q842 198 800 190 Q842 182 850 140Z" fill="#FCE7A8"/>
+</svg>
