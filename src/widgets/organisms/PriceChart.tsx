@@ -19,7 +19,8 @@ import {
 import { AppText } from '@/src/widgets/atoms/AppText';
 import { FlashingText } from '@/src/widgets/atoms/FlashingText';
 import { ProMark } from '@/src/widgets/atoms/ProMark';
-import React, { memo, useCallback, useId, useMemo, useState, type ReactNode } from 'react';
+import { useWebElementWidth } from '@/src/core/hooks/useWebElementWidth';
+import React, { memo, useCallback, useId, useMemo, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -91,6 +92,12 @@ type Props = {
   bare?: boolean;
   /** Saat başka yerde (ör. ekran başlığında) gösteriliyorsa grafikte gizlenir. */
   hideTimestamp?: boolean;
+  /**
+   * Çizim alanının genişliği biliniyorsa (ör. sayfalayıcıda sayfa genişliği) doğrudan verilir;
+   * grafik kendi alanını ayrıca ölçmez. Web'de iç içe ölçümler düzen değişirken ara bir değer
+   * yakalayıp grafiği bir süre sıkışık çizebiliyordu.
+   */
+  plotWidth?: number;
 };
 
 type TimeframeTabsProps = {
@@ -164,11 +171,13 @@ export function PriceChart({
   changeExtra,
   bare,
   hideTimestamp,
+  plotWidth,
 }: Props) {
   const styles = useStyles();
   const { colors } = useTheme();
   const gradientId = `chartFill${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
-  const [width, setWidth] = useState(0);
+  const [measuredWidth, setWidth] = useState(0);
+  const width = plotWidth && plotWidth > 0 ? plotWidth : measuredWidth;
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const series = useMemo(() => {
@@ -265,6 +274,9 @@ export function PriceChart({
   });
 
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
+  // Web'de genişlik ayrıca doğrudan tarayıcıdan izlenir (bkz. `useWebElementWidth`).
+  const plotRef = useRef<ComponentRef<typeof View>>(null);
+  useWebElementWidth(plotRef, setWidth);
 
   const first = series[0];
   const last = series[series.length - 1];
@@ -343,6 +355,7 @@ export function PriceChart({
 
       <GestureDetector gesture={pan}>
         <View
+          ref={plotRef}
           style={[styles.plot, bare && styles.plotBare, { height }]}
           onLayout={onLayout}
           accessibilityRole="image"

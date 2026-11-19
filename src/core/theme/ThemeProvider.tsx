@@ -1,3 +1,4 @@
+import { useHydrated } from '@/src/core/hooks/useHydrated';
 import { storageGet, storageSet } from '@/src/core/storage/storage';
 import { darkColors, lightColors, type AppColors } from '@/src/core/theme/colors';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -48,6 +49,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [preference, setPreferenceState] = useState<ThemePreference>('system');
+  const [preferenceLoaded, setPreferenceLoaded] = useState(false);
   const [fontScale, setFontScaleState] = useState<FontScale>('default');
   const system = useColorScheme();
 
@@ -58,7 +60,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         // Kayıt okunamazsa sistem teması kullanılır.
-      });
+      })
+      .finally(() => setPreferenceLoaded(true));
   }, []);
 
   useEffect(() => {
@@ -89,7 +92,26 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const fontFactor = FONT_SCALES.find((f) => f.id === fontScale)?.factor ?? 1;
 
-  const scheme: ColorScheme = preference === 'system' ? (system === 'dark' ? 'dark' : 'light') : preference;
+  // Sunucu sistem temasını bilmez ve açık temayla çizer. Hydrate bitene kadar aynısı çizilir
+  // (yoksa React farklı stilleri düzeltmeden bırakır), ardından gerçek temaya geçilir.
+  const hydrated = useHydrated();
+  const resolved: ColorScheme = preference === 'system' ? (system === 'dark' ? 'dark' : 'light') : preference;
+  const scheme: ColorScheme = hydrated ? resolved : 'light';
+
+  // Web'de belge zemini (`app/+html.tsx`) `data-theme` ile uygulama temasını izler.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const root = document.documentElement;
+    if (preference === 'system') delete root.dataset.theme;
+    else root.dataset.theme = preference;
+  }, [preference]);
+
+  // Kayıtlı tema okunduktan ve gerçek temayla çizildikten sonra sayfa görünür olur (`app/+html.tsx`);
+  // böylece koyu temada bir anlık açık renk parlaması görünmez.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !hydrated || !preferenceLoaded) return;
+    document.documentElement.dataset.ready = '1';
+  }, [hydrated, preferenceLoaded]);
 
   const value = useMemo(
     () => ({

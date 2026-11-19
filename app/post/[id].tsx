@@ -96,7 +96,7 @@ export default function PostDetailScreen() {
 
   if (loading) {
     return (
-      <Screen>
+      <Screen webWidth="readable">
         <ActivityIndicator color={colors.brand.gold} />
       </Screen>
     );
@@ -104,7 +104,7 @@ export default function PostDetailScreen() {
 
   if (!post) {
     return (
-      <Screen>
+      <Screen webWidth="readable">
         <Stack.Screen options={{ title: 'İçerik' }} />
         <AppText>İçerik bulunamadı</AppText>
       </Screen>
@@ -115,7 +115,7 @@ export default function PostDetailScreen() {
   const url = article.summary?.url ?? post.url;
 
   return (
-    <Screen
+    <Screen webWidth="readable"
       scroll
       footer={
         url ? (

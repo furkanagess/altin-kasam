@@ -1,5 +1,6 @@
+import { appAlert } from '@/src/core/dialog/appAlert';
 import { engagementDatasource } from '@/src/data/datasources/engagementDatasource';
-import { Alert, Linking, Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 
 type StoreReviewModule = typeof import('expo-store-review');
 
@@ -34,13 +35,13 @@ export const reviewDatasource = {
       await engagementDatasource.update(() => ({ reviewAsked: true }));
       // Bildirim ya da animasyon kapanana kadar kısa bekle.
       await new Promise((resolve) => setTimeout(resolve, 1800));
-      Alert.alert('Altın Kasam’dan memnun musun?', 'Görüşün uygulamayı geliştirmemize yardım eder.', [
+      appAlert('Altın Kasam’dan memnun musun?', 'Görüşün uygulamayı geliştirmemize yardım eder.', [
         {
           text: 'Pek değil',
           style: 'cancel',
           onPress: () => {
             if (!SUPPORT_EMAIL) return;
-            Alert.alert('Neyi geliştirelim?', 'Bize kısa bir not yazarsan memnun oluruz.', [
+            appAlert('Neyi geliştirelim?', 'Bize kısa bir not yazarsan memnun oluruz.', [
               { text: 'Vazgeç', style: 'cancel' },
               {
                 text: 'E-posta yaz',

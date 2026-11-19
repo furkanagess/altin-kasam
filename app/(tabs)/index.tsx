@@ -1,3 +1,4 @@
+import { useWebElementWidth } from '@/src/core/hooks/useWebElementWidth';
 import {
   type ChartUnit,
   type Currency,
@@ -109,6 +110,8 @@ const ChartPage = memo(function ChartPage({
     <View style={[styles.page, { width }]}>
       <PriceChart
         hideTimestamp
+        // Grafik alanı sayfanın tam genişliğidir (`plotBare` kenar boşluğunu geri alır).
+        plotWidth={width}
         points={points ?? EMPTY_POINTS}
         currency={currency}
         livePrice={livePrice}
@@ -172,6 +175,14 @@ function MarketChartSection() {
   const [pageWidth, setPageWidth] = useState(0);
   const [page, setPage] = useState(0);
   const pageRef = useRef(0);
+  // Sayfa genişliği; web'de ayrıca doğrudan tarayıcıdan izlenir, çünkü react-native-web `onLayout`'u
+  // pencere boyutu değişince birkaç saniye gecikebiliyor (o arada sayfalar yan yana taşıyordu).
+  const pagerWrapRef = useRef<ComponentRef<typeof View>>(null);
+  const onPageWidth = useCallback((width: number) => {
+    setPageWidth((current) => (current === width ? current : width));
+    pagerRef.current?.scrollTo({ x: pageRef.current * width, animated: false });
+  }, []);
+  useWebElementWidth(pagerWrapRef, onPageWidth);
 
   // Seçili sekme sayfa yerine oturunca güncellenir; kaydırma sırasında yeniden çizim olmaz.
   const settle = useCallback(
@@ -224,18 +235,15 @@ function MarketChartSection() {
       )}
 
       <TourTarget id="chart" style={styles.pager}>
+        {/* Genişlik sarmalayıcıdan ölçülür: web'de yatay ScrollView'un kendi onLayout'u pencere
+            büyüyünce yeniden tetiklenmez, sayfalar eski genişlikte kalıp yan sayfa taşar. */}
+        <View ref={pagerWrapRef} onLayout={(e) => onPageWidth(e.nativeEvent.layout.width)}>
         <ScrollView
           ref={pagerRef}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
-          onLayout={(e) => {
-            const width = e.nativeEvent.layout.width;
-            if (width === pageWidth) return;
-            setPageWidth(width);
-            pagerRef.current?.scrollTo({ x: pageRef.current * width, animated: false });
-          }}
           onScroll={settle}
           onMomentumScrollEnd={settle}
         >
@@ -258,6 +266,7 @@ function MarketChartSection() {
             />
           ))}
         </ScrollView>
+        </View>
       </TourTarget>
 
     </View>

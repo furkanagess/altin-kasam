@@ -13,7 +13,7 @@ export default function GoalScreen() {
   const [saving, setSaving] = useState(false);
 
   return (
-    <Screen scroll>
+    <Screen webWidth="readable" scroll>
       <SectionHeader
         title={goal ? 'Hedefini düzenle' : 'Altın biriktirme hedefi'}
         subtitle="Dönem içinde kasana eklediğin alımlar hedefe sayılır"

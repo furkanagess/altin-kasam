@@ -59,7 +59,7 @@ export default function WeeklyAnalysisScreen() {
 
   if (loading) {
     return (
-      <Screen>
+      <Screen webWidth="readable">
         <ActivityIndicator color={colors.brand.gold} />
       </Screen>
     );
@@ -67,7 +67,7 @@ export default function WeeklyAnalysisScreen() {
 
   if (!analysis) {
     return (
-      <Screen>
+      <Screen webWidth="readable">
         <EmptyState title="Analiz bulunamadı" message="Bu hafta için yayımlanmış bir analiz yok." />
       </Screen>
     );
@@ -79,7 +79,7 @@ export default function WeeklyAnalysisScreen() {
 
   if (isLocked(analysis)) {
     return (
-      <Screen>
+      <Screen webWidth="readable">
         <AppText variant="caption" tone="gold" style={styles.week}>
           {formatWeekRange(analysis.weekStart).toLocaleUpperCase('tr-TR')}
         </AppText>
@@ -96,7 +96,7 @@ export default function WeeklyAnalysisScreen() {
   return (
     <View style={styles.root}>
       <MarketTicker items={ticker} />
-      <Screen scroll>
+      <Screen webWidth="readable" scroll>
         <View style={styles.header}>
           <View style={styles.meta}>
             <AppText variant="caption" tone="gold" style={styles.week}>

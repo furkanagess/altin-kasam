@@ -1,4 +1,5 @@
 import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
+import { useSheetPresentation } from '@/src/core/theme/web';
 import { AppButton } from '@/src/widgets/atoms/AppButton';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import React, { useEffect, useState } from 'react';
@@ -86,6 +87,7 @@ function OptionChip({ option, selected, onPress }: { option: FilterOption; selec
 export function FilterSheet({ visible, onClose, groups, onReset, activeCount, resultCount }: Props) {
   const styles = useStyles();
   const insets = useSafeAreaInsets();
+  const sheet = useSheetPresentation();
   const [offset] = useState(() => new Animated.Value(SHEET_OFFSET));
 
   // Karartma Modal ile solarak gelir; panel ayrıca alttan kayar.
@@ -103,15 +105,16 @@ export function FilterSheet({ visible, onClose, groups, onReset, activeCount, re
 
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
-      <View style={styles.root}>
+      <View style={[styles.root, sheet.rootStyle]}>
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Filtreleri kapat" />
         <Animated.View
           style={[
             styles.sheet,
-            { paddingBottom: paddings.md + insets.bottom, transform: [{ translateY: offset }] },
+            { paddingBottom: paddings.md + insets.bottom, transform: sheet.wide ? [] : [{ translateY: offset }] },
+            sheet.sheetStyle,
           ]}
         >
-          <View style={styles.handle} />
+          {sheet.wide ? null : <View style={styles.handle} />}
 
           <View style={styles.header}>
             <View style={styles.headerText}>

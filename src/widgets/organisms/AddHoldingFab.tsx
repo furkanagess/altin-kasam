@@ -1,4 +1,5 @@
 import { makeStyles, useTheme } from '@/src/core/theme';
+import { useBreakpoint } from '@/src/core/theme/web';
 import { storageGet, storageSet } from '@/src/core/storage/storage';
 import { registerTourTarget } from '@/src/viewmodels/tour/tourTargets';
 import { router, usePathname } from 'expo-router';
@@ -38,6 +39,8 @@ export function AddHoldingFab() {
   const styles = useStyles();
   const { colors } = useTheme();
   const pathname = usePathname();
+  // Geniş web ekranında "Varlık ekle" kenar çubuğunda ve başlıkta durur; yüzen buton içeriği örtmez.
+  const wide = useBreakpoint() !== 'compact';
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [ready, setReady] = useState(false);
@@ -116,7 +119,7 @@ export function AddHoldingFab() {
     }),
   );
 
-  if (!ready || HIDDEN_ON.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null;
+  if (wide || !ready || HIDDEN_ON.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null;
 
   return (
     <Animated.View

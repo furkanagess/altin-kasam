@@ -1,3 +1,5 @@
+import { useBreakpoint } from '@/src/core/theme/web';
+import { appAlert } from '@/src/core/dialog/appAlert';
 import { LEGAL_LINKS } from '@/src/core/constants/premium';
 import { FONT_SCALES, makeStyles, paddings, radii, useTheme, type ThemePreference } from '@/src/core/theme';
 import { useGoal } from '@/src/viewmodels/goal/GoalProvider';
@@ -13,7 +15,7 @@ import { ThemePreferenceIcon } from '@/src/widgets/atoms/ThemePreferenceIcon';
 import { useCommunityViewModel } from '@/src/viewmodels/community/CommunityProvider';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 function SettingsRow({
   title,
@@ -122,6 +124,7 @@ export default function SettingsScreen() {
   const { isPremium, configured, openPaywall, restore, managementUrl } = useSubscription();
   const { goal } = useGoal();
   const { start: startTour } = useTour();
+  const wideWeb = useBreakpoint() !== 'compact';
   const [restoring, setRestoring] = useState(false);
   const { followedSources } = useCommunityViewModel();
   const accountLinking = useAccount();
@@ -133,7 +136,7 @@ export default function SettingsScreen() {
     setRestoring(true);
     try {
       const restored = await restore();
-      Alert.alert(
+      appAlert(
         restored ? 'Pro geri yüklendi' : 'Satın alım bulunamadı',
         restored ? 'Tüm Pro özellikler açıldı.' : 'Bu hesapta etkin bir Pro aboneliği yok.',
       );
@@ -215,12 +218,17 @@ export default function SettingsScreen() {
           detail={goal ? `${goal.grams} g · ${goal.period === 'yearly' ? 'yıllık' : 'aylık'}` : 'Hedef belirlenmedi'}
           onPress={() => router.push('/goal')}
         />
-        <View style={styles.divider} />
-        <SettingsRow
-          title="Uygulama turu"
-          detail="Özellikleri adım adım yeniden gez"
-          onPress={startTour}
-        />
+        {/* Tur telefon düzenine göredir; geniş web ekranında gösterilmez. */}
+        {wideWeb ? null : (
+          <>
+            <View style={styles.divider} />
+            <SettingsRow
+              title="Uygulama turu"
+              detail="Özellikleri adım adım yeniden gez"
+              onPress={startTour}
+            />
+          </>
+        )}
       </View>
 
       <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>DESTEK</AppText>

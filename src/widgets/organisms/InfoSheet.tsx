@@ -1,5 +1,6 @@
 import type { InfoContent } from '@/src/core/constants/marketInfo';
 import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
+import { useSheetPresentation } from '@/src/core/theme/web';
 import { AppButton } from '@/src/widgets/atoms/AppButton';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import React, { useEffect, useState, type ReactNode } from 'react';
@@ -30,6 +31,7 @@ function CloseIcon() {
 export function InfoSheet({ visible, onClose, title, intro, items, note, children }: Props) {
   const styles = useStyles();
   const insets = useSafeAreaInsets();
+  const sheet = useSheetPresentation();
   const [offset] = useState(() => new Animated.Value(SHEET_OFFSET));
 
   useEffect(() => {
@@ -46,15 +48,16 @@ export function InfoSheet({ visible, onClose, title, intro, items, note, childre
 
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
-      <View style={styles.root}>
+      <View style={[styles.root, sheet.rootStyle]}>
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Kapat" />
         <Animated.View
           style={[
             styles.sheet,
-            { paddingBottom: paddings.md + insets.bottom, transform: [{ translateY: offset }] },
+            { paddingBottom: paddings.md + insets.bottom, transform: sheet.wide ? [] : [{ translateY: offset }] },
+            sheet.sheetStyle,
           ]}
         >
-          <View style={styles.handle} />
+          {sheet.wide ? null : <View style={styles.handle} />}
           <View style={styles.header}>
             <AppText variant="h3" style={styles.title}>
               {title}

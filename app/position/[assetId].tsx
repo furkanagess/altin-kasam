@@ -1,3 +1,4 @@
+import { appAlert } from '@/src/core/dialog/appAlert';
 import { formatAssetQuantity, getOtherAsset, portfolioQuantityUnit } from '@/src/core/constants/portfolioAssets';
 import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
 import type { ValuedHolding } from '@/src/domain/models';
@@ -12,7 +13,7 @@ import { SectionHeader } from '@/src/widgets/molecules/SectionHeader';
 import { VaultDropAnimation } from '@/src/widgets/organisms/VaultDropAnimation';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 const dateFormatter = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -48,11 +49,7 @@ export default function PositionScreen() {
       await removeHolding(h.id);
       setWithdrawal({ subtitle: `${date} alımı · ${formatAssetQuantity(h.assetId, h.quantity)}`, last: holdingCount <= 1 });
     };
-    if (Platform.OS === 'web') {
-      if (window.confirm(message)) void remove();
-      return;
-    }
-    Alert.alert('Alımı sil', message, [
+    appAlert('Alımı sil', message, [
       { text: 'Vazgeç', style: 'cancel' },
       { text: 'Sil', style: 'destructive', onPress: () => void remove() },
     ]);

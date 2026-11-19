@@ -4,6 +4,7 @@ import { tourRepository, type TourStatus } from '@/src/data/repositories/tourRep
 import { useGoal } from '@/src/viewmodels/goal/GoalProvider';
 import { usePathname } from 'expo-router';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useBreakpoint } from '@/src/core/theme/web';
 
 /** Ana ekran bu kadar süre kesintisiz açık kaldıysa tur başlar (arada paywall açılırsa sayaç sıfırlanır). */
 const AUTO_START_DELAY_MS = 1500;
@@ -64,11 +65,13 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
 
   // Onboarding ve ilk paywall bittikten sonra, kullanıcı ana ekranda durduğunda bir kez başlar.
   const homeOpen = pathname === '/' || pathname === '/index';
+  // Tur telefon düzenini (alt sekmeler, yüzen buton) gösterir; geniş web ekranında başlamaz.
+  const wideWeb = useBreakpoint() !== 'compact';
   useEffect(() => {
-    if (!loaded || !statusLoaded || !onboardingDone || status !== 'pending' || active || !homeOpen) return;
+    if (wideWeb || !loaded || !statusLoaded || !onboardingDone || status !== 'pending' || active || !homeOpen) return;
     const timer = setTimeout(start, AUTO_START_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [loaded, statusLoaded, onboardingDone, status, active, homeOpen, start]);
+  }, [wideWeb, loaded, statusLoaded, onboardingDone, status, active, homeOpen, start]);
 
   const next = useCallback(() => {
     if (stepIndex >= TOUR_STEPS.length - 1) return finish(true, stepIndex);

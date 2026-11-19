@@ -1,3 +1,4 @@
+import { appAlert } from '@/src/core/dialog/appAlert';
 import { analyticsDatasource } from '@/src/data/datasources/analyticsDatasource';
 import { paddings } from '@/src/core/theme';
 import { fileShareDatasource } from '@/src/data/datasources/fileShareDatasource';
@@ -9,7 +10,7 @@ import { AppText } from '@/src/widgets/atoms/AppText';
 import { Screen } from '@/src/widgets/atoms/Screen';
 import { PortfolioShareCard } from '@/src/widgets/organisms/PortfolioShareCard';
 import React, { useMemo, useRef, useState } from 'react';
-import { Alert, Switch, View } from 'react-native';
+import { Switch, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
 /** Kasayı görsele çevirip paylaşır. Tutarlar varsayılan olarak gizlidir. */
@@ -37,9 +38,9 @@ export default function ShareVaultScreen() {
       const uri = await captureRef(cardRef, { format: 'png', quality: 1, result: 'tmpfile' });
       const ok = await fileShareDatasource.shareImage(uri, 'Kasamı paylaş');
       analyticsDatasource.track({ name: 'share_card_shared', ok });
-      if (!ok) Alert.alert('Paylaşım kullanılamıyor', 'Bu cihazda paylaşım menüsü açılamadı.');
+      if (!ok) appAlert('Paylaşım kullanılamıyor', 'Bu cihazda paylaşım menüsü açılamadı.');
     } catch {
-      Alert.alert('Görsel oluşturulamadı', 'Lütfen tekrar dene.');
+      appAlert('Görsel oluşturulamadı', 'Lütfen tekrar dene.');
     } finally {
       setBusy(false);
     }

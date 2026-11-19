@@ -103,7 +103,7 @@ export default function InsightScreen() {
 
   if (!isPremium) {
     return (
-      <Screen scroll>
+      <Screen webWidth="readable" scroll>
         <AppText tone="secondary">
           Altın ve gümüşle ilgili bugünkü haber ve gönderilerin yönü ve özeti Pro’ya dahildir.
         </AppText>
@@ -118,7 +118,7 @@ export default function InsightScreen() {
     <View style={styles.root}>
       <TopTabs tabs={TABS} value={topic} onChange={setTopic} />
       {/* Sekme değişince kaydırma başa döner. */}
-      <Screen key={topic} scroll onRefresh={() => void refresh()} refreshing={feed.refreshing}>
+      <Screen webWidth="readable" key={topic} scroll onRefresh={() => void refresh()} refreshing={feed.refreshing}>
         {insights.loading && !insight.analyzed ? (
           <ActivityIndicator color={colors.brand.gold} />
         ) : (

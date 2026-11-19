@@ -1,3 +1,4 @@
+import { appAlert } from '@/src/core/dialog/appAlert';
 import { useValueMoments } from '@/src/viewmodels/engagement/useValueMoments';
 import { analyticsDatasource } from '@/src/data/datasources/analyticsDatasource';
 import {
@@ -31,7 +32,7 @@ import { Screen } from '@/src/widgets/atoms/Screen';
 import { SectionHeader } from '@/src/widgets/molecules/SectionHeader';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 type Direction = PriceAlarm['direction'];
 
@@ -82,14 +83,10 @@ function AssetIcon({ asset }: { asset: AlarmAsset }) {
   );
 }
 
-/** Silmeden önce onay; web'de `Alert` iki düğmeyi göstermediği için `confirm`. */
+/** Silmeden önce onay. */
 function confirmRemove(label: string, onConfirm: () => void) {
   const message = `${label} alarmı silinsin mi?`;
-  if (Platform.OS === 'web') {
-    if (window.confirm(message)) onConfirm();
-    return;
-  }
-  Alert.alert('Alarmı sil', message, [
+  appAlert('Alarmı sil', message, [
     { text: 'Vazgeç', style: 'cancel' },
     { text: 'Sil', style: 'destructive', onPress: onConfirm },
   ]);
@@ -397,7 +394,7 @@ export default function AlarmScreen() {
   const tone = diffTone && { color: diffTone === 'up' ? colors.semantic.up : colors.semantic.down };
 
   return (
-    <Screen scroll footer={footer}>
+    <Screen webWidth="readable" scroll footer={footer}>
       <View style={styles.segment} role="tablist" aria-label="Alarm türü">
         {MODES.map((m) => {
           const active = m.id === mode;

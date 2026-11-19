@@ -1,3 +1,4 @@
+import { appAlert } from '@/src/core/dialog/appAlert';
 import {
   alarmPriceOf,
   alarmValueNoun,
@@ -15,7 +16,6 @@ import { useValueMoments } from '@/src/viewmodels/engagement/useValueMoments';
 import { useAlarmPrices } from '@/src/viewmodels/alarm/useAlarmPrices';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Platform } from 'react-native';
 
 type AlarmContextValue = {
   alarms: PriceAlarm[];
@@ -148,9 +148,7 @@ export function AlarmProvider({ children }: { children: React.ReactNode }) {
           const { title, body } = alarmMessage(alarm, price);
           const sent = await notificationsDatasource.present(title, body, '/');
           if (sent) continue;
-          // react-native-web'de `Alert.alert` bir şey göstermez.
-          if (Platform.OS === 'web') window.alert(`${title}\n${body}`);
-          else Alert.alert(title, body);
+          appAlert(title, body);
         }
       } catch {
         // Kayıt başarısızsa alarm bekleyen kalır; bir sonraki fiyat güncellemesinde yeniden denenir.

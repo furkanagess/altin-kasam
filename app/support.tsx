@@ -1,3 +1,4 @@
+import { appAlert } from '@/src/core/dialog/appAlert';
 import { SUPPORT_EMAIL } from '@/src/core/constants/app';
 import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
 import {
@@ -13,7 +14,7 @@ import { AppText } from '@/src/widgets/atoms/AppText';
 import { Screen } from '@/src/widgets/atoms/Screen';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Pressable, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 
 const TOPICS: { id: SupportTopic; label: string; placeholder: string }[] = [
   {
@@ -59,7 +60,7 @@ export default function SupportScreen() {
     try {
       const result = await supportDatasource.send({ topic, message: trimmed, email, premium: isPremium });
       if (result.ok) {
-        Alert.alert(
+        appAlert(
           'Mesajın bize ulaştı',
           email.trim() ? 'Teşekkürler! En kısa sürede e-postayla dönüş yapacağız.' : 'Teşekkürler, geri bildirimin için.',
         );
@@ -71,7 +72,7 @@ export default function SupportScreen() {
       } else if (result.reason === 'invalid') {
         setError('Mesaj gönderilemedi. Metni kontrol edip tekrar dene.');
       } else {
-        Alert.alert('Mesaj gönderilemedi', 'İnternet bağlantını kontrol et ya da mail uygulamanla yaz.', [
+        appAlert('Mesaj gönderilemedi', 'İnternet bağlantını kontrol et ya da mail uygulamanla yaz.', [
           { text: 'Vazgeç', style: 'cancel' },
           { text: 'Mail uygulamasını aç', onPress: () => void supportDatasource.openMail(topic) },
         ]);
@@ -82,7 +83,7 @@ export default function SupportScreen() {
   };
 
   return (
-    <Screen scroll>
+    <Screen webWidth="readable" scroll>
       <View style={styles.segments} role="radiogroup" aria-label="Konu">
         {TOPICS.map((t) => {
           const selected = t.id === topic;

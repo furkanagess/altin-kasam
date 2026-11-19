@@ -1,10 +1,11 @@
+import { appAlert } from '@/src/core/dialog/appAlert';
 import { AUTH_PROVIDER_LABELS, type AuthProviderId } from '@/src/core/constants/account';
 import { makeStyles, paddings, radii, typography, useTheme } from '@/src/core/theme';
 import { useAccount } from '@/src/viewmodels/account/AccountProvider';
 import { AppButton } from '@/src/widgets/atoms/AppButton';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 function AppleLogo({ color }: { color: string }) {
@@ -95,19 +96,19 @@ export function AccountLinkSection() {
     try {
       const result = await link(provider);
       if (!result) return;
-      Alert.alert(
+      appAlert(
         'Hesap bağlandı',
         result.restored
           ? 'Hesabındaki veriler bu cihazdakilerle birleştirildi. Kasan, alarmların, aboneliğin ve takiplerin artık hesabında.'
           : 'Kasan, alarmların, aboneliğin, bildirim ve haber takiplerin hesabına taşındı. Yeni bir telefonda aynı hesapla bağlanınca hepsi geri gelir.',
       );
     } catch (error) {
-      Alert.alert('Hesap bağlanamadı', errorMessage(error));
+      appAlert('Hesap bağlanamadı', errorMessage(error));
     }
   };
 
   const onSignOut = () => {
-    Alert.alert(
+    appAlert(
       'Bağlantıyı kes',
       'Verilerin bu cihazda ve hesabında kalır; değişiklikler artık hesabına yedeklenmez.',
       [
@@ -129,7 +130,7 @@ export function AccountLinkSection() {
   };
 
   const onDelete = () => {
-    Alert.alert(
+    appAlert(
       'Hesabı sil',
       'Hesabın ve hesaptaki tüm yedeğin kalıcı olarak silinir. Bu cihazdaki veriler kalır. Aktif bir aboneliğin varsa App Store / Google Play’den ayrıca iptal etmelisin.',
       [
@@ -141,9 +142,9 @@ export function AccountLinkSection() {
             setBusy('delete');
             try {
               await deleteAccount();
-              Alert.alert('Hesap silindi', 'Hesabın ve yedeğin silindi.');
+              appAlert('Hesap silindi', 'Hesabın ve yedeğin silindi.');
             } catch (error) {
-              Alert.alert('Hesap silinemedi', errorMessage(error));
+              appAlert('Hesap silinemedi', errorMessage(error));
             } finally {
               setBusy(null);
             }

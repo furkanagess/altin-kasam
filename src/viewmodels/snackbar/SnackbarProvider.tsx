@@ -1,3 +1,4 @@
+import { useBreakpoint } from '@/src/core/theme/web';
 import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -54,6 +55,8 @@ function SnackbarView({ snack, onDone }: { snack: Snack; onDone: (id: number) =>
   const styles = useStyles();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  // Geniş web ekranında sağ altta küçük bir bildirim olur; kenar çubuğu ve başlığın üstüne binmez.
+  const wide = useBreakpoint() !== 'compact';
   const [progress] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
@@ -75,11 +78,18 @@ function SnackbarView({ snack, onDone }: { snack: Snack; onDone: (id: number) =>
       <Animated.View
         style={[
           styles.bar,
+          wide ? WIDE_POSITION : { top: insets.top + TOP_OFFSET },
           {
-            top: insets.top + TOP_OFFSET,
             opacity: progress,
-            // Üstten aşağı iner; kapanırken aynı yoldan yukarı çıkar.
-            transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [-SLIDE_DISTANCE, 0] }) }],
+            // Üstten aşağı iner (geniş ekranda alttan çıkar); kapanırken aynı yoldan geri gider.
+            transform: [
+              {
+                translateY: progress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [wide ? SLIDE_DISTANCE : -SLIDE_DISTANCE, 0],
+                }),
+              },
+            ],
           },
         ]}
         role="status"
@@ -97,6 +107,8 @@ function SnackbarView({ snack, onDone }: { snack: Snack; onDone: (id: number) =>
     </View>
   );
 }
+
+const WIDE_POSITION = { bottom: paddings.xl, right: paddings.xl, left: undefined, width: 380 } as const;
 
 export function useSnackbar(): SnackbarContextValue {
   const ctx = useContext(SnackbarContext);

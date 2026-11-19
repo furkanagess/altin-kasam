@@ -6,6 +6,9 @@ import { AddHoldingFab } from '@/src/widgets/organisms/AddHoldingFab';
 import { TourOverlay } from '@/src/widgets/organisms/TourOverlay';
 import { TourProvider } from '@/src/viewmodels/tour/TourProvider';
 import { NetworkBanner } from '@/src/widgets/organisms/NetworkBanner';
+import { DialogHost } from '@/src/widgets/organisms/DialogHost';
+import { WebModalFrame } from '@/src/widgets/organisms/WebModalFrame';
+import { useBreakpoint } from '@/src/core/theme/web';
 import { notificationsDatasource } from '@/src/data/datasources/notificationsDatasource';
 import {
   DarkTheme,
@@ -46,9 +49,31 @@ export default function RootLayout() {
   );
 }
 
+/** Geniş web ekranında ortalanmış pencere olarak açılan modal rotalar ve pencere genişliği. */
+const WEB_MODALS: Record<string, 'sm' | 'lg'> = {
+  goal: 'sm',
+  alarm: 'sm',
+  'add-holding/index': 'lg',
+};
+
 /** Navigasyon (başlıklar, kart zeminleri) ve durum çubuğu seçili temayı izler. */
 function RootNavigator() {
   const { colors, scheme } = useTheme();
+  const wideWeb = useBreakpoint() !== 'compact';
+  /**
+   * Modal rotaların seçenekleri. Geniş web'de rota saydam katman olarak açılır ve kendi başlığını
+   * `WebModalFrame` çizer; telefonda ve native'de bugünkü modal sunum korunur.
+   */
+  const modal = (title: string, closeButton = true) =>
+    wideWeb
+      ? ({
+          title,
+          presentation: 'transparentModal',
+          headerShown: false,
+          animation: 'none',
+          contentStyle: { backgroundColor: 'transparent' },
+        } as const)
+      : ({ title, presentation: 'modal', ...(closeButton ? { headerRight: () => <HeaderCloseButton /> } : null) } as const);
   const navigationTheme = useMemo(() => {
     const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
     return {
@@ -72,6 +97,16 @@ function RootNavigator() {
       <TourProvider>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack
+        screenLayout={({ children, route, options }) => {
+          const size = wideWeb ? WEB_MODALS[route.name] : undefined;
+          return size ? (
+            <WebModalFrame title={typeof options.title === 'string' ? options.title : undefined} size={size}>
+              {children}
+            </WebModalFrame>
+          ) : (
+            children
+          );
+        }}
         screenOptions={{
           headerStyle: { backgroundColor: colors.surface.canvas },
           headerTintColor: colors.brand.ink,
@@ -87,7 +122,7 @@ function RootNavigator() {
         />
         <Stack.Screen
           name="goal"
-          options={{ title: 'Yatırım hedefi', presentation: 'modal' }}
+          options={modal('Yatırım hedefi', false)}
         />
         <Stack.Screen
           name="insight"
@@ -111,11 +146,11 @@ function RootNavigator() {
         />
         <Stack.Screen
           name="add-holding/index"
-          options={{ title: 'Varlık ekle', presentation: 'modal', headerRight: () => <HeaderCloseButton /> }}
+          options={modal('Varlık ekle')}
         />
         <Stack.Screen
           name="alarm"
-          options={{ title: 'Fiyat alarmı', presentation: 'modal', headerRight: () => <HeaderCloseButton /> }}
+          options={modal('Fiyat alarmı')}
         />
         <Stack.Screen
           name="gold/[id]"
@@ -164,6 +199,7 @@ function RootNavigator() {
       <AddHoldingFab />
       <NetworkBanner />
       <TourOverlay />
+      <DialogHost />
       </TourProvider>
     </NavigationThemeProvider>
   );

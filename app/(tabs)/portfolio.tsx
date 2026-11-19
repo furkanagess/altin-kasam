@@ -1,3 +1,4 @@
+import { appAlert } from '@/src/core/dialog/appAlert';
 import { makeStyles, paddings, useTheme } from '@/src/core/theme';
 import { portfolioRepository } from '@/src/data/repositories/portfolioRepository';
 import { useProGate } from '@/src/viewmodels/subscription/useProGate';
@@ -30,7 +31,7 @@ import { PortfolioChartCard } from '@/src/widgets/organisms/PortfolioChartCard';
 import type { PortfolioPosition, PortfolioSnapshot } from '@/src/domain/models';
 import { router } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 function StatTile({
   label,
@@ -120,11 +121,7 @@ export default function PortfolioScreen() {
         for (const h of p.holdings) await removeHolding(h.id);
         setWithdrawal({ assetId: p.assetId, subtitle: `${p.label} · ${formatAssetQuantity(p.assetId, p.quantity)}` });
       };
-      if (Platform.OS === 'web') {
-        if (window.confirm(message)) void removeAll();
-        return;
-      }
-      Alert.alert('Kasadan çıkar', message, [
+      appAlert('Kasadan çıkar', message, [
         { text: 'Vazgeç', style: 'cancel' },
         { text: 'Çıkar', style: 'destructive', onPress: () => void removeAll() },
       ]);
@@ -147,9 +144,9 @@ export default function PortfolioScreen() {
         'text/csv',
         'Kasamı dışa aktar',
       );
-      if (!ok) Alert.alert('Paylaşım kullanılamıyor', 'Bu cihazda paylaşım menüsü açılamadı.');
+      if (!ok) appAlert('Paylaşım kullanılamıyor', 'Bu cihazda paylaşım menüsü açılamadı.');
     } catch {
-      Alert.alert('Dışa aktarılamadı', 'Lütfen tekrar dene.');
+      appAlert('Dışa aktarılamadı', 'Lütfen tekrar dene.');
     }
   }, [snapshot, guardCsv, consumeCsv]);
   const openShare = useCallback(async () => {

@@ -1,10 +1,11 @@
+import { appAlert } from '@/src/core/dialog/appAlert';
 import { networkMonitor } from '@/src/core/network/networkMonitor';
 import { notificationsDatasource } from '@/src/data/datasources/notificationsDatasource';
 import { useNetworkRecovery } from '@/src/viewmodels/network/useNetworkStatus';
 import { economicCalendarRepository } from '@/src/data/repositories/economicCalendarRepository';
 import type { EconomicEvent } from '@/src/domain/models';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, AppState, Platform } from 'react-native';
+import { AppState } from 'react-native';
 
 /** Uygulama açıkken yenileme aralığı; sunucu yanıtı da 5 dk önbellekte. */
 const REFRESH_MS = 5 * 60_000;
@@ -112,8 +113,7 @@ export function EconomicCalendarProvider({ children }: { children: React.ReactNo
     if (!result.ok) {
       const message =
         'Hatırlatma kurulamadı. Bildirim izni verilmemiş olabilir ya da açıklamaya çok az kaldı; izni Ayarlar’dan açabilirsin.';
-      if (Platform.OS === 'web') window.alert(message);
-      else Alert.alert('Hatırlatma', message);
+      appAlert('Hatırlatma', message);
     }
   }, []);
 
