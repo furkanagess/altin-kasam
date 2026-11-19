@@ -18,7 +18,7 @@ export default function HoldingDetailScreen() {
 
   if (!holding) {
     return (
-      <Screen>
+      <Screen webWidth="readable">
         <AppText>Varlık bulunamadı</AppText>
       </Screen>
     );
@@ -29,6 +29,7 @@ export default function HoldingDetailScreen() {
 
   return (
     <Screen
+      webWidth="readable"
       scroll
       footer={
         <AppButton

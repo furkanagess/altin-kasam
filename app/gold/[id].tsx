@@ -1,3 +1,5 @@
+import { useBreakpoint } from '@/src/core/theme/web';
+import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { getGoldAsset } from '@/src/core/constants/goldAssets';
 import { makeStyles, paddings } from '@/src/core/theme';
 import { useMarketViewModel } from '@/src/viewmodels/market/MarketProvider';
@@ -26,6 +28,7 @@ export default function GoldRateDetailScreen() {
   const { openPaywall } = useSubscription();
   const onLockedTimeframe = useCallback(() => openPaywall('timeframe'), [openPaywall]);
   const chart = useGoldRateChart(asset?.id ?? '');
+  const expanded = useBreakpoint() === 'expanded';
 
   if (!asset) {
     return (
@@ -41,50 +44,58 @@ export default function GoldRateDetailScreen() {
       ? 'Bu çeşidin kendi fiyat geçmişi yok; grafik gram altının hareketinden, güncel fiyat oranıyla yaklaşık çizildi.'
       : null;
 
+  const addButton = (
+    <AppButton label="Ekle" onPress={() => router.push({ pathname: '/add-holding', params: { assetId: asset.id } })} />
+  );
+
+  // Masaüstünde grafik solda; fiyat tablosu ve "Ekle" sağda. Telefonda "Ekle" altta sabittir.
   return (
-    <Screen
-      scroll
-      footer={
-        <AppButton
-          label="Ekle"
-          onPress={() => router.push({ pathname: '/add-holding', params: { assetId: asset.id } })}
-        />
-      }
-    >
+    <Screen scroll footer={expanded ? undefined : addButton}>
       <Stack.Screen options={{ title: asset.label }} />
+      <WideColumns
+        asideWidth={360}
+        main={
+          <>
 
-      <PriceChart
-        points={chart.points}
-        currency={currency}
-        livePrice={rate?.bid}
-        timeframe={chart.timeframe}
-        timeframes={timeframes}
-        onTimeframeChange={chart.setTimeframe}
-        lockedTimeframes={lockedTimeframes}
-        onLockedTimeframe={onLockedTimeframe}
-        loading={chart.loading}
-        headerLeft={<GoldAssetIcon asset={asset} size={26} maxWidth={40} />}
-        headerRight={
-          <View style={styles.chartActions}>
-            <CurrencySwitcher {...currencySwitcher} compact />
-            <AlarmButton
-              assetId={asset.id}
-              onPress={() => router.push({ pathname: '/alarm', params: { assetId: asset.id } })}
-              accessibilityLabel={`${asset.label} için fiyat alarmı`}
+            <PriceChart
+              points={chart.points}
+              currency={currency}
+              livePrice={rate?.bid}
+              timeframe={chart.timeframe}
+              timeframes={timeframes}
+              onTimeframeChange={chart.setTimeframe}
+              lockedTimeframes={lockedTimeframes}
+              onLockedTimeframe={onLockedTimeframe}
+              loading={chart.loading}
+              headerLeft={<GoldAssetIcon asset={asset} size={26} maxWidth={40} />}
+              headerRight={
+                <View style={styles.chartActions}>
+                  <CurrencySwitcher {...currencySwitcher} compact />
+                  <AlarmButton
+                    assetId={asset.id}
+                    onPress={() => router.push({ pathname: '/alarm', params: { assetId: asset.id } })}
+                    accessibilityLabel={`${asset.label} için fiyat alarmı`}
+                  />
+                </View>
+              }
+              flashOnLiveChange
+              height={expanded ? 320 : 240}
+              bare
             />
-          </View>
+            {sourceNote ? (
+              <AppText variant="caption" tone="tertiary">
+                {sourceNote}
+              </AppText>
+            ) : null}
+          </>
         }
-        flashOnLiveChange
-        height={240}
-        bare
+        aside={
+          <>
+            {rate ? <PriceStatsTable bid={rate.bid} ask={rate.ask} day={rate.day} currency={currency} /> : null}
+            {expanded ? addButton : null}
+          </>
+        }
       />
-      {sourceNote ? (
-        <AppText variant="caption" tone="tertiary">
-          {sourceNote}
-        </AppText>
-      ) : null}
-
-      {rate ? <PriceStatsTable bid={rate.bid} ask={rate.ask} day={rate.day} currency={currency} /> : null}
     </Screen>
   );
 }

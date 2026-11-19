@@ -30,7 +30,7 @@ function SourceRow({ source }: { source: DataSource }) {
 export default function DataSourcesScreen() {
   const styles = useStyles();
   return (
-    <Screen scroll>
+    <Screen webWidth="readable" scroll>
       <AppText variant="body" tone="secondary">
         Uygulamadaki fiyat, takvim ve haber verileri aşağıdaki kaynaklardan derlenir.
       </AppText>

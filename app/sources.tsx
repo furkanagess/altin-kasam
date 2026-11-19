@@ -33,7 +33,7 @@ export default function SourcesScreen() {
   const others = newsSources.filter((s) => !followedSources.has(s.name));
 
   return (
-    <Screen scroll>
+    <Screen webWidth="readable" scroll>
       <AppText variant="body" tone="secondary">
         Takip ettiğin kaynakların haberleri Topluluk akışında en üstte görünür. Bu kaynaklardan yeni haber gelince
         bildirim alırsın; kontrol uygulama açıkken birkaç dakikada bir yapılır.

@@ -1,3 +1,5 @@
+import { useBreakpoint } from '@/src/core/theme/web';
+import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { METAL_ALARM_ASSET, OUNCE_ALARM_ASSET } from '@/src/core/constants/alarmAssets';
 import { makeStyles, paddings } from '@/src/core/theme';
 import { MetalSymbol } from '@/src/domain/enums';
@@ -46,6 +48,7 @@ export default function MetalDetailScreen() {
   const currencySwitcher = useChartCurrencySwitcher();
   const { openPaywall } = useSubscription();
   const onLockedTimeframe = useCallback(() => openPaywall('timeframe'), [openPaywall]);
+  const expanded = useBreakpoint() === 'expanded';
 
   if (!symbol) {
     return (
@@ -61,43 +64,57 @@ export default function MetalDetailScreen() {
   const holdingAssetId = METAL_ALARM_ASSET[symbol];
   const assetId = ounce ? OUNCE_ALARM_ASSET[symbol] : holdingAssetId;
 
-  return (
-    <Screen
-      scroll
-      footer={<AppButton label="Ekle" onPress={() => router.push({ pathname: '/add-holding', params: { assetId: holdingAssetId } })} />}
-    >
-      <Stack.Screen options={{ title: ounce ? OUNCE_TITLES[symbol] : TITLES[symbol] }} />
-      <View style={styles.unitRow}>
-        <UnitSwitcher value={unit} onChange={setUnit} />
-      </View>
+  const addButton = (
+    <AppButton label="Ekle" onPress={() => router.push({ pathname: '/add-holding', params: { assetId: holdingAssetId } })} />
+  );
 
-      <PriceChart
-        points={charts[symbol]?.points ?? EMPTY_POINTS}
-        currency={currency}
-        livePrice={quote?.bid}
-        timeframe={timeframe}
-        timeframes={timeframes}
-        onTimeframeChange={setTimeframe}
-        lockedTimeframes={lockedTimeframes}
-        onLockedTimeframe={onLockedTimeframe}
-        loading={chartLoading[symbol]}
-        headerLeft={<MetalIcon symbol={symbol} />}
-        headerRight={
-          <View style={styles.chartActions}>
-            <CurrencySwitcher {...currencySwitcher} compact />
-            <AlarmButton
-              assetId={assetId}
-              onPress={() => router.push({ pathname: '/alarm', params: { assetId } })}
-              accessibilityLabel={`${ounce ? OUNCE_TITLES[symbol] : TITLES[symbol]} için fiyat alarmı`}
+  // Masaüstünde grafik solda; fiyat tablosu ve "Ekle" sağda. Telefonda "Ekle" altta sabittir.
+  return (
+    <Screen scroll footer={expanded ? undefined : addButton}>
+      <Stack.Screen options={{ title: ounce ? OUNCE_TITLES[symbol] : TITLES[symbol] }} />
+      <WideColumns
+        asideWidth={360}
+        main={
+          <>
+            <View style={styles.unitRow}>
+              <UnitSwitcher value={unit} onChange={setUnit} />
+            </View>
+
+            <PriceChart
+              points={charts[symbol]?.points ?? EMPTY_POINTS}
+              currency={currency}
+              livePrice={quote?.bid}
+              timeframe={timeframe}
+              timeframes={timeframes}
+              onTimeframeChange={setTimeframe}
+              lockedTimeframes={lockedTimeframes}
+              onLockedTimeframe={onLockedTimeframe}
+              loading={chartLoading[symbol]}
+              headerLeft={<MetalIcon symbol={symbol} />}
+              headerRight={
+                <View style={styles.chartActions}>
+                  <CurrencySwitcher {...currencySwitcher} compact />
+                  <AlarmButton
+                    assetId={assetId}
+                    onPress={() => router.push({ pathname: '/alarm', params: { assetId } })}
+                    accessibilityLabel={`${ounce ? OUNCE_TITLES[symbol] : TITLES[symbol]} için fiyat alarmı`}
+                  />
+                </View>
+              }
+              flashOnLiveChange
+              flashKey={`${currency}-${unit}`}
+              height={expanded ? 320 : 240}
+              bare
             />
-          </View>
+          </>
         }
-        flashOnLiveChange
-        flashKey={`${currency}-${unit}`}
-        height={240}
-        bare
+        aside={
+          <>
+            {quote ? <PriceStatsTable bid={quote.bid} ask={quote.ask} day={quote.day} currency={currency} /> : null}
+            {expanded ? addButton : null}
+          </>
+        }
       />
-      {quote ? <PriceStatsTable bid={quote.bid} ask={quote.ask} day={quote.day} currency={currency} /> : null}
     </Screen>
   );
 }

@@ -164,7 +164,7 @@ export default function HomeWidgetScreen() {
   });
 
   return (
-    <Screen scroll>
+    <Screen webWidth="readable" scroll>
       <View style={styles.top}>
         <View style={styles.previewWrap}>
           <WidgetPreview props={preview} />

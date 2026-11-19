@@ -1,3 +1,5 @@
+import { useBreakpoint } from '@/src/core/theme/web';
+import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import {
   EVENT_SCENARIO_DISCLAIMER,
   eventScenarios,
@@ -93,6 +95,7 @@ function ReactionRow({
 
 /** Açıklanmış karar ya da veri raporu: sonuç, altın ve gümüş için anlamı, piyasa tepkisi, resmî metin. */
 export default function EconomicEventReportScreen() {
+  const expanded = useBreakpoint() === 'expanded';
   const styles = useStyles();
   const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -129,7 +132,7 @@ export default function EconomicEventReportScreen() {
 
   if (!isPremium) {
     return (
-      <Screen scroll footer={<AppButton label="Pro’yu incele" onPress={() => openPaywall('calendar')} />}>
+      <Screen webWidth="readable" scroll footer={<AppButton label="Pro’yu incele" onPress={() => openPaywall('calendar')} />}>
         <Stack.Screen options={{ title: event?.title ?? 'Karar raporu' }} />
         {hero}
         <View style={styles.lockedCard}>
@@ -187,133 +190,178 @@ export default function EconomicEventReportScreen() {
   const reactionLabel = (metal: string) => `${metal} (${reaction?.currency === 'USD' ? 'USD' : 'TL'})`;
   const hours = reaction?.gold?.hours ?? reaction?.silver?.hours;
 
-  return (
-    <Screen
-      scroll
-      footer={
-        source ? (
-          <AppButton
-            label="Resmî kaynağı aç"
-            variant="secondary"
-            onPress={() => router.push({ pathname: '/reader', params: { url: source.url, title: source.label } })}
-          />
-        ) : undefined
-      }
-    >
-      <Stack.Screen options={{ title: event?.title ?? 'Karar raporu' }} />
-      {hero}
+  const sourceButton = source ? (
+    <AppButton
+      label="Resmî kaynağı aç"
+      variant="secondary"
+      onPress={() => router.push({ pathname: '/reader', params: { url: source.url, title: source.label } })}
+    />
+  ) : undefined;
 
-      {analysis ? (
-        <>
-          <AppText variant="bodyStrong" style={styles.headline}>
-            {analysis.headline}
-          </AppText>
+  const analysisBlock = (
+    <>
+    {analysis ? (
+      <>
+        <AppText variant="bodyStrong" style={styles.headline}>
+          {analysis.headline}
+        </AppText>
 
-          {analysis.meaning.length ? (
-            <Section title="ALTIN VE GÜMÜŞ İÇİN ANLAMI">
-              {analysis.meaning.map((text) => (
-                <AppText key={text} variant="body" style={styles.paragraph}>
-                  {text}
-                </AppText>
-              ))}
-            </Section>
-          ) : null}
-        </>
-      ) : (
-        <ActivityIndicator color={colors.brand.gold} />
-      )}
-
-      {event && !result ? (
-        <Section title="NE BEKLENMELİ">
-          {eventScenarios(event).map((s) => (
-            <View key={s.side}>
-              <AppText variant="bodyStrong">{s.condition}</AppText>
-              <AppText variant="body" tone="secondary">
-                {s.effect}
-              </AppText>
-            </View>
-          ))}
-          <AppText variant="caption" tone="tertiary">
-            {EVENT_SCENARIO_DISCLAIMER}
-          </AppText>
-        </Section>
-      ) : null}
-
-      {expectation ? (
-        <Section title="BEKLENTİ">
-          <ExpectationRow label={expectationLabel} value={withBasis(expectation.value)} />
-          {result ? (
-            <ExpectationRow label="Açıklanan" value={withBasis(expectation.actual ?? result.value)} />
-          ) : null}
-          {result && surpriseText ? (
-            <ExpectationRow
-              label="Sonuç"
-              value={surpriseText.replace(/^./, (c) => c.toLocaleUpperCase('tr-TR'))}
-              strong={expectation.surprise !== 'inline'}
-            />
-          ) : null}
-          <AppText variant="caption" tone="tertiary">
-            {expectation.kind === 'nowcast'
-              ? 'Piyasa anketi değil, verilere dayalı model tahminidir.'
-              : 'Katılımcı yanıtlarının ortalaması.'}
-          </AppText>
-        </Section>
-      ) : null}
-
-      {report ? (
-        <Section title="PİYASA TEPKİSİ">
-          {reaction ? (
-            <>
-              <View>
-                <ReactionRow first symbol={MetalSymbol.XAU} label={reactionLabel('Altın')} reaction={reaction.gold} />
-                <ReactionRow symbol={MetalSymbol.XAG} label={reactionLabel('Gümüş')} reaction={reaction.silver} />
-              </View>
-              <AppText variant="caption" tone="tertiary">
-                {hours != null && hours < 24
-                  ? `Açıklamadan bu yana (${hours} saat). Fiyat hareketi yalnızca bu açıklamaya bağlı olmayabilir.`
-                  : 'Açıklamadan sonraki 24 saat. Fiyat hareketi yalnızca bu açıklamaya bağlı olmayabilir.'}
-              </AppText>
-            </>
-          ) : (
-            <ActivityIndicator color={colors.brand.gold} />
-          )}
-        </Section>
-      ) : null}
-
-      {statement ? (
-        <Section title="RESMÎ METİNDEN">
-          <View style={styles.toneRow}>
-            <AppText variant="caption" tone="secondary">
-              Metnin tonu
-            </AppText>
-            <Badge label={TONE_LABELS[statement.tone].label} tone={TONE_LABELS[statement.tone].tone} />
-          </View>
-          {statement.toneReasons.map((reason) => (
-            <View key={reason} style={styles.bulletRow}>
-              <View style={styles.bullet} />
-              <AppText variant="body" tone="secondary" style={styles.flex}>
-                {reason}
-              </AppText>
-            </View>
-          ))}
-          <View style={styles.quote}>
-            {statement.language === 'en' ? (
-              <AppText variant="caption" tone="tertiary">
-                Metin İngilizcedir; Türkçe değerlendirme yukarıda.
-              </AppText>
-            ) : null}
-            {statement.paragraphs.map((p) => (
-              <AppText key={p} variant="body" tone="secondary" style={styles.paragraph}>
-                {p}
+        {analysis.meaning.length ? (
+          <Section title="ALTIN VE GÜMÜŞ İÇİN ANLAMI">
+            {analysis.meaning.map((text) => (
+              <AppText key={text} variant="body" style={styles.paragraph}>
+                {text}
               </AppText>
             ))}
+          </Section>
+        ) : null}
+      </>
+    ) : (
+      <ActivityIndicator color={colors.brand.gold} />
+    )}
+    </>
+  );
+  const scenarioBlock = (
+    <>
+    {event && !result ? (
+      <Section title="NE BEKLENMELİ">
+        {eventScenarios(event).map((s) => (
+          <View key={s.side}>
+            <AppText variant="bodyStrong">{s.condition}</AppText>
+            <AppText variant="body" tone="secondary">
+              {s.effect}
+            </AppText>
           </View>
-        </Section>
-      ) : null}
+        ))}
+        <AppText variant="caption" tone="tertiary">
+          {EVENT_SCENARIO_DISCLAIMER}
+        </AppText>
+      </Section>
+    ) : null}
+    </>
+  );
+  const expectationBlock = (
+    <>
+    {expectation ? (
+      <Section title="BEKLENTİ">
+        <ExpectationRow label={expectationLabel} value={withBasis(expectation.value)} />
+        {result ? (
+          <ExpectationRow label="Açıklanan" value={withBasis(expectation.actual ?? result.value)} />
+        ) : null}
+        {result && surpriseText ? (
+          <ExpectationRow
+            label="Sonuç"
+            value={surpriseText.replace(/^./, (c) => c.toLocaleUpperCase('tr-TR'))}
+            strong={expectation.surprise !== 'inline'}
+          />
+        ) : null}
+        <AppText variant="caption" tone="tertiary">
+          {expectation.kind === 'nowcast'
+            ? 'Piyasa anketi değil, verilere dayalı model tahminidir.'
+            : 'Katılımcı yanıtlarının ortalaması.'}
+        </AppText>
+      </Section>
+    ) : null}
+    </>
+  );
+  const reactionBlock = (
+    <>
+    {report ? (
+      <Section title="PİYASA TEPKİSİ">
+        {reaction ? (
+          <>
+            <View>
+              <ReactionRow first symbol={MetalSymbol.XAU} label={reactionLabel('Altın')} reaction={reaction.gold} />
+              <ReactionRow symbol={MetalSymbol.XAG} label={reactionLabel('Gümüş')} reaction={reaction.silver} />
+            </View>
+            <AppText variant="caption" tone="tertiary">
+              {hours != null && hours < 24
+                ? `Açıklamadan bu yana (${hours} saat). Fiyat hareketi yalnızca bu açıklamaya bağlı olmayabilir.`
+                : 'Açıklamadan sonraki 24 saat. Fiyat hareketi yalnızca bu açıklamaya bağlı olmayabilir.'}
+            </AppText>
+          </>
+        ) : (
+          <ActivityIndicator color={colors.brand.gold} />
+        )}
+      </Section>
+    ) : null}
+    </>
+  );
+  const statementBlock = (
+    <>
+    {statement ? (
+      <Section title="RESMÎ METİNDEN">
+        <View style={styles.toneRow}>
+          <AppText variant="caption" tone="secondary">
+            Metnin tonu
+          </AppText>
+          <Badge label={TONE_LABELS[statement.tone].label} tone={TONE_LABELS[statement.tone].tone} />
+        </View>
+        {statement.toneReasons.map((reason) => (
+          <View key={reason} style={styles.bulletRow}>
+            <View style={styles.bullet} />
+            <AppText variant="body" tone="secondary" style={styles.flex}>
+              {reason}
+            </AppText>
+          </View>
+        ))}
+        <View style={styles.quote}>
+          {statement.language === 'en' ? (
+            <AppText variant="caption" tone="tertiary">
+              Metin İngilizcedir; Türkçe değerlendirme yukarıda.
+            </AppText>
+          ) : null}
+          {statement.paragraphs.map((p) => (
+            <AppText key={p} variant="body" tone="secondary" style={styles.paragraph}>
+              {p}
+            </AppText>
+          ))}
+        </View>
+      </Section>
+    ) : null}
+    </>
+  );
 
-      <AppText variant="caption" tone="tertiary" style={styles.disclaimer}>
-        Değerlendirme kurallara dayalıdır; yatırım tavsiyesi değildir.
-      </AppText>
+  // Masaüstünde anlatım solda; beklenti, piyasa tepkisi ve kaynak sağda. Telefonda bugünkü sıra.
+  return (
+    <Screen scroll footer={expanded ? undefined : sourceButton}>
+      <Stack.Screen options={{ title: event?.title ?? 'Karar raporu' }} />
+      {expanded ? (
+        <WideColumns
+          asideWidth={400}
+          stickyAside
+          main={
+            <>
+              {hero}
+              {analysisBlock}
+              {scenarioBlock}
+              {statementBlock}
+              <AppText variant="caption" tone="tertiary" style={styles.disclaimer}>
+                Değerlendirme kurallara dayalıdır; yatırım tavsiyesi değildir.
+              </AppText>
+            </>
+          }
+          aside={
+            <>
+              {expectationBlock}
+              {reactionBlock}
+              {sourceButton}
+            </>
+          }
+        />
+      ) : (
+        <>
+          {hero}
+          {analysisBlock}
+          {scenarioBlock}
+          {expectationBlock}
+          {reactionBlock}
+          {statementBlock}
+          <AppText variant="caption" tone="tertiary" style={styles.disclaimer}>
+            Değerlendirme kurallara dayalıdır; yatırım tavsiyesi değildir.
+          </AppText>
+        </>
+      )}
     </Screen>
   );
 }

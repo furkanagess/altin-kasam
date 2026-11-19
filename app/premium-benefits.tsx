@@ -136,7 +136,7 @@ export default function PremiumBenefitsScreen() {
   };
 
   return (
-    <Screen scroll>
+    <Screen webWidth="readable" scroll>
       <View style={[styles.card, styles.hero]}>
         <View style={styles.heroTitle}>
           <AppText variant="h3">{isPremium ? 'Pro aktif' : 'Ücretsiz plan'}</AppText>

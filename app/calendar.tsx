@@ -1,3 +1,5 @@
+import { useBreakpoint } from '@/src/core/theme/web';
+import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { EVENT_REMINDER_LEAD_MINUTES } from '@/src/core/constants/economicCalendar';
 import { makeStyles, paddings, useTheme } from '@/src/core/theme';
 import { useEconomicCalendar } from '@/src/viewmodels/analysis/EconomicCalendarProvider';
@@ -44,6 +46,85 @@ export default function EconomicCalendarScreen() {
         ]
       : FOOTNOTES;
 
+  const expanded = useBreakpoint() === 'expanded';
+  const recentList = recent.length ? (
+    <>
+      <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>
+        SON AÇIKLANANLAR
+      </AppText>
+      <EconomicCalendarList events={recent} reminders={reminders} past onOpen={openReport} badgeFor={reportBadge} />
+    </>
+  ) : null;
+  const upcomingTitle = recent.length ? (
+    <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>
+      YAKLAŞAN
+    </AppText>
+  ) : null;
+  const upcomingBlock = (
+    <>
+    {loading ? (
+      <ActivityIndicator color={colors.brand.gold} />
+    ) : events.length ? (
+      isPremium ? (
+        <EconomicCalendarList
+          events={events}
+          reminders={reminders}
+          onToggleReminder={remindersAvailable ? (e) => void toggleReminder(e) : undefined}
+          showNotes
+        />
+      ) : (
+        <>
+          <CalendarPremiumTeaser
+            upcoming={events}
+            reportCount={recent.filter((e) => e.result).length}
+            onPress={() => openPaywall('calendar')}
+            now={openedAt}
+          />
+          {/* Sıradakinden sonraki olayların bulanık önizlemesi: listenin dolu olduğu görünür. */}
+          <PremiumLock
+            locked
+            onLockedPress={() => openPaywall('calendar')}
+            label={`${Math.max(events.length - 1, 0)} olay daha · Pro`}
+            accessibilityLabel="Yaklaşan ekonomik takvim"
+          >
+            <EconomicCalendarList events={events.slice(1, 4)} reminders={reminders} showNotes />
+          </PremiumLock>
+        </>
+      )
+    ) : error ? (
+      <EmptyState
+        title="Takvim alınamadı"
+        message={
+          isOffline
+            ? 'İnternet bağlantın yok. Bağlantı gelince takvim kendiliğinden yüklenecek.'
+            : 'Kurum takvimlerine şu an ulaşılamıyor. Biraz sonra tekrar dene.'
+        }
+        actionLabel="Tekrar dene"
+        onAction={() => void refresh()}
+      />
+    ) : (
+      <EmptyState
+        title="Yaklaşan olay yok"
+        message="Kurumlar yeni dönemin takvimini duyurunca burada listelenir."
+      />
+    )}
+    </>
+  );
+  const notesBlock = (
+    <>
+    <View style={styles.notes}>
+      {footnotes.map((note) => (
+        <View key={note} style={styles.noteRow}>
+          <View style={styles.noteDot} />
+          <AppText variant="caption" tone="tertiary" style={styles.noteText}>
+            {note}
+          </AppText>
+        </View>
+      ))}
+    </View>
+    </>
+  );
+
   return (
     <Screen
       scroll
@@ -53,73 +134,31 @@ export default function EconomicCalendarScreen() {
         void refresh().finally(() => setRefreshing(false));
       }}
     >
-      {recent.length ? (
-        <>
-          <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>
-            SON AÇIKLANANLAR
-          </AppText>
-          <EconomicCalendarList events={recent} reminders={reminders} past onOpen={openReport} badgeFor={reportBadge} />
-          <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>
-            YAKLAŞAN
-          </AppText>
-        </>
-      ) : null}
-      {loading ? (
-        <ActivityIndicator color={colors.brand.gold} />
-      ) : events.length ? (
-        isPremium ? (
-          <EconomicCalendarList
-            events={events}
-            reminders={reminders}
-            onToggleReminder={remindersAvailable ? (e) => void toggleReminder(e) : undefined}
-            showNotes
-          />
-        ) : (
-          <>
-            <CalendarPremiumTeaser
-              upcoming={events}
-              reportCount={recent.filter((e) => e.result).length}
-              onPress={() => openPaywall('calendar')}
-              now={openedAt}
-            />
-            {/* Sıradakinden sonraki olayların bulanık önizlemesi: listenin dolu olduğu görünür. */}
-            <PremiumLock
-              locked
-              onLockedPress={() => openPaywall('calendar')}
-              label={`${Math.max(events.length - 1, 0)} olay daha · Pro`}
-              accessibilityLabel="Yaklaşan ekonomik takvim"
-            >
-              <EconomicCalendarList events={events.slice(1, 4)} reminders={reminders} showNotes />
-            </PremiumLock>
-          </>
-        )
-      ) : error ? (
-        <EmptyState
-          title="Takvim alınamadı"
-          message={
-            isOffline
-              ? 'İnternet bağlantın yok. Bağlantı gelince takvim kendiliğinden yüklenecek.'
-              : 'Kurum takvimlerine şu an ulaşılamıyor. Biraz sonra tekrar dene.'
+      {/* Masaüstünde yaklaşan olaylar solda, son açıklananlar ve notlar sağda. */}
+      {expanded ? (
+        <WideColumns
+          asideWidth={420}
+          main={
+            <>
+              {upcomingTitle}
+              {upcomingBlock}
+            </>
           }
-          actionLabel="Tekrar dene"
-          onAction={() => void refresh()}
+          aside={
+            <>
+              {recentList}
+              {notesBlock}
+            </>
+          }
         />
       ) : (
-        <EmptyState
-          title="Yaklaşan olay yok"
-          message="Kurumlar yeni dönemin takvimini duyurunca burada listelenir."
-        />
+        <>
+          {recentList}
+          {upcomingTitle}
+          {upcomingBlock}
+          {notesBlock}
+        </>
       )}
-      <View style={styles.notes}>
-        {footnotes.map((note) => (
-          <View key={note} style={styles.noteRow}>
-            <View style={styles.noteDot} />
-            <AppText variant="caption" tone="tertiary" style={styles.noteText}>
-              {note}
-            </AppText>
-          </View>
-        ))}
-      </View>
     </Screen>
   );
 }

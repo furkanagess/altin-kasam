@@ -8,6 +8,7 @@ import { TourProvider } from '@/src/viewmodels/tour/TourProvider';
 import { NetworkBanner } from '@/src/widgets/organisms/NetworkBanner';
 import { DialogHost } from '@/src/widgets/organisms/DialogHost';
 import { WebModalFrame } from '@/src/widgets/organisms/WebModalFrame';
+import { WebSidebar } from '@/src/widgets/organisms/WebSidebar';
 import { useBreakpoint } from '@/src/core/theme/web';
 import { notificationsDatasource } from '@/src/data/datasources/notificationsDatasource';
 import { crashDatasource } from '@/src/data/datasources/crashDatasource';
@@ -22,13 +23,14 @@ import {
   DefaultTheme,
   router,
   Stack,
+  usePathname,
   ThemeProvider as NavigationThemeProvider,
   type Href,
 } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
@@ -67,10 +69,16 @@ const WEB_MODALS: Record<string, 'sm' | 'lg'> = {
   'add-holding/index': 'lg',
 };
 
+const SIDEBAR_HIDDEN_ON = ['/onboarding', '/paywall'];
+
 /** Navigasyon (başlıklar, kart zeminleri) ve durum çubuğu seçili temayı izler. */
 function RootNavigator() {
   const { colors, scheme } = useTheme();
-  const wideWeb = useBreakpoint() !== 'compact';
+  const breakpoint = useBreakpoint();
+  const wideWeb = breakpoint !== 'compact';
+  // Kalıcı sol menü: tam ekran akışlarda (karşılama, Pro satın alma) gösterilmez.
+  const pathname = usePathname();
+  const showSidebar = wideWeb && !SIDEBAR_HIDDEN_ON.includes(pathname);
   /**
    * Modal rotaların seçenekleri. Geniş web'de rota saydam katman olarak açılır ve kendi başlığını
    * `WebModalFrame` çizer; telefonda ve native'de bugünkü modal sunum korunur.
@@ -136,110 +144,115 @@ function RootNavigator() {
     <NavigationThemeProvider value={navigationTheme}>
       <TourProvider>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      <Stack
-        screenLayout={({ children, route, options }) => {
-          const size = wideWeb ? WEB_MODALS[route.name] : undefined;
-          return size ? (
-            <WebModalFrame title={typeof options.title === 'string' ? options.title : undefined} size={size}>
-              {children}
-            </WebModalFrame>
-          ) : (
-            children
-          );
-        }}
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.surface.canvas },
-          headerTintColor: colors.brand.ink,
-          headerTitleStyle: { fontWeight: '600' },
-          headerBackButtonDisplayMode: 'minimal',
-          contentStyle: { backgroundColor: colors.surface.canvas },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="onboarding"
-          options={{ headerShown: false, gestureEnabled: false }}
-        />
-        <Stack.Screen
-          name="goal"
-          options={modal('Yatırım hedefi', false)}
-        />
-        <Stack.Screen
-          name="insight"
-          options={{ title: 'Topluluk beklentisi', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="settings"
-          options={{ title: 'Ayarlar', presentation: 'card', headerRight: () => <HeaderSupportButton /> }}
-        />
-        <Stack.Screen
-          name="widget"
-          options={{ title: 'Ana ekran widget’ı', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="premium-benefits"
-          options={{ title: 'Pro avantajların', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="manage-subscription"
-          options={{ title: 'Aboneliği yönet', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="paywall"
-          options={{ title: 'Pro', presentation: 'fullScreenModal', headerShown: false }}
-        />
-        <Stack.Screen
-          name="add-holding/index"
-          options={modal('Varlık ekle')}
-        />
-        <Stack.Screen
-          name="alarm"
-          options={modal('Fiyat alarmı')}
-        />
-        <Stack.Screen
-          name="gold/[id]"
-          options={{ title: '', presentation: 'card' }}
-        />
-        <Stack.Screen name="metal/[symbol]" options={{ title: '', presentation: 'card' }} />
-        <Stack.Screen
-          name="analysis/[id]"
-          options={{ title: 'Haftalık analiz', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="economic-event/[id]"
-          options={{ title: 'Karar raporu', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="calendar"
-          options={{ title: 'Ekonomik takvim', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="holding/[id]"
-          options={{ title: 'Varlık detayı', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="position/[assetId]"
-          options={{ title: '', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="post/[id]"
-          options={{ title: '', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="sources"
-          options={{ title: 'Haber kaynakları', presentation: 'card' }}
-        />
-        <Stack.Screen name="data-sources" options={{ title: 'Veri kaynakları', presentation: 'card' }} />
-        <Stack.Screen name="support" options={{ title: 'Destek', presentation: 'card' }} />
-        <Stack.Screen
-          name="share-vault"
-          options={{ title: 'Kasamı paylaş', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="reader"
-          options={{ title: '', presentation: 'card' }}
-        />
-      </Stack>
+      <View style={styles.shell}>
+        {showSidebar ? <WebSidebar collapsed={breakpoint === 'medium'} /> : null}
+        <View style={styles.main}>
+          <Stack
+            screenLayout={({ children, route, options }) => {
+              const size = wideWeb ? WEB_MODALS[route.name] : undefined;
+              return size ? (
+                <WebModalFrame title={typeof options.title === 'string' ? options.title : undefined} size={size}>
+                  {children}
+                </WebModalFrame>
+              ) : (
+                children
+              );
+            }}
+            screenOptions={{
+              headerStyle: { backgroundColor: colors.surface.canvas },
+              headerTintColor: colors.brand.ink,
+              headerTitleStyle: { fontWeight: '600' },
+              headerBackButtonDisplayMode: 'minimal',
+              contentStyle: { backgroundColor: colors.surface.canvas },
+            }}
+          >
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="onboarding"
+              options={{ headerShown: false, gestureEnabled: false }}
+            />
+            <Stack.Screen
+              name="goal"
+              options={modal('Yatırım hedefi', false)}
+            />
+            <Stack.Screen
+              name="insight"
+              options={{ title: 'Topluluk beklentisi', presentation: 'card' }}
+            />
+            <Stack.Screen
+              name="settings"
+              options={{ title: 'Ayarlar', presentation: 'card', headerRight: () => <HeaderSupportButton /> }}
+            />
+            <Stack.Screen
+              name="widget"
+              options={{ title: 'Ana ekran widget’ı', presentation: 'card' }}
+            />
+            <Stack.Screen
+              name="premium-benefits"
+              options={{ title: 'Pro avantajların', presentation: 'card' }}
+            />
+            <Stack.Screen
+              name="manage-subscription"
+              options={{ title: 'Aboneliği yönet', presentation: 'card' }}
+            />
+            <Stack.Screen
+              name="paywall"
+              options={{ title: 'Pro', presentation: 'fullScreenModal', headerShown: false }}
+            />
+            <Stack.Screen
+              name="add-holding/index"
+              options={modal('Varlık ekle')}
+            />
+            <Stack.Screen
+              name="alarm"
+              options={modal('Fiyat alarmı')}
+            />
+            <Stack.Screen
+              name="gold/[id]"
+              options={{ title: '', presentation: 'card' }}
+            />
+            <Stack.Screen name="metal/[symbol]" options={{ title: '', presentation: 'card' }} />
+            <Stack.Screen
+              name="analysis/[id]"
+              options={{ title: 'Haftalık analiz', presentation: 'card' }}
+            />
+            <Stack.Screen
+              name="economic-event/[id]"
+              options={{ title: 'Karar raporu', presentation: 'card' }}
+            />
+            <Stack.Screen
+              name="calendar"
+              options={{ title: 'Ekonomik takvim', presentation: 'card' }}
+            />
+            <Stack.Screen
+              name="holding/[id]"
+              options={{ title: 'Varlık detayı', presentation: 'card' }}
+            />
+            <Stack.Screen
+              name="position/[assetId]"
+              options={{ title: '', presentation: 'card' }}
+            />
+            <Stack.Screen
+              name="post/[id]"
+              options={{ title: '', presentation: 'card' }}
+            />
+            <Stack.Screen
+              name="sources"
+              options={{ title: 'Haber kaynakları', presentation: 'card' }}
+            />
+            <Stack.Screen name="data-sources" options={{ title: 'Veri kaynakları', presentation: 'card' }} />
+            <Stack.Screen name="support" options={{ title: 'Destek', presentation: 'card' }} />
+            <Stack.Screen
+              name="share-vault"
+              options={{ title: 'Kasamı paylaş', presentation: 'card' }}
+            />
+            <Stack.Screen
+              name="reader"
+              options={{ title: '', presentation: 'card' }}
+            />
+          </Stack>
+        </View>
+      </View>
       <AddHoldingFab />
       <NetworkBanner />
       <TourOverlay />
@@ -251,4 +264,7 @@ function RootNavigator() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  // Geniş web'de menü ve yığın yan yana; telefonda yalnızca yığın.
+  shell: { flex: 1, flexDirection: 'row' },
+  main: { flex: 1, minWidth: 0 },
 });

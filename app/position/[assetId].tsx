@@ -1,3 +1,5 @@
+import { useBreakpoint } from '@/src/core/theme/web';
+import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { appAlert } from '@/src/core/dialog/appAlert';
 import { formatAssetQuantity, getOtherAsset, portfolioQuantityUnit } from '@/src/core/constants/portfolioAssets';
 import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
@@ -38,6 +40,7 @@ export default function PositionScreen() {
   const { assetId } = useLocalSearchParams<{ assetId: string }>();
   const { snapshot, removeHolding } = usePortfolioViewModel();
   const position = snapshot?.positions.find((p) => p.assetId === assetId);
+  const expanded = useBreakpoint() === 'expanded';
 
   /** `last`: birimin son alımıydı; animasyon bitince ekran kapanır. */
   const [withdrawal, setWithdrawal] = useState<{ subtitle: string; last: boolean } | null>(null);
@@ -84,103 +87,114 @@ export default function PositionScreen() {
   const unit = other?.kind === 'cash' ? other.symbol : portfolioQuantityUnit(position.assetId);
   const up = position.pnl >= 0;
 
+  const addButton = (
+    <AppButton
+      label="Aynı birimden ekle"
+      onPress={() => router.push({ pathname: '/add-holding', params: { assetId: position.assetId } })}
+    />
+  );
+
+  // Masaüstünde özet ve "ekle" solda, alımlar sağda. Telefonda "ekle" altta sabittir.
   return (
-    <Screen
-      scroll
-      footer={
-        <AppButton
-          label="Aynı birimden ekle"
-          onPress={() => router.push({ pathname: '/add-holding', params: { assetId: position.assetId } })}
-        />
-      }
-    >
+    <Screen scroll footer={expanded ? undefined : addButton}>
       <Stack.Screen options={{ title: position.label }} />
+      <WideColumns
+        asideWidth={440}
+        main={
+          <>
 
-      <View style={styles.card}>
-        <View style={styles.heroTop}>
-          <View
-            style={[
-              styles.iconBadge,
-              {
-                backgroundColor:
-                  other?.kind === 'cash'
-                    ? colors.surface.muted
-                    : other?.kind === 'metal'
-                      ? colors.surface.silverBadge
-                      : colors.surface.goldBadge,
-              },
-            ]}
-          >
-            <PortfolioAssetIcon assetId={position.assetId} size={28} maxWidth={40} />
-          </View>
-          <AppText variant="caption" tone="secondary" style={styles.flex}>
-            {`${formatNumber(position.quantity)} ${unit} · ${dateFormatter.format(new Date(position.firstBoughtAt))} tarihinden beri`}
-          </AppText>
-        </View>
-        <AppText variant="price">{formatMoney(position.marketValue, currency)}</AppText>
-        {tryCash ? null : (
-          <AppText variant="bodyStrong" tone={up ? 'up' : 'down'}>
-            {`${formatSignedMoney(position.pnl, currency)} (${formatPercent(position.pnlPercent)})`}
-          </AppText>
-        )}
-        <View style={styles.grid}>
-          <Stat label="Ortalama maliyet" value={formatMoney(position.averageCost, currency)} />
-          <Stat right label="Güncel birim (alış)" value={formatMoney(position.unitPrice, currency)} />
-          <Stat label="Toplam maliyet" value={formatMoney(position.costTotal, currency)} />
-          <Stat right label="Alım sayısı" value={`${position.holdings.length}`} />
-        </View>
-      </View>
-
-      <SectionHeader title="Alımlar" subtitle="Her alım kendi fiyatına göre" />
-      <View style={styles.list}>
-        {position.holdings.map((h) => {
-          const holdingUp = h.pnl >= 0;
-          return (
-            <View key={h.id} style={styles.row}>
-              <Pressable
-                style={styles.rowMain}
-                onPress={() => router.push(`/holding/${h.id}`)}
-                accessibilityRole="button"
-                accessibilityLabel={`${dateFormatter.format(new Date(h.boughtAt))}, ${formatNumber(h.quantity)} ${unit}`}
-              >
-                <View style={styles.flex}>
-                  <AppText variant="bodyStrong">{dateFormatter.format(new Date(h.boughtAt))}</AppText>
-                  <AppText variant="caption" tone="secondary">
-                    {tryCash
-                      ? `${formatNumber(h.quantity)} ${unit}`
-                      : `${formatNumber(h.quantity)} ${unit} × ${formatMoney(h.costBasisPerUnit, currency)}`}
-                  </AppText>
+            <View style={styles.card}>
+              <View style={styles.heroTop}>
+                <View
+                  style={[
+                    styles.iconBadge,
+                    {
+                      backgroundColor:
+                        other?.kind === 'cash'
+                          ? colors.surface.muted
+                          : other?.kind === 'metal'
+                            ? colors.surface.silverBadge
+                            : colors.surface.goldBadge,
+                    },
+                  ]}
+                >
+                  <PortfolioAssetIcon assetId={position.assetId} size={28} maxWidth={40} />
                 </View>
-                <View style={styles.values}>
-                  <AppText variant="bodyStrong">{formatMoney(h.marketValue, currency)}</AppText>
-                  {tryCash ? null : (
-                    <AppText variant="caption" tone={holdingUp ? 'up' : 'down'}>
-                      {formatPercent(h.pnlPercent)}
-                    </AppText>
-                  )}
-                </View>
-              </Pressable>
-              <Pressable
-                onPress={() => confirmRemove(h)}
-                style={styles.remove}
-                accessibilityRole="button"
-                accessibilityLabel="Alımı sil"
-                hitSlop={6}
-              >
-                <AppText variant="caption" tone="down" style={styles.removeLabel}>
-                  Sil
+                <AppText variant="caption" tone="secondary" style={styles.flex}>
+                  {`${formatNumber(position.quantity)} ${unit} · ${dateFormatter.format(new Date(position.firstBoughtAt))} tarihinden beri`}
                 </AppText>
-              </Pressable>
+              </View>
+              <AppText variant="price">{formatMoney(position.marketValue, currency)}</AppText>
+              {tryCash ? null : (
+                <AppText variant="bodyStrong" tone={up ? 'up' : 'down'}>
+                  {`${formatSignedMoney(position.pnl, currency)} (${formatPercent(position.pnlPercent)})`}
+                </AppText>
+              )}
+              <View style={styles.grid}>
+                <Stat label="Ortalama maliyet" value={formatMoney(position.averageCost, currency)} />
+                <Stat right label="Güncel birim (alış)" value={formatMoney(position.unitPrice, currency)} />
+                <Stat label="Toplam maliyet" value={formatMoney(position.costTotal, currency)} />
+                <Stat right label="Alım sayısı" value={`${position.holdings.length}`} />
+              </View>
             </View>
-          );
-        })}
-      </View>
+            {expanded ? addButton : null}
+          </>
+        }
+        aside={
+          <>
+            <SectionHeader title="Alımlar" subtitle="Her alım kendi fiyatına göre" />
+            <View style={styles.list}>
+              {position.holdings.map((h) => {
+                const holdingUp = h.pnl >= 0;
+                return (
+                  <View key={h.id} style={styles.row}>
+                    <Pressable
+                      style={styles.rowMain}
+                      onPress={() => router.push(`/holding/${h.id}`)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${dateFormatter.format(new Date(h.boughtAt))}, ${formatNumber(h.quantity)} ${unit}`}
+                    >
+                      <View style={styles.flex}>
+                        <AppText variant="bodyStrong">{dateFormatter.format(new Date(h.boughtAt))}</AppText>
+                        <AppText variant="caption" tone="secondary">
+                          {tryCash
+                            ? `${formatNumber(h.quantity)} ${unit}`
+                            : `${formatNumber(h.quantity)} ${unit} × ${formatMoney(h.costBasisPerUnit, currency)}`}
+                        </AppText>
+                      </View>
+                      <View style={styles.values}>
+                        <AppText variant="bodyStrong">{formatMoney(h.marketValue, currency)}</AppText>
+                        {tryCash ? null : (
+                          <AppText variant="caption" tone={holdingUp ? 'up' : 'down'}>
+                            {formatPercent(h.pnlPercent)}
+                          </AppText>
+                        )}
+                      </View>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => confirmRemove(h)}
+                      style={styles.remove}
+                      accessibilityRole="button"
+                      accessibilityLabel="Alımı sil"
+                      hitSlop={6}
+                    >
+                      <AppText variant="caption" tone="down" style={styles.removeLabel}>
+                        Sil
+                      </AppText>
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
 
-      <AppText variant="caption" tone="tertiary" style={styles.note}>
-        {currency !== 'TRY'
-          ? 'Ortalama maliyet, alımların miktarla ağırlıklı ortalamasıdır. Alış tutarları TL olarak kaydedilir ve güncel kurla çevrilerek gösterilir.'
-          : 'Ortalama maliyet, alımların miktarla ağırlıklı ortalamasıdır; kâr/zarar bozdurma (alış) fiyatıyla hesaplanır.'}
-      </AppText>
+            <AppText variant="caption" tone="tertiary" style={styles.note}>
+              {currency !== 'TRY'
+                ? 'Ortalama maliyet, alımların miktarla ağırlıklı ortalamasıdır. Alış tutarları TL olarak kaydedilir ve güncel kurla çevrilerek gösterilir.'
+                : 'Ortalama maliyet, alımların miktarla ağırlıklı ortalamasıdır; kâr/zarar bozdurma (alış) fiyatıyla hesaplanır.'}
+            </AppText>
+          </>
+        }
+      />
       {withdrawalAnimation}
     </Screen>
   );

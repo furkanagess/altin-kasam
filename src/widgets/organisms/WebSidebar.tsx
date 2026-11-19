@@ -3,16 +3,24 @@ import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
 import { webLayout } from '@/src/core/theme/web';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
 import { AppText } from '@/src/widgets/atoms/AppText';
-import type { BottomTabBarProps } from 'expo-router/js-tabs';
+import { TabIcon, type TabIconName } from '@/src/widgets/atoms/TabIcon';
 import { router, usePathname, type Href } from 'expo-router';
 import React, { type ReactNode } from 'react';
 import { Image, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-type Props = BottomTabBarProps & {
+type Props = {
   /** `medium` ekranda yalnızca ikonlar gösterilir. */
   collapsed: boolean;
 };
+
+/** Ana bölümler (sekmeler); sırası telefondaki alt sekme çubuğuyla aynı. */
+const SECTIONS: readonly { href: Href; label: string; icon: TabIconName; paths: readonly string[] }[] = [
+  { href: '/', label: 'Piyasa', icon: 'market', paths: ['/', '/index'] },
+  { href: '/analytics', label: 'Analiz', icon: 'analysis', paths: ['/analytics'] },
+  { href: '/community', label: 'Topluluk', icon: 'community', paths: ['/community'] },
+  { href: '/portfolio', label: 'Kasam', icon: 'portfolio', paths: ['/portfolio'] },
+];
 
 type IconProps = { color: string };
 
@@ -62,10 +70,11 @@ function GearIcon({ color }: IconProps) {
 }
 
 /**
- * Geniş web ekranının sol gezinme çubuğu. Sekme navigatörünün `tabBar`'ı olarak çizilir; ana
- * bölümler sekmelerdir, alttaki kısayollar (takvim, alarm, ayarlar) yığına açılan ekranlardır.
+ * Geniş web ekranının sol gezinme çubuğu. Kök düzende yığının yanında çizilir; böylece detay
+ * sayfalarında (altın türü, pozisyon, analiz…) da görünür kalır. Ana bölümler sekmelerdir,
+ * alttaki kısayollar (takvim, alarm, ayarlar) yığına açılan ekranlardır.
  */
-export function WebSidebar({ state, descriptors, emitter, navigateToTab, collapsed }: Props) {
+export function WebSidebar({ collapsed }: Props) {
   const styles = useStyles();
   const { colors } = useTheme();
   const pathname = usePathname();
@@ -96,7 +105,7 @@ export function WebSidebar({ state, descriptors, emitter, navigateToTab, collaps
     <View style={[styles.root, { width: collapsed ? webLayout.sidebar.collapsed : webLayout.sidebar.expanded }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Pressable
-          onPress={() => navigateToTab(state.routes[0].key)}
+          onPress={() => router.navigate('/')}
           accessibilityRole="link"
           accessibilityLabel="Altın Kasam ana sayfa"
           style={[styles.brand, collapsed && styles.brandCollapsed]}
@@ -116,21 +125,15 @@ export function WebSidebar({ state, descriptors, emitter, navigateToTab, collaps
         </Pressable>
 
         <View style={styles.group}>
-          {state.routes.map((route, index) => {
-            const { options } = descriptors[route.key];
-            const label = typeof options.title === 'string' ? options.title : route.name;
-            const active = state.index === index;
-            return item(
-              route.key,
-              label,
-              (color) => options.tabBarIcon?.({ focused: active, color, size: 22 }),
-              active,
-              () => {
-                const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-                if (!active && !event.defaultPrevented) navigateToTab(route.key);
-              },
-            );
-          })}
+          {SECTIONS.map((section) =>
+            item(
+              section.label,
+              section.label,
+              (color) => <TabIcon name={section.icon} color={color} focused={section.paths.includes(pathname)} size={22} />,
+              section.paths.includes(pathname),
+              () => router.navigate(section.href),
+            ),
+          )}
         </View>
 
         <View style={[styles.group, styles.divider]}>

@@ -1,6 +1,5 @@
 import { useTheme } from '@/src/core/theme';
 import { useBreakpoint } from '@/src/core/theme/web';
-import { WebSidebar } from '@/src/widgets/organisms/WebSidebar';
 import { useGoal } from '@/src/viewmodels/goal/GoalProvider';
 import { TabIcon } from '@/src/widgets/atoms/TabIcon';
 import { HeaderActions } from '@/src/widgets/molecules/HeaderActions';
@@ -27,9 +26,8 @@ function TabLabel({ title, focused }: { title: string; focused: boolean }) {
 export default function TabLayout() {
   const { colors } = useTheme();
   const { loaded, onboardingDone } = useGoal();
-  // Geniş web ekranında alt sekme çubuğu yerine sol kenar çubuğu (tablette yalnızca ikonlar).
-  const breakpoint = useBreakpoint();
-  const sidebar = breakpoint !== 'compact';
+  // Geniş web ekranında alt sekme çubuğu gizlenir; yerine kök düzendeki sol menü kullanılır.
+  const sidebar = useBreakpoint() !== 'compact';
 
   // Depo okunana kadar sekmeler çizilmez; aksi halde karşılama ekranından önce bir an görünür.
   if (!loaded) return null;
@@ -37,9 +35,9 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      tabBar={sidebar ? (props) => <WebSidebar {...props} collapsed={breakpoint === 'medium'} /> : undefined}
+      // Geniş web ekranında sekme çubuğu yok: kalıcı sol menü kök düzende çizilir (`app/_layout.tsx`).
+      tabBar={sidebar ? () => null : undefined}
       screenOptions={{
-        tabBarPosition: sidebar ? 'left' : 'bottom',
         headerShown: true,
         headerTitleAlign: 'left',
         headerStyle: { backgroundColor: colors.surface.canvas },

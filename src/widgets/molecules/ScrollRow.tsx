@@ -1,4 +1,5 @@
 import { makeStyles, useTheme } from '@/src/core/theme';
+import { useBreakpoint } from '@/src/core/theme/web';
 import React, { useCallback, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import {
   Pressable,
@@ -74,6 +75,18 @@ export function ScrollRow({ children, style, contentContainerStyle, arrowInset =
     const right = offset.current + viewport.current < content.current - EDGE_EPSILON;
     setEdges((prev) => (prev.left === left && prev.right === right ? prev : { left, right }));
   }, []);
+
+  // Geniş web ekranında fareyle yatay kaydırma zahmetli: öğeler satıra sarılan ızgara olur.
+  const wide = useBreakpoint() !== 'compact';
+  if (wide) {
+    return (
+      <View style={style}>
+        <View style={[contentContainerStyle, { flexDirection: 'row', flexWrap: 'wrap' }]} {...a11y}>
+          {children}
+        </View>
+      </View>
+    );
+  }
 
   const scrollBy = (direction: -1 | 1) => {
     const max = Math.max(0, content.current - viewport.current);

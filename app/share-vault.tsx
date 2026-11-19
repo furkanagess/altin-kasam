@@ -28,7 +28,7 @@ export default function ShareVaultScreen() {
 
   if (!snapshot || !breakdown || !snapshot.holdings.length) {
     return (
-      <Screen>
+      <Screen webWidth="readable">
         <AppText tone="secondary">Paylaşılacak bir varlık yok. Önce kasana varlık ekle.</AppText>
       </Screen>
     );
@@ -58,7 +58,7 @@ export default function ShareVaultScreen() {
   };
 
   return (
-    <Screen
+    <Screen webWidth="readable"
       scroll
       footer={<AppButton label="Görseli paylaş" loading={busy} onPress={() => void share()} />}
     >
