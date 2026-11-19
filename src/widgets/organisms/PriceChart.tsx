@@ -28,10 +28,12 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Stop } from 'react-native-svg';
 
 const PADDING_Y = 18;
 const EXTREME_LABEL_WIDTH = 96;
+/** Kasaya ekleme rozetinin yarıçapı. */
+const MARKER_R = 6;
 /** Eksen etiketlerinin ve dikey kılavuz çizgilerinin konumu (0 = sol, 1 = sağ). */
 const TICKS = [0, 1 / 3, 2 / 3, 1];
 const TICK_GRANULARITY: Record<Timeframe, 'time' | 'day' | 'month'> = {
@@ -82,6 +84,10 @@ type Props = {
    * çizgi başladığı yerden çizilir. Verilmezse eksen serinin ilk–son noktasıdır.
    */
   fullPeriod?: boolean;
+  /** `points` içindeki sıralar; bu noktalar grafikte "+" rozetiyle işaretlenir (ör. kasaya ekleme). */
+  markers?: readonly number[];
+  /** Grafikte gezinirken işaretli noktaya gelince tarihin yanında gösterilir. */
+  markerLabel?: string;
   /** Değişimin önünde küçük etiket (ör. "Toplam"). */
   changeLabel?: string;
   /** Değişimin yanında; grafikte gezinirken gizlenir (ör. günlük kâr/zarar). */
@@ -166,6 +172,8 @@ export function PriceChart({
   titleRight,
   baseline,
   fullPeriod,
+  markers,
+  markerLabel,
   formatValue,
   changeLabel,
   changeExtra,
@@ -291,6 +299,11 @@ export function PriceChart({
   const lineColor = periodUp ? colors.semantic.up : colors.semantic.down;
   const showTime = TIMEFRAME_SHOWS_TIME[timeframe];
   const activeCoord = activeIndex != null ? geometry?.coords[activeIndex] : undefined;
+  const markerCoords = useMemo(
+    () => (geometry && markers?.length ? markers.flatMap((i) => (geometry.coords[i] ? [geometry.coords[i]] : [])) : []),
+    [geometry, markers],
+  );
+  const activeIsMarker = activeIndex != null && !!markers?.includes(activeIndex);
 
   // Çizim alanı kart kenarına kadar uzanır; etiketler kartın iç boşluğunda kalır.
   const extremeLabelLeft = (index: number) =>
@@ -348,6 +361,7 @@ export function PriceChart({
           {active ? (
             <AppText variant="caption" tone="secondary">
               {formatChartDate(active.t, showTime)}
+              {activeIsMarker && markerLabel ? ` · ${markerLabel}` : ''}
             </AppText>
           ) : null}
         </View>
@@ -406,9 +420,39 @@ export function PriceChart({
                   strokeLinecap="round"
                 />
                 {/* Tam periyotta seri geç başlıyorsa başlangıç (ilk alım) noktası işaretlenir. */}
-                {domain && geometry.firstX > 4 ? (
+                {domain && geometry.firstX > 4 && !markers?.includes(0) ? (
                   <Circle cx={geometry.firstX} cy={geometry.coords[0].y} r={3.5} fill={lineColor} />
                 ) : null}
+                {markerCoords.map((c, i) => (
+                  <G key={i}>
+                    <Circle
+                      cx={c.x}
+                      cy={c.y}
+                      r={MARKER_R}
+                      fill={colors.brand.gold}
+                      stroke={colors.surface.elevated}
+                      strokeWidth={1.5}
+                    />
+                    <Line
+                      x1={c.x - MARKER_R / 2}
+                      x2={c.x + MARKER_R / 2}
+                      y1={c.y}
+                      y2={c.y}
+                      stroke={colors.text.onGold}
+                      strokeWidth={1.6}
+                      strokeLinecap="round"
+                    />
+                    <Line
+                      x1={c.x}
+                      x2={c.x}
+                      y1={c.y - MARKER_R / 2}
+                      y2={c.y + MARKER_R / 2}
+                      stroke={colors.text.onGold}
+                      strokeWidth={1.6}
+                      strokeLinecap="round"
+                    />
+                  </G>
+                ))}
                 {activeCoord ? (
                   <>
                     <Line

@@ -14,8 +14,10 @@ import { Screen } from '@/src/widgets/atoms/Screen';
 import { ThemePreferenceIcon } from '@/src/widgets/atoms/ThemePreferenceIcon';
 import { useCommunityViewModel } from '@/src/viewmodels/community/CommunityProvider';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { weeklySummaryRepository } from '@/src/data/repositories/weeklySummaryRepository';
+import { usePortfolioViewModel } from '@/src/viewmodels/portfolio/PortfolioProvider';
+import React, { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 function SettingsRow({
   title,
@@ -121,11 +123,27 @@ function FontScalePicker() {
 
 export default function SettingsScreen() {
   const styles = useStyles();
-  const { isPremium, configured, openPaywall, restore, managementUrl } = useSubscription();
+  const { isPremium, configured, openPaywall, restore } = useSubscription();
   const { goal } = useGoal();
   const { start: startTour } = useTour();
   const wideWeb = useBreakpoint() !== 'compact';
   const [restoring, setRestoring] = useState(false);
+  const hasHoldings = usePortfolioViewModel().holdings.length > 0;
+  const [weeklySummary, setWeeklySummary] = useState(true);
+  useEffect(() => {
+    let alive = true;
+    void weeklySummaryRepository.isEnabled().then((on) => {
+      if (alive) setWeeklySummary(on);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const toggleWeeklySummary = async (on: boolean) => {
+    setWeeklySummary(on);
+    await weeklySummaryRepository.setEnabled(on);
+    await weeklySummaryRepository.sync(hasHoldings);
+  };
   const { followedSources } = useCommunityViewModel();
   const accountLinking = useAccount();
   const showAccount =
@@ -146,7 +164,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <Screen scroll>
+    <Screen webWidth="readable" scroll>
       {showAccount ? (
         <>
           <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>HESAP</AppText>
@@ -169,21 +187,14 @@ export default function SettingsScreen() {
         <AppText tone="secondary">
           {isPremium
             ? 'Tüm Pro özellikler açık. Hangilerini nasıl kullandığını avantajlar ekranında görebilirsin.'
-            : 'Dolar/euro görünümü, uzun dönem grafikler, topluluk beklentisi ve ana ekran widget’ı Pro’da.'}
+            : 'Sınırsız alarm ve kasa, dolar/euro görünümü, topluluk beklentisi ve widget’ta tür seçimi Pro’da.'}
         </AppText>
         {isPremium ? (
           <AppButton label="Pro avantajların" onPress={() => router.push('/premium-benefits')} />
         ) : null}
         {isPremium ? (
           configured ? (
-            <AppButton
-              label="Aboneliği yönet"
-              variant="secondary"
-              onPress={async () => {
-                const url = await managementUrl();
-                if (url) void Linking.openURL(url);
-              }}
-            />
+            <AppButton label="Aboneliği yönet" variant="secondary" onPress={() => router.push('/manage-subscription')} />
           ) : null
         ) : (
           <AppButton label="Pro’yu incele" onPress={() => openPaywall()} />
@@ -202,8 +213,7 @@ export default function SettingsScreen() {
       <View style={styles.card}>
         <SettingsRow
           title="Ana ekran widget’ı"
-          detail="Seçtiğin birimin fiyatı ana ekranında"
-          pro
+          detail="Gram altın ücretsiz; tür seçimi ve orta boy Pro’da"
           onPress={() => router.push('/widget')}
         />
         <View style={styles.divider} />
@@ -212,6 +222,20 @@ export default function SettingsScreen() {
           detail={followedSources.size ? `${followedSources.size} kaynak takip ediliyor` : 'Takip ettiğin kaynaktan haber gelince bildirim'}
           onPress={() => router.push('/sources')}
         />
+        <View style={styles.divider} />
+        <View style={styles.row}>
+          <View style={styles.rowText}>
+            <AppText variant="bodyStrong">Haftalık kasa özeti</AppText>
+            <AppText variant="caption" tone="secondary">
+              Pazar akşamı kasanın haftalık değişimini hatırlatan bildirim
+            </AppText>
+          </View>
+          <Switch
+            value={weeklySummary}
+            onValueChange={(on) => void toggleWeeklySummary(on)}
+            accessibilityLabel="Haftalık kasa özeti bildirimi"
+          />
+        </View>
         <View style={styles.divider} />
         <SettingsRow
           title="Yatırım hedefi"

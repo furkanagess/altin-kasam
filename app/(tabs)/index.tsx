@@ -23,7 +23,6 @@ import { MetalIcon, OilIcon } from '@/src/widgets/atoms/MetalIcon';
 import { AlarmButton } from '@/src/widgets/molecules/AlarmButton';
 import { FullscreenButton } from '@/src/widgets/molecules/FullscreenButton';
 import { METAL_ALARM_ASSET, OUNCE_ALARM_ASSET } from '@/src/core/constants/alarmAssets';
-import { ProMark } from '@/src/widgets/atoms/ProMark';
 import { Screen } from '@/src/widgets/atoms/Screen';
 import { TourTarget } from '@/src/widgets/atoms/TourTarget';
 import { CurrencySwitcher } from '@/src/widgets/molecules/CurrencySwitcher';
@@ -307,15 +306,14 @@ export default function MarketScreen() {
           style={styles.widgetEntry}
           onPress={() => router.push('/widget')}
           accessibilityRole="button"
-          accessibilityLabel="Ana ekran widget’ı, Pro"
+          accessibilityLabel="Ana ekran widget’ı, ücretsiz"
         >
           <View style={styles.widgetEntryText}>
             <View style={styles.widgetEntryTitle}>
               <AppText variant="bodyStrong">Ana ekran widget’ı</AppText>
-              <ProMark />
             </View>
             <AppText variant="caption" tone="secondary">
-              Seçtiğin birimin fiyatı telefonunun ana ekranında
+              Gram altın fiyatı telefonunun ana ekranında, ücretsiz
             </AppText>
           </View>
           <AppText variant="bodyStrong" tone="gold">›</AppText>

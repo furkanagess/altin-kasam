@@ -47,8 +47,10 @@ export async function decideAtMoment(moment: ValueMoment, isPremium: boolean): P
     return 'review';
   }
 
+  // Alarmın çaldığı an en yüksek niyet anıdır: kullanıcı alarmın işe yaradığını o an görür.
   const paywallMoment =
     moment === 'alarm_created' ||
+    moment === 'alarm_triggered' ||
     (moment === 'holding_added' && state.holdingsAdded >= PROMPT_RULES.paywallMinHoldings);
   if (
     !isPremium &&

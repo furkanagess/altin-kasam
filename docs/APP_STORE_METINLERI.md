@@ -67,8 +67,8 @@ NEDEN ALTIN KASAM?
 - Sade ve hızlı arayüz
 
 ALTIN KASAM PRO
-Ücretsiz planla fiyatları izleyebilir, kasana 5 kaleme kadar altın ekleyebilir ve 1 fiyat alarmı kurabilirsin. Pro ile:
-- Sınırsız kasa ve sınırsız fiyat alarmı
+Ücretsiz planla fiyatları izleyebilir, kasana sınırsız altın ekleyebilir ve 1 fiyat alarmı kurabilirsin. Pro ile:
+- Sınırsız fiyat alarmı
 - Güncel haftalık altın analizleri
 - Ekonomik takvimin tamamı, hatırlatmalar ve karar raporları
 - Topluluk beklentisi ve haber özeti

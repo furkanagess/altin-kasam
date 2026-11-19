@@ -2,6 +2,7 @@ import { analyticsDatasource } from '@/src/data/datasources/analyticsDatasource'
 import type { PaywallReason } from '@/src/core/constants/premium';
 import { storageGet, storageSet } from '@/src/core/storage/storage';
 import { subscriptionRepository } from '@/src/data/repositories/subscriptionRepository';
+import { syncTrialReminder } from '@/src/data/repositories/trialReminderRepository';
 import type { SubscriptionPackage } from '@/src/domain/models';
 import { router } from 'expo-router';
 import React, {
@@ -47,6 +48,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     if (subscriptionRepository.configured) void storageSet(PREMIUM_CACHE_KEY, premium).catch(() => {});
   }, []);
 
+  // Deneme bitmeden önceki gün hatırlatması: açılışta ve Pro durumu her değiştiğinde yeniden kurulur
+  // (iptal edilen ya da ücretliye dönen denemede kaldırılır).
+  useEffect(() => {
+    if (subscriptionRepository.configured) void syncTrialReminder(isPremium);
+  }, [isPremium]);
+
   useEffect(() => {
     let alive = true;
     if (subscriptionRepository.configured) {
@@ -83,9 +90,15 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const purchase = useCallback(async (packageId: string) => {
     const premium = await subscriptionRepository.purchase(packageId);
     setPremium(premium);
-    if (premium) analyticsDatasource.track({ name: 'pro_purchased' });
+    if (premium) {
+      // Paket, deneme ve offering ile: fiyat / deneme deneylerini RevenueCat dışında da okuyabilmek için.
+      const pkg = packages.find((p) => p.id === packageId);
+      const props = { period: pkg?.period ?? 'unknown', offering: pkg?.offeringId ?? 'unknown' };
+      analyticsDatasource.track({ name: 'pro_purchased', ...props, trial: Boolean(pkg?.trial) });
+      if (pkg?.trial) analyticsDatasource.track({ name: 'trial_started', ...props });
+    }
     return premium;
-  }, [setPremium]);
+  }, [setPremium, packages]);
 
   const restore = useCallback(async () => {
     const premium = await subscriptionRepository.restore();

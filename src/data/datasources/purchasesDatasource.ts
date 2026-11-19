@@ -17,6 +17,8 @@ export interface IPurchasesDatasource {
   purchase(packageId: string): Promise<boolean>;
   restore(): Promise<boolean>;
   managementUrl(): Promise<string | null>;
+  /** Pro ücretsiz denemedeyse ve yenilenecekse deneme bitişi; değilse null. */
+  trialEndsAt(): Promise<Date | null>;
   onPremiumChange(listener: (premium: boolean) => void): () => void;
   /**
    * Aboneliği bağlı hesaba (Firebase uid) taşır: RevenueCat anonim kullanıcının satın alımlarını
@@ -54,7 +56,7 @@ function hasPremium(info: CustomerInfo): boolean {
   return info.entitlements.active[PREMIUM_ENTITLEMENT] !== undefined;
 }
 
-function toPackage(pkg: PurchasesPackage): SubscriptionPackage {
+function toPackage(pkg: PurchasesPackage, offeringId?: string): SubscriptionPackage {
   const intro = pkg.product.introPrice;
   const unit = intro ? TRIAL_UNITS[intro.periodUnit] : undefined;
   return {
@@ -67,6 +69,7 @@ function toPackage(pkg: PurchasesPackage): SubscriptionPackage {
       intro && intro.price === 0 && unit
         ? `${intro.periodNumberOfUnits} ${unit} ücretsiz`
         : undefined,
+    offeringId,
   };
 }
 
@@ -97,7 +100,7 @@ export class RevenueCatPurchasesDatasource implements IPurchasesDatasource {
     const available = offerings.current?.availablePackages ?? [];
     this.packages.clear();
     for (const pkg of available) this.packages.set(pkg.identifier, pkg);
-    return available.map(toPackage);
+    return available.map((pkg) => toPackage(pkg, offerings.current?.identifier));
   }
 
   async purchase(packageId: string): Promise<boolean> {
@@ -118,6 +121,12 @@ export class RevenueCatPurchasesDatasource implements IPurchasesDatasource {
 
   async managementUrl(): Promise<string | null> {
     return (await Purchases.getCustomerInfo()).managementURL;
+  }
+
+  async trialEndsAt(): Promise<Date | null> {
+    const entitlement = (await Purchases.getCustomerInfo()).entitlements.active[PREMIUM_ENTITLEMENT];
+    if (!entitlement || entitlement.periodType !== 'TRIAL' || !entitlement.willRenew) return null;
+    return entitlement.expirationDate ? new Date(entitlement.expirationDate) : null;
   }
 
   onPremiumChange(listener: (premium: boolean) => void): () => void {
@@ -165,6 +174,10 @@ export class PreviewPurchasesDatasource implements IPurchasesDatasource {
   }
 
   async managementUrl(): Promise<string | null> {
+    return null;
+  }
+
+  async trialEndsAt(): Promise<Date | null> {
     return null;
   }
 

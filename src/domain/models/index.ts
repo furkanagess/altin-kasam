@@ -337,6 +337,8 @@ export type SubscriptionPackage = {
   period: SubscriptionPeriod;
   /** Ör. "7 gün ücretsiz"; deneme yoksa boş. */
   trial?: string;
+  /** RevenueCat offering kimliği; fiyat deneylerinde hangi grubun gösterildiğini ölçmek için. */
+  offeringId?: string;
 };
 
 export type CommunityPost = {
@@ -359,8 +361,13 @@ export type CommunityPost = {
  * değerler uygulamada biçimlendirilmiş metin olarak gelir.
  */
 export type HomeWidgetProps = {
-  /** Pro değilse fiyat yerine kilit mesajı gösterilir. */
+  /** Henüz fiyat gönderilmediyse (ilk kurulum) fiyat yerine "uygulamayı aç" mesajı gösterilir. */
   locked: boolean;
+  /**
+   * Ücretsiz plan: yalnızca küçük boy gram altın widget'ı fiyat gösterir; orta boy (iOS) Pro
+   * tanıtımı gösterir. Eski sürümden kalan veride bulunmayabilir.
+   */
+  free?: boolean;
   metal: "gold" | "silver";
   /** Kısa ad, büyük harfle, ör. "GRAM ALTIN". */
   title: string;

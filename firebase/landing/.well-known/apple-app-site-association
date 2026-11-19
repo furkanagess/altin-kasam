@@ -1,0 +1,62 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "4NZ23FB632.com.furkanages.altinkasam"
+        ],
+        "components": [
+          {
+            "/": "/alarm",
+            "comment": "Fiyat alarmı"
+          },
+          {
+            "/": "/calendar",
+            "comment": "Ekonomik takvim"
+          },
+          {
+            "/": "/insight",
+            "comment": "Günün yorumu"
+          },
+          {
+            "/": "/goal",
+            "comment": "Birikim hedefi"
+          },
+          {
+            "/": "/widget",
+            "comment": "Widget kurulumu"
+          },
+          {
+            "/": "/paywall",
+            "comment": "Pro"
+          },
+          {
+            "/": "/gold/*",
+            "comment": "Altın türü detayı"
+          },
+          {
+            "/": "/metal/*",
+            "comment": "Gümüş, platin, ons"
+          },
+          {
+            "/": "/analysis/*",
+            "comment": "Haftalık analiz"
+          },
+          {
+            "/": "/economic-event/*",
+            "comment": "Takvim olayı"
+          },
+          {
+            "/": "/post/*",
+            "comment": "Topluluk gönderisi"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "4NZ23FB632.com.furkanages.altinkasam"
+    ]
+  }
+}

@@ -33,7 +33,7 @@ a{color:inherit;text-decoration:none}
 canvas#sparks{position:fixed;inset:0;z-index:-1;width:100%;height:100%;pointer-events:none}
 
 /* hero */
-.hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:64px 0 40px}
+.hero{min-height:calc(100svh - 64px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:64px 0 40px}
 .logo{position:relative;width:128px;height:128px;border-radius:30px;overflow:hidden;box-shadow:0 20px 60px rgba(242,200,98,.28),0 0 0 1px var(--line);animation:pop .9s cubic-bezier(.2,1.4,.4,1) both,float 5s ease-in-out .9s infinite}
 .logo img{width:100%;height:100%}
 .logo::after{content:"";position:absolute;inset:-50%;background:linear-gradient(110deg,transparent 40%,rgba(255,255,255,.45) 50%,transparent 60%);transform:translateX(-100%);animation:shine 4s ease-in-out 1.4s infinite}
@@ -53,8 +53,9 @@ h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text
 .btn.primary{background:var(--grad);color:#14171D;border-color:transparent;box-shadow:0 10px 30px rgba(242,200,98,.3)}
 .btn.primary small{color:rgba(20,23,29,.7)}
 .hint{margin-top:14px;font-size:.8rem;color:var(--mut);animation:up .8s .7s both}
-.scroll{margin-top:36px;width:24px;height:38px;border:2px solid var(--line);border-radius:14px;position:relative;opacity:.8;animation:up .8s .9s both}
-.scroll::after{content:"";position:absolute;left:50%;top:7px;width:4px;height:8px;margin-left:-2px;border-radius:2px;background:var(--gold);animation:dot 1.6s infinite}
+.scroll{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:30px;color:var(--gold);font-size:.82rem;font-weight:600;letter-spacing:.06em;animation:up .8s .9s both;transition:opacity .3s}
+.scroll svg{width:26px;height:26px;animation:bounce 1.5s ease-in-out infinite}
+.scroll.hide{opacity:0;pointer-events:none}
 
 /* ticker */
 .ticker{border-block:1px solid var(--line);background:rgba(23,27,35,.6);overflow:hidden;white-space:nowrap}
@@ -75,9 +76,9 @@ h2{font-size:clamp(1.7rem,6vw,2.6rem);letter-spacing:-.02em;line-height:1.12;mar
 /* screenshots carousel */
 .shots{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 20px 24px;margin:28px -20px 0;scrollbar-width:none}
 .shots::-webkit-scrollbar{display:none}
-.phone{flex:none;width:min(62vw,250px);scroll-snap-align:center;border-radius:34px;padding:7px;background:linear-gradient(160deg,#2a2f3a,#0f1217);box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 0 1px var(--line);transition:transform .3s}
-.phone:hover{transform:translateY(-6px) rotate(-1deg)}
-.phone img{border-radius:28px;width:100%;aspect-ratio:1206/2622;object-fit:cover}
+.phone{flex:none;width:min(72vw,280px);scroll-snap-align:center;border-radius:26px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 0 1px var(--line);transition:transform .3s}
+.phone:hover{transform:translateY(-6px)}
+.phone img{width:100%;aspect-ratio:1206/2622;object-fit:cover}
 
 /* cta */
 .cta{text-align:center;padding:72px 0 40px}
@@ -101,7 +102,7 @@ footer a{color:var(--gold);margin:0 8px}
 @keyframes ring{from{opacity:.8;transform:scale(1)}to{opacity:0;transform:scale(1.9)}}
 @keyframes up{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
 @keyframes gold{to{background-position:0 100%}}
-@keyframes dot{0%{opacity:0;transform:translateY(0)}40%{opacity:1}100%{opacity:0;transform:translateY(14px)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(9px)}}
 @keyframes marquee{to{transform:translateX(-50%)}}
 
 @media(min-width:720px){
@@ -140,7 +141,7 @@ footer a{color:var(--gold);margin:0 8px}
     </a>
   </div>
   <p class="hint" id="hint">iOS ve Android'de ücretsiz indir</p>
-  <div class="scroll" aria-hidden="true"></div>
+  <a class="scroll" id="scroll" href="#features" aria-label="Aşağı kaydır"><span>Keşfetmek için kaydır</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></a>
 </header>
 
 <div class="ticker" aria-hidden="true"><div>
@@ -148,7 +149,7 @@ footer a{color:var(--gold);margin:0 8px}
   <span>Canlı gram altın</span><span>Çeyrek · Yarım · Tam</span><span>Cumhuriyet altını</span><span>Gümüş ve ons</span><span>USD / EUR</span><span>Fiyat alarmı</span><span>Altın portföyü</span><span>Haftalık analiz</span>
 </div></div>
 
-<section class="wrap">
+<section class="wrap" id="features">
   <div class="rv"><div class="eyebrow">Özellikler</div><h2>Altınla ilgili her şey,<br>tek dokunuşta.</h2></div>
   <div class="grid">
     <div class="feat rv"><i>📈</i><h3>Canlı fiyatlar</h3><p>Gram, çeyrek, yarım, tam, Cumhuriyet altını, gümüş ve ons — anlık güncellenir.</p></div>
@@ -161,14 +162,14 @@ footer a{color:var(--gold);margin:0 8px}
 </section>
 
 <section>
-  <div class="wrap rv"><div class="eyebrow">Uygulamadan</div><h2>Sade, hızlı, karanlık tema.</h2></div>
+  <div class="wrap rv"><div class="eyebrow">Uygulamadan</div><h2>Uygulamayı yakından gör.</h2></div>
   <div class="wrap"><div class="shots" id="shots">
-    <div class="phone"><img loading="lazy" src="/img/market.jpg" alt="Canlı altın fiyatları ekranı"></div>
-    <div class="phone"><img loading="lazy" src="/img/kasa.jpg" alt="Altın portföyü ekranı"></div>
-    <div class="phone"><img loading="lazy" src="/img/alarm.jpg" alt="Fiyat alarmı ekranı"></div>
-    <div class="phone"><img loading="lazy" src="/img/takvim.jpg" alt="Ekonomik takvim ekranı"></div>
-    <div class="phone"><img loading="lazy" src="/img/analiz.jpg" alt="Haftalık analiz ekranı"></div>
-    <div class="phone"><img loading="lazy" src="/img/rapor.jpg" alt="Rapor ekranı"></div>
+    <div class="phone"><img loading="lazy" src="/img/01-canli-altin-fiyatlari.jpg" alt="Canlı altın fiyatları"></div>
+    <div class="phone"><img loading="lazy" src="/img/02-altin-portfoyu-kasa.jpg" alt="Altın portföyü ve kasa"></div>
+    <div class="phone"><img loading="lazy" src="/img/03-altin-fiyat-alarmi.jpg" alt="Altın fiyat alarmı"></div>
+    <div class="phone"><img loading="lazy" src="/img/04-fed-tcmb-ekonomik-takvim.jpg" alt="Fed ve TCMB ekonomik takvimi"></div>
+    <div class="phone"><img loading="lazy" src="/img/05-haftalik-altin-analizi.jpg" alt="Haftalık altın analizi"></div>
+    <div class="phone"><img loading="lazy" src="/img/06-altin-ve-gumus-etkisi.jpg" alt="Altın ve gümüş etkisi"></div>
   </div></div>
 </section>
 
@@ -195,6 +196,22 @@ footer a{color:var(--gold);margin:0 8px}
 <script>
 (function(){
   document.getElementById('y').textContent=new Date().getFullYear();
+
+  // Kanal ölçümü: ?s=instagram (ya da utm_source) mağaza linklerine taşınır; yoksa "landing".
+  // Play: referrer -> Play Console edinme raporu. App Store: ct (+ pt) -> App Analytics kaynakları.
+  // APPLE_PT: App Store Connect > App Analytics > Kampanya linki oluştururken verilen sağlayıcı kodu.
+  var APPLE_PT='';
+  var q=new URLSearchParams(location.search);
+  var src=(q.get('s')||q.get('utm_source')||'landing').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,40)||'landing';
+  var camp=(q.get('c')||q.get('utm_campaign')||'').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,40);
+  document.querySelectorAll('a[href*="play.google.com/store/apps"]').forEach(function(a){
+    var ref='utm_source='+src+'&utm_medium=web'+(camp?'&utm_campaign='+camp:'');
+    a.href+=(a.href.indexOf('?')<0?'?':'&')+'referrer='+encodeURIComponent(ref);
+  });
+  document.querySelectorAll('a[href*="apps.apple.com"]').forEach(function(a){
+    a.href+=(a.href.indexOf('?')<0?'?':'&')+(APPLE_PT?'pt='+APPLE_PT+'&':'')+'ct='+encodeURIComponent(camp?src+'-'+camp:src);
+  });
+
   var ua=navigator.userAgent||'';
   var isAndroid=/Android/i.test(ua);
   var isIOS=/iPhone|iPad|iPod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
@@ -213,7 +230,8 @@ footer a{color:var(--gold);margin:0 8px}
 
   // sticky bar after hero
   var hero=document.querySelector('.hero'),barEl=document.getElementById('bar');
-  window.addEventListener('scroll',function(){barEl.classList.toggle('show',window.scrollY>hero.offsetHeight*.7)},{passive:true});
+  var cue=document.getElementById('scroll');
+  window.addEventListener('scroll',function(){barEl.classList.toggle('show',window.scrollY>hero.offsetHeight*.7);cue.classList.toggle('hide',window.scrollY>60)},{passive:true});
 
   // gold sparks
   var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;

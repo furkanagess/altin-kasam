@@ -1,6 +1,11 @@
 import { getGoldAsset } from '@/src/core/constants/goldAssets';
 import type { Currency } from '@/src/core/constants/app';
-import { HOME_WIDGET_OPTIONS, SILVER_WIDGET_OPTION_ID, type HomeWidgetOption } from '@/src/core/constants/homeWidget';
+import {
+  DEFAULT_HOME_WIDGET_OPTION_ID,
+  HOME_WIDGET_OPTIONS,
+  SILVER_WIDGET_OPTION_ID,
+  type HomeWidgetOption,
+} from '@/src/core/constants/homeWidget';
 import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
 import { GoldForm, MetalSymbol } from '@/src/domain/enums';
 import type { HomeWidgetProps } from '@/src/domain/models';
@@ -12,8 +17,8 @@ import { AppButton } from '@/src/widgets/atoms/AppButton';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import { GoldAssetIcon } from '@/src/widgets/atoms/GoldAssetIcon';
 import { MetalIcon } from '@/src/widgets/atoms/MetalIcon';
+import { ProMark } from '@/src/widgets/atoms/ProMark';
 import { Screen } from '@/src/widgets/atoms/Screen';
-import { PremiumBlur } from '@/src/widgets/molecules/PremiumBlur';
 import { SectionHeader } from '@/src/widgets/molecules/SectionHeader';
 import React from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
@@ -97,6 +102,7 @@ function OptionRow({
   currency,
   selected,
   first,
+  locked,
   onPress,
 }: {
   option: HomeWidgetOption;
@@ -104,6 +110,8 @@ function OptionRow({
   currency: Currency;
   selected: boolean;
   first: boolean;
+  /** Ücretsiz planda seçilemeyen birim: fiyatın yanında Pro etiketi. */
+  locked: boolean;
   onPress: () => void;
 }) {
   const styles = useStyles();
@@ -129,9 +137,13 @@ function OptionRow({
       <AppText variant="body" tone="secondary" style={styles.rowPrice}>
         {formatMoney(price, currency)}
       </AppText>
-      <View style={[styles.radio, selected && styles.radioOn]}>
-        {selected ? <View style={styles.radioDot} /> : null}
-      </View>
+      {locked ? (
+        <ProMark />
+      ) : (
+        <View style={[styles.radio, selected && styles.radioOn]}>
+          {selected ? <View style={styles.radioDot} /> : null}
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -155,20 +167,19 @@ export default function HomeWidgetScreen() {
     <Screen scroll>
       <View style={styles.top}>
         <View style={styles.previewWrap}>
-          <PremiumBlur locked={locked}>
-            <WidgetPreview props={preview} />
-          </PremiumBlur>
+          <WidgetPreview props={preview} />
         </View>
         {locked ? (
           <AppText tone="secondary" style={styles.center}>
-            Seçtiğin altın çeşidinin ya da gümüşün fiyatını telefonunun ana ekranında görmek Pro’ya özel.
+            Gram altın widget’ı ücretsiz. Pro ile widget’ta istediğin altın türünü ya da gümüşü
+            gösterebilir, orta boy widget’ı kullanabilirsin.
           </AppText>
         ) : null}
       </View>
 
       {locked ? (
         <View style={styles.gate}>
-          <AppButton label="Pro’yu incele" onPress={() => openPaywall('widget')} />
+          <AppButton label="Pro’yu incele" variant="secondary" onPress={() => openPaywall('widget')} />
         </View>
       ) : null}
 
@@ -199,7 +210,10 @@ export default function HomeWidgetScreen() {
                   currency={currency}
                   selected={option.id === selectedId}
                   first={i === 0}
-                  onPress={() => (locked ? openPaywall('widget') : select(option.id))}
+                  locked={locked && option.id !== DEFAULT_HOME_WIDGET_OPTION_ID}
+                  onPress={() =>
+                    locked && option.id !== DEFAULT_HOME_WIDGET_OPTION_ID ? openPaywall('widget') : select(option.id)
+                  }
                 />
               ))}
             </View>

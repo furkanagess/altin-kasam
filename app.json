@@ -14,7 +14,11 @@
         "usesNonExemptEncryption": false
       },
       "usesAppleSignIn": true,
-      "appleTeamId": "4NZ23FB632"
+      "appleTeamId": "4NZ23FB632",
+      "associatedDomains": [
+        "applinks:altin-kasam.web.app",
+        "webcredentials:altin-kasam.web.app"
+      ]
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +29,74 @@
       },
       "package": "com.furkanages.altinkasam",
       "versionCode": 3,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "altin-kasam.web.app",
+              "pathPrefix": "/alarm"
+            },
+            {
+              "scheme": "https",
+              "host": "altin-kasam.web.app",
+              "pathPrefix": "/calendar"
+            },
+            {
+              "scheme": "https",
+              "host": "altin-kasam.web.app",
+              "pathPrefix": "/insight"
+            },
+            {
+              "scheme": "https",
+              "host": "altin-kasam.web.app",
+              "pathPrefix": "/goal"
+            },
+            {
+              "scheme": "https",
+              "host": "altin-kasam.web.app",
+              "pathPrefix": "/widget"
+            },
+            {
+              "scheme": "https",
+              "host": "altin-kasam.web.app",
+              "pathPrefix": "/paywall"
+            },
+            {
+              "scheme": "https",
+              "host": "altin-kasam.web.app",
+              "pathPrefix": "/gold/"
+            },
+            {
+              "scheme": "https",
+              "host": "altin-kasam.web.app",
+              "pathPrefix": "/metal/"
+            },
+            {
+              "scheme": "https",
+              "host": "altin-kasam.web.app",
+              "pathPrefix": "/analysis/"
+            },
+            {
+              "scheme": "https",
+              "host": "altin-kasam.web.app",
+              "pathPrefix": "/economic-event/"
+            },
+            {
+              "scheme": "https",
+              "host": "altin-kasam.web.app",
+              "pathPrefix": "/post/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",

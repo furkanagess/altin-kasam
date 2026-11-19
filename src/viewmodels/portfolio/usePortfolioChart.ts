@@ -12,6 +12,8 @@ export type PortfolioChart = {
   points: CandlePoint[];
   /** `points` ile aynı uzunlukta: o ana kadar yatırılan toplam tutar (kâr/zarar tabanı). */
   cost: number[];
+  /** Kasaya ekleme yapılan noktaların `points` içindeki sıraları. */
+  deposits: number[];
   loading: boolean;
   timeframe: Timeframe;
   setTimeframe: (timeframe: Timeframe) => void;
@@ -85,9 +87,9 @@ export function usePortfolioChart(initialTimeframe: Timeframe = '1D'): Portfolio
     () =>
       history && holdings && history.currency === currency
         ? portfolioRepository.valueSeries(holdings, history)
-        : { points: [], cost: [] },
+        : { points: [], cost: [], deposits: [] },
     [history, holdings, currency],
   );
 
-  return { points: series.points, cost: series.cost, loading, timeframe, setTimeframe, timeframes, lockedTimeframes };
+  return { points: series.points, cost: series.cost, deposits: series.deposits, loading, timeframe, setTimeframe, timeframes, lockedTimeframes };
 }

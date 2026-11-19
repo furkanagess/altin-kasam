@@ -1,0 +1,17 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.furkanages.altinkasam",
+      "sha256_cert_fingerprints": [
+        "50:41:F0:BA:53:32:9F:AE:3A:46:04:41:D7:B3:23:AD:E4:FF:AF:83:64:A2:D1:55:6D:6A:7D:EA:F8:FD:9A:62",
+        "9D:E8:93:BD:2C:5F:C4:B9:FD:6B:A8:92:77:E7:7F:E2:FF:47:EB:CE:C3:F7:65:24:52:47:ED:17:B2:5E:20:08",
+        "F9:47:49:4A:5B:71:FB:CD:8C:39:C6:97:FC:91:61:B1:AC:D3:F9:A1:93:CD:73:47:16:44:1F:76:AC:15:90:7C",
+        "A3:D5:9C:9A:A1:78:4D:F2:1C:B9:69:BF:67:A8:22:72:DA:4C:41:95:19:59:04:3E:33:C4:A6:5C:79:08:3C:BF"
+      ]
+    }
+  }
+]

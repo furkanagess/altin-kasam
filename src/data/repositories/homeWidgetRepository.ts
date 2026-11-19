@@ -47,24 +47,17 @@ export class HomeWidgetRepository {
     await storageSet(SELECTION_KEY, id);
   }
 
+  /** Ücretsiz planda widget her zaman varsayılan birimi (gram altın) gösterir; seçim Pro'dur. */
+  effectiveOptionId(optionId: string, isPremium: boolean): string {
+    return isPremium ? optionId : DEFAULT_HOME_WIDGET_OPTION_ID;
+  }
+
   /** Fiyat yoksa (ilk yükleme) `null`; widget eski verisini korur. */
   buildProps(optionId: string, market: MarketView, isPremium: boolean, now = new Date()): HomeWidgetProps | null {
-    const option = getHomeWidgetOption(optionId) ?? getHomeWidgetOption(DEFAULT_HOME_WIDGET_OPTION_ID)!;
+    const id = this.effectiveOptionId(optionId, isPremium);
+    const option = getHomeWidgetOption(id) ?? getHomeWidgetOption(DEFAULT_HOME_WIDGET_OPTION_ID)!;
     const metal = option.metal === MetalSymbol.XAG ? 'silver' : 'gold';
     const { title, subtitle } = widgetTitle(option.id, option.label);
-    if (!isPremium) {
-      return {
-        locked: true,
-        metal,
-        title,
-        subtitle,
-        price: '',
-        change: '',
-        up: true,
-        updatedAt: '',
-        url: 'altinkasam:///paywall?reason=widget',
-      };
-    }
 
     const price =
       option.id === SILVER_WIDGET_OPTION_ID
@@ -74,6 +67,7 @@ export class HomeWidgetRepository {
 
     return {
       locked: false,
+      free: !isPremium,
       metal,
       title,
       subtitle,

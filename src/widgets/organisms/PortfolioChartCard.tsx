@@ -59,6 +59,8 @@ export function PortfolioChartCard({
       titleRight={titleRight}
       // Değişim, dönem başına değil o ana kadar yatırılan tutara göre: kâr/zarar.
       baseline={chart.cost}
+      markers={chart.deposits}
+      markerLabel="Kasaya ekleme"
       changeLabel="Toplam"
       changeExtra={
         <View style={styles.day}>

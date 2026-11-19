@@ -130,9 +130,7 @@ export default function PortfolioScreen() {
   );
 
   const csvGate = useProGate('csv');
-  const imageGate = useProGate('image');
   const { guard: guardCsv, consume: consumeCsv } = csvGate;
-  const { guard: guardImage } = imageGate;
   const exportCsv = useCallback(async () => {
     if (!snapshot || !(await guardCsv())) return;
     try {
@@ -149,9 +147,8 @@ export default function PortfolioScreen() {
       appAlert('Dışa aktarılamadı', 'Lütfen tekrar dene.');
     }
   }, [snapshot, guardCsv, consumeCsv]);
-  const openShare = useCallback(async () => {
-    if (await guardImage()) router.push('/share-vault');
-  }, [guardImage]);
+  // Paylaşım görseli herkese açık (büyüme döngüsü); yalnızca tutarları göstermek Pro'dur.
+  const openShare = useCallback(() => router.push('/share-vault'), []);
 
   const goal = <GoalCard progress={goalProgress} onEdit={() => router.push('/goal')} compact />;
   // Son varlık çıkarılınca ekran boş duruma geçer; animasyon iki durumda da çizilir.
@@ -241,16 +238,16 @@ export default function PortfolioScreen() {
       </View>
 
       <View style={styles.actions}>
-        <AppButton label="Görsel oluştur" variant="secondary" style={styles.flex} onPress={() => void openShare()} />
+        <AppButton label="Görsel oluştur" variant="secondary" style={styles.flex} onPress={openShare} />
         <AppButton label="CSV dışa aktar" variant="secondary" style={styles.flex} onPress={() => void exportCsv()} />
       </View>
       {!csvGate.isPremium ? (
         <View style={styles.proNote}>
           <ProMark />
           <AppText variant="caption" tone="secondary" style={styles.flex}>
-            {csvGate.remaining || imageGate.remaining
-              ? `Ücretsiz planda her biri ${FREE_EXPORT_USES} kez kullanılabilir · kalan: görsel ${imageGate.remaining ?? 0}, CSV ${csvGate.remaining ?? 0}`
-              : 'Ücretsiz haklarını kullandın; sınırsız kullanım Pro’da.'}
+            {csvGate.remaining
+              ? `Görsel ücretsiz. CSV ücretsiz planda ${FREE_EXPORT_USES} kez kullanılabilir · kalan: ${csvGate.remaining}`
+              : 'Görsel ücretsiz. CSV hakkını kullandın; sınırsız dışa aktarma Pro’da.'}
           </AppText>
         </View>
       ) : null}

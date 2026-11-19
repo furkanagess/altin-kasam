@@ -1,7 +1,10 @@
 import {
   LEGAL_LINKS,
+  PAYWALL_REASON_TEXT,
+  type PaywallReason,
 } from '@/src/core/constants/premium';
 import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
+import { analyticsDatasource } from '@/src/data/datasources/analyticsDatasource';
 import { feedbackDatasource } from '@/src/data/datasources/feedbackDatasource';
 import type { SubscriptionPackage, SubscriptionPeriod } from '@/src/domain/models';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
@@ -11,7 +14,7 @@ import { Screen } from '@/src/widgets/atoms/Screen';
 import { PaywallFeatureCarousel } from '@/src/widgets/organisms/PaywallFeatureCarousel';
 import { PaywallHero } from '@/src/widgets/organisms/PaywallHero';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Easing,
@@ -50,6 +53,26 @@ function annualSavingsPercent(packages: SubscriptionPackage[]): number | null {
   if (!monthly || !annual || monthly.price <= 0) return null;
   const savings = Math.round((1 - annual.price / (monthly.price * 12)) * 100);
   return savings > 0 ? savings : null;
+}
+
+const RENEWAL_UNIT: Partial<Record<SubscriptionPeriod, string>> = { annual: 'yıl', monthly: 'ay' };
+
+/**
+ * Seçili paketin ödeme açıklaması, düğmenin hemen üstünde: deneme varsa "7 gün ücretsiz, sonra
+ * ₺X/yıl" ve hatırlatma sözü; otomatik yenilenen pakette iptal bilgisi. Ömür boyu pakette yok.
+ */
+function billingNote(pkg: SubscriptionPackage | undefined): string | null {
+  if (!pkg) return null;
+  const unit = RENEWAL_UNIT[pkg.period];
+  if (!unit) return null;
+  if (pkg.trial) {
+    return `${pkg.trial}, sonra ${pkg.priceString}/${unit}. Deneme bitmeden 1 gün önce hatırlatırız; istediğin zaman iptal edebilirsin.`;
+  }
+  return `${pkg.priceString}/${unit}, otomatik yenilenir. İstediğin zaman iptal edebilirsin.`;
+}
+
+function isPaywallReason(value: string | undefined): value is PaywallReason {
+  return value !== undefined && value in PAYWALL_REASON_TEXT;
 }
 
 /** Yıllık paketin aylık karşılığı; mağaza fiyat metnindeki sayı aynı biçimle değiştirilir (para birimi korunur). */
@@ -174,8 +197,10 @@ export default function PaywallScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  const { demo } = useLocalSearchParams<{ demo?: string }>();
+  const { demo, reason } = useLocalSearchParams<{ demo?: string; reason?: string }>();
   const isDemo = demo === '1';
+  // Paywall hangi sebeple açıldıysa ilk satır onu söyler (ör. alarm sınırı, alarm çaldı).
+  const reasonText = isPaywallReason(reason) ? PAYWALL_REASON_TEXT[reason] : null;
   const {
     isPremium,
     configured,
@@ -185,7 +210,6 @@ export default function PaywallScreen() {
     loadPackages,
     purchase,
     restore,
-    managementUrl,
     simulatePremium,
   } = useSubscription();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -197,6 +221,20 @@ export default function PaywallScreen() {
     if (!configured) return;
     loadPackages().catch(() => setMessage('Paketler yüklenemedi. Bağlantını kontrol edip tekrar dene.'));
   }, [configured, loadPackages]);
+
+  // Gösterim ölçüsü: paketler yüklendiğinde bir kez (hangi offering, hangi paketler, deneme var mı).
+  const impressionSent = useRef(false);
+  useEffect(() => {
+    if (impressionSent.current || !packages.length || isDemo) return;
+    impressionSent.current = true;
+    analyticsDatasource.track({
+      name: 'paywall_impression',
+      reason: reason ?? 'direct',
+      offering: packages[0]?.offeringId ?? 'unknown',
+      packages: packages.map((p) => p.period).join(','),
+      hasTrial: packages.some((p) => Boolean(p.trial)),
+    });
+  }, [packages, reason, isDemo]);
 
   // Önizlemede gerçek paketler varsa onlar, yoksa örnek fiyatlar gösterilir.
   const usingDemoPackages = isDemo && !packages.length;
@@ -249,14 +287,7 @@ export default function PaywallScreen() {
         <AppText variant="h1">Pro aktif</AppText>
         <AppText tone="secondary">Tüm Pro özellikler açık. Teşekkürler!</AppText>
         {configured ? (
-          <AppButton
-            label="Aboneliği yönet"
-            variant="secondary"
-            onPress={async () => {
-              const url = await managementUrl();
-              if (url) void Linking.openURL(url);
-            }}
-          />
+          <AppButton label="Aboneliği yönet" variant="secondary" onPress={() => router.push('/manage-subscription')} />
         ) : null}
         {canSimulate ? (
           <AppButton label="Simülasyonu kapat" variant="ghost" onPress={() => simulatePremium(false)} />
@@ -304,6 +335,11 @@ export default function PaywallScreen() {
           <AppText variant="brand" style={styles.center}>
             Altın Kasam <Text style={styles.proWord}>Pro</Text>
           </AppText>
+          {reasonText ? (
+            <AppText tone="secondary" style={[styles.center, styles.reason]}>
+              {reasonText}
+            </AppText>
+          ) : null}
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(220).duration(450)} style={styles.carouselBleed}>
@@ -374,6 +410,11 @@ export default function PaywallScreen() {
             </AppText>
           </Animated.View>
         ) : null}
+        {canBuy && billingNote(selected) ? (
+          <AppText variant="caption" tone="secondary" style={styles.center}>
+            {billingNote(selected)}
+          </AppText>
+        ) : null}
         {canBuy ? (
           <ShimmerCta
             label={ctaLabel}
@@ -408,6 +449,7 @@ export default function PaywallScreen() {
 
 const useStyles = makeStyles((colors) => ({
   root: { flex: 1, backgroundColor: colors.surface.canvas },
+  reason: { marginTop: paddings.xs },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',

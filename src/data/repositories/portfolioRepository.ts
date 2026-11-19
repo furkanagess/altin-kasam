@@ -259,9 +259,9 @@ export class PortfolioRepository {
     holdings: ValuedHolding[],
     history: PortfolioHistory,
     now = Date.now(),
-  ): { points: CandlePoint[]; cost: number[] } {
+  ): { points: CandlePoint[]; cost: number[]; deposits: number[] } {
     const timeline = history.gold;
-    if (!holdings.length || timeline.length < 2) return { points: [], cost: [] };
+    if (!holdings.length || timeline.length < 2) return { points: [], cost: [], deposits: [] };
     const lastT = timeline[timeline.length - 1].t;
 
     // Kalem başına fiyat serisi; serisi olmayan kalem bugünkü değerinde sabit sayılır.
@@ -308,7 +308,15 @@ export class PortfolioRepository {
       points.push({ t, v: value });
       cost.push(invested);
     }
-    return { points, cost };
+
+    // Kasaya ekleme anları: pencere içindeki alımın noktası; son mumdan sonraki alım son noktadadır.
+    const depositSet = new Set<number>();
+    for (const leg of legs) {
+      if (leg.boughtAt <= firstT || leg.boughtAt > now) continue;
+      depositSet.add(leg.boughtAt >= lastT ? times.length - 1 : times.indexOf(leg.boughtAt));
+    }
+    const deposits = [...depositSet].filter((i) => i >= 0).sort((a, b) => a - b);
+    return { points, cost, deposits };
   }
 
   /** Aynı varlığın alımları birleştirilir (iki ayrı dolar alımı tek "Dolar" satırı). */

@@ -14,7 +14,7 @@ const POSITION_KEY = 'altin_kasam_fab_position_v1';
 /** Bu mesafeden az hareket dokunma sayılır, fazlası sürükleme. */
 const TAP_SLOP = 6;
 /** Tam ekran akışlarda ya da zaten varlık eklerken buton görünmez. */
-const HIDDEN_ON = ['/add-holding', '/onboarding', '/paywall', '/goal', '/alarm', '/share-vault', '/reader', '/widget'];
+const HIDDEN_ON = ['/add-holding', '/onboarding', '/paywall', '/goal', '/alarm', '/share-vault', '/reader', '/widget', '/manage-subscription'];
 /** Sekme çubuğunun üstünde kalması için varsayılan alt boşluk. */
 const DEFAULT_BOTTOM_OFFSET = 96;
 

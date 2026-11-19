@@ -57,9 +57,9 @@ const PriceWidget = (props: HomeWidgetProps) => {
           {props.title}
         </Text>
         <Spacer modifiers={[weight(1)]} />
-        <Text color={palette.ink} style={{ fontSize: 17, fontWeight: '700' }}>Pro’ya özel</Text>
+        <Text color={palette.ink} style={{ fontSize: 17, fontWeight: '700' }}>Uygulamayı aç</Text>
         <Text color={palette.muted} maxLines={2} style={{ fontSize: 11 }}>
-          Canlı fiyat için dokun.
+          Canlı fiyat uygulama açılınca gelir.
         </Text>
       </Column>
     );

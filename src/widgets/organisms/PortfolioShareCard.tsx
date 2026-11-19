@@ -15,8 +15,11 @@ export const PORTFOLIO_GROUP_COLORS: Record<string, string> = {
 };
 
 const MAX_POSITIONS = 5;
-/** Yayın sonrası mağaza adresi; boşsa satır gösterilmez. */
-const STORE_URL = process.env.EXPO_PUBLIC_STORE_URL ?? '';
+/**
+ * Görselin altındaki indirme adresi: landing sayfası iki mağazaya da yönlendirir. Her paylaşım
+ * yeni kullanıcı getirebilsin diye her zaman gösterilir.
+ */
+const STORE_URL = process.env.EXPO_PUBLIC_STORE_URL || 'altin-kasam.web.app';
 const APP_ICON = require('@/assets/images/icon.png');
 /** Görsel her temada aynı çıksın diye koyu palet sabit kullanılır (useTheme yok). */
 const c = darkColors;
@@ -114,7 +117,10 @@ export function PortfolioShareCard({ snapshot, breakdown, showAmounts }: Props) 
       ))}
       {hidden > 0 ? <Text style={styles.more}>+{hidden} varlık daha</Text> : null}
 
-      {STORE_URL ? <Text style={styles.store}>{`${APP_NAME} ile takip ediyorum · ${STORE_URL}`}</Text> : null}
+      <View style={styles.footer}>
+        <Text style={styles.footerLead}>{`${APP_NAME} ile takip ediyorum`}</Text>
+        <Text style={styles.footerUrl}>{STORE_URL}</Text>
+      </View>
       <Text style={styles.disclaimer}>Yatırım tavsiyesi değildir</Text>
     </View>
   );
@@ -146,6 +152,8 @@ const styles = StyleSheet.create({
   positionQty: { fontSize: 12, fontWeight: '400', color: c.text.secondary },
   positionPct: { fontSize: 14, fontWeight: '800' },
   more: { fontSize: 12, color: c.text.tertiary, marginTop: 2 },
-  store: { fontSize: 11, color: c.brand.goldDeep, textAlign: 'center', marginTop: 14, marginBottom: -6 },
-  disclaimer: { fontSize: 10, fontStyle: 'italic', color: c.text.tertiary, textAlign: 'center', marginTop: 18 },
+  footer: { alignItems: 'center', marginTop: 18, paddingTop: 14, borderTopWidth: 1, borderTopColor: RULE, gap: 2 },
+  footerLead: { fontSize: 11, color: c.text.secondary },
+  footerUrl: { fontSize: 15, fontWeight: '800', color: GOLD, letterSpacing: 0.3 },
+  disclaimer: { fontSize: 10, fontStyle: 'italic', color: c.text.tertiary, textAlign: 'center', marginTop: 10 },
 });

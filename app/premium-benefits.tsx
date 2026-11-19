@@ -2,7 +2,6 @@ import { CURRENCY_LABELS } from '@/src/core/constants/app';
 import { getHomeWidgetOption } from '@/src/core/constants/homeWidget';
 import {
   FREE_ALARM_LIMIT,
-  FREE_HOLDING_LIMIT,
   PREMIUM_FEATURE_ICONS,
   PREMIUM_FEATURES,
   type PremiumFeatureId,
@@ -10,7 +9,6 @@ import {
 import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
 import { useAlarms } from '@/src/viewmodels/alarm/AlarmProvider';
 import { useMarketViewModel } from '@/src/viewmodels/market/MarketProvider';
-import { usePortfolioViewModel } from '@/src/viewmodels/portfolio/PortfolioProvider';
 import { useSubscription } from '@/src/viewmodels/subscription/SubscriptionProvider';
 import { useHomeWidget } from '@/src/viewmodels/widget/HomeWidgetProvider';
 import { AppButton } from '@/src/widgets/atoms/AppButton';
@@ -20,7 +18,7 @@ import { ProMark } from '@/src/widgets/atoms/ProMark';
 import { Screen } from '@/src/widgets/atoms/Screen';
 import { router, type Href } from 'expo-router';
 import React from 'react';
-import { Linking, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 const ICONS = PREMIUM_FEATURE_ICONS;
@@ -89,9 +87,8 @@ function FeatureCard({
 /** Pro'nun açtığı özellikler ve kullanıcının her birini şu an nasıl kullandığı. */
 export default function PremiumBenefitsScreen() {
   const styles = useStyles();
-  const { isPremium, configured, managementUrl, openPaywall } = useSubscription();
+  const { isPremium, configured, openPaywall } = useSubscription();
   const { currency } = useMarketViewModel();
-  const { holdings } = usePortfolioViewModel();
   const { activeCount } = useAlarms();
   const widget = useHomeWidget();
 
@@ -131,11 +128,6 @@ export default function PremiumBenefitsScreen() {
       inUse: currency !== 'TRY',
       action: { label: 'Piyasaya git', href: '/' },
     },
-    holdings: {
-      usage: `Kasanda ${holdings.length} kalem var · ücretsiz planda sınır ${FREE_HOLDING_LIMIT}.`,
-      inUse: holdings.length > FREE_HOLDING_LIMIT,
-      action: { label: 'Kasam', href: '/portfolio' },
-    },
     alarms: {
       usage: `${activeCount} bekleyen fiyat alarmın var · ücretsiz planda sınır ${FREE_ALARM_LIMIT}.`,
       inUse: activeCount > FREE_ALARM_LIMIT,
@@ -157,14 +149,7 @@ export default function PremiumBenefitsScreen() {
         </AppText>
         {isPremium ? (
           configured ? (
-            <AppButton
-              label="Aboneliği yönet"
-              variant="secondary"
-              onPress={async () => {
-                const url = await managementUrl();
-                if (url) void Linking.openURL(url);
-              }}
-            />
+            <AppButton label="Aboneliği yönet" variant="secondary" onPress={() => router.push('/manage-subscription')} />
           ) : null
         ) : (
           <AppButton label="Pro’yu incele" onPress={() => openPaywall()} />

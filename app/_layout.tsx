@@ -10,8 +10,15 @@ import { DialogHost } from '@/src/widgets/organisms/DialogHost';
 import { WebModalFrame } from '@/src/widgets/organisms/WebModalFrame';
 import { useBreakpoint } from '@/src/core/theme/web';
 import { notificationsDatasource } from '@/src/data/datasources/notificationsDatasource';
+import { crashDatasource } from '@/src/data/datasources/crashDatasource';
+import { useValueMoments } from '@/src/viewmodels/engagement/useValueMoments';
+import { usePortfolioViewModel } from '@/src/viewmodels/portfolio/PortfolioProvider';
+import { weeklySummaryRepository } from '@/src/data/repositories/weeklySummaryRepository';
+import { analyticsDatasource } from '@/src/data/datasources/analyticsDatasource';
 import {
   DarkTheme,
+  ErrorBoundary as RouterErrorBoundary,
+  type ErrorBoundaryProps,
   DefaultTheme,
   router,
   Stack,
@@ -19,13 +26,17 @@ import {
   type Href,
 } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
-export { ErrorBoundary } from 'expo-router';
+/** Ekran çizilirken oluşan hata çökme yerine hata ekranına düşer; Crashlytics'e ayrıca bildirilir. */
+export function ErrorBoundary(props: ErrorBoundaryProps) {
+  useEffect(() => crashDatasource.recordError(props.error, 'render'), [props.error]);
+  return <RouterErrorBoundary {...props} />;
+}
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -90,7 +101,36 @@ function RootNavigator() {
   }, [colors, scheme]);
 
   // Fiyat alarmı ve takip edilen kaynak bildirimleri ilgili ekranı açar.
-  useEffect(() => notificationsDatasource.onOpen((path) => router.push(path as Href)), []);
+  // Sunucudan gelen alarm bildirimi `?moment=alarm_triggered` taşır: alarmın çaldığı an Pro anıdır.
+  // Haftalık kasa özeti: kasada varlık olduğu sürece pazar akşamı hatırlatma (Ayarlar'dan kapatılır).
+  const hasHoldings = usePortfolioViewModel().holdings.length > 0;
+  useEffect(() => {
+    void weeklySummaryRepository.sync(hasHoldings);
+  }, [hasHoldings]);
+
+  // Dinleyici bir kez kurulur: yeniden kurulursa son bildirim tekrar işlenip ekran yeniden açılır.
+  const { reach } = useValueMoments();
+  const reachRef = useRef(reach);
+  useEffect(() => {
+    reachRef.current = reach;
+  }, [reach]);
+  useEffect(
+    () =>
+      notificationsDatasource.onOpen((path) => {
+        const [route, query = ''] = path.split('?');
+        const params = new URLSearchParams(query);
+        // Hangi bildirimin uygulamayı geri getirdiği (tutunma ölçüsü).
+        analyticsDatasource.track({
+          name: 'notification_opened',
+          kind: params.get('src') ?? (params.get('moment') ? 'alarm' : route || '/'),
+        });
+        router.push((route || '/') as Href);
+        if (params.get('moment') === 'alarm_triggered') {
+          void reachRef.current('alarm_triggered', 1200);
+        }
+      }),
+    [],
+  );
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
@@ -139,6 +179,10 @@ function RootNavigator() {
         <Stack.Screen
           name="premium-benefits"
           options={{ title: 'Pro avantajların', presentation: 'card' }}
+        />
+        <Stack.Screen
+          name="manage-subscription"
+          options={{ title: 'Aboneliği yönet', presentation: 'card' }}
         />
         <Stack.Screen
           name="paywall"

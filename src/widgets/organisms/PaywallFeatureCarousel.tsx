@@ -24,7 +24,7 @@ type Feature = (typeof PREMIUM_FEATURES)[number];
 
 const PER_PAGE = 3;
 /** Paywall'daki sıralama: en çok satın aldıran özellikler ilk sayfada. Listede olmayanlar sona eklenir. */
-const ORDER: PremiumFeatureId[] = ['weekly', 'alarms', 'calendar', 'insight', 'widget', 'holdings'];
+const ORDER: PremiumFeatureId[] = ['weekly', 'alarms', 'calendar', 'insight', 'widget'];
 const ORDERED: Feature[] = [
   ...ORDER.map((id) => PREMIUM_FEATURES.find((f) => f.id === id)).filter((f): f is Feature => Boolean(f)),
   ...PREMIUM_FEATURES.filter((f) => !ORDER.includes(f.id)),

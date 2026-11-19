@@ -19,17 +19,12 @@ import {
   portfolioQuantityUnit,
   type OtherAssetDefinition,
 } from "@/src/core/constants/portfolioAssets";
-import {
-  FREE_HOLDING_LIMIT,
-  PAYWALL_REASON_TEXT,
-} from "@/src/core/constants/premium";
 import { makeStyles, paddings, radii, useTheme } from "@/src/core/theme";
 import { feedbackDatasource } from "@/src/data/datasources/feedbackDatasource";
 import { MetalSymbol } from "@/src/domain/enums";
 import { formatDecimalInput, formatGrams, formatNumber, formatTRY, numberToInput, parseDecimalTr } from "@/src/utils/format";
 import { useMarketViewModel } from "@/src/viewmodels/market/MarketProvider";
 import { usePortfolioViewModel } from "@/src/viewmodels/portfolio/PortfolioProvider";
-import { useSubscription } from "@/src/viewmodels/subscription/SubscriptionProvider";
 import { AppButton } from "@/src/widgets/atoms/AppButton";
 import { AppText } from "@/src/widgets/atoms/AppText";
 import { Screen } from "@/src/widgets/atoms/Screen";
@@ -38,7 +33,6 @@ import { GoldAssetCard } from "@/src/widgets/molecules/GoldAssetCard";
 import { OtherAssetCard } from "@/src/widgets/molecules/OtherAssetCard";
 import { QuantityStepper } from "@/src/widgets/molecules/QuantityStepper";
 import { ScrollRow } from "@/src/widgets/molecules/ScrollRow";
-import { SectionHeader } from "@/src/widgets/molecules/SectionHeader";
 import { VaultDropAnimation } from "@/src/widgets/organisms/VaultDropAnimation";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
@@ -60,12 +54,9 @@ export default function AddHoldingScreen() {
   const { colors } = useTheme();
   const { quotes, goldRates, fxRates } = useMarketViewModel();
   const { addHolding, holdings } = usePortfolioViewModel();
-  const { isPremium, openPaywall } = useSubscription();
   const { reach } = useValueMoments();
   /** Kayıttan sonra oynayan kasa animasyonu; bitince ekran kapanır. */
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string; assetId: string } | null>(null);
-  // Eklenen kalem sınırı doldurabilir; animasyon sürerken sınır ekranına geçilmez.
-  const limitReached = !celebration && !isPremium && holdings.length >= FREE_HOLDING_LIMIT;
   const params = useLocalSearchParams<{ assetId?: string }>();
   const initialId =
     getGoldAsset(params.assetId ?? "")?.id ??
@@ -250,18 +241,6 @@ export default function AddHoldingScreen() {
     }
   };
 
-  if (limitReached) {
-    return (
-      <Screen scroll>
-        <SectionHeader title="Varlık ekle" subtitle="Ücretsiz plan sınırına ulaştın" />
-        <View style={styles.limit}>
-          <AppText tone="secondary">{PAYWALL_REASON_TEXT.holdings} Pro ile sınır kalkar.</AppText>
-        </View>
-        <AppButton label="Pro’yu incele" onPress={() => openPaywall("holdings")} />
-      </Screen>
-    );
-  }
-
   return (
     <Screen
       scroll
@@ -434,11 +413,6 @@ export default function AddHoldingScreen() {
 }
 
 const useStyles = makeStyles((colors) => ({
-  limit: {
-    padding: paddings.card,
-    borderRadius: radii.md,
-    backgroundColor: colors.surface.muted,
-  },
   group: { gap: 8 },
   groupHeader: {
     flexDirection: "row",

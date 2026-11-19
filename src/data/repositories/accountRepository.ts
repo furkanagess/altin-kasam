@@ -1,6 +1,7 @@
 import { ACCOUNT_SYNC_KEYS, type AuthProviderId } from '@/src/core/constants/account';
 import { storageGet, storageGetRaw, storageSet, storageSetRaw } from '@/src/core/storage/storage';
 import { accountBackupDatasource } from '@/src/data/datasources/accountBackupDatasource';
+import { crashDatasource } from '@/src/data/datasources/crashDatasource';
 import {
   AuthError,
   firebaseAuthDatasource,
@@ -117,6 +118,7 @@ export class AccountRepository {
   async restoreSession(): Promise<Account | null> {
     if (!this.configured) return null;
     this.session = await firebaseAuthDatasource.loadSession();
+    void crashDatasource.setUserId(this.session?.uid ?? null);
     return this.session ? toAccount(this.session) : null;
   }
 
@@ -144,6 +146,7 @@ export class AccountRepository {
       rawNonce: credential.rawNonce,
       displayName: credential.displayName,
     });
+    void crashDatasource.setUserId(this.session.uid);
     try {
       // Abonelik hesaba bağlanır: bu cihazdaki satın alım hesaba geçer, hesaptaki Pro bu cihazda açılır.
       await subscriptionRepository.identify(this.session.uid).catch(() => false);
@@ -204,6 +207,7 @@ export class AccountRepository {
   async signOut(): Promise<void> {
     const provider = this.session?.provider;
     this.session = null;
+    void crashDatasource.setUserId(null);
     await firebaseAuthDatasource.clearSession();
     await writeMeta({ lastSyncedAt: null, dirty: false }).catch(() => {});
     if (provider === 'google') await socialSignInDatasource.signOutGoogle();

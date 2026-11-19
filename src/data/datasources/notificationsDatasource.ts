@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { analyticsDatasource } from '@/src/data/datasources/analyticsDatasource';
 import { Platform } from 'react-native';
 
 type NotificationsModule = typeof import('expo-notifications');
@@ -65,6 +66,8 @@ export const notificationsDatasource = {
       const current = await notifications.getPermissionsAsync();
       if (current.granted) return true;
       const requested = await notifications.requestPermissionsAsync();
+      // Tutunma ölçüsü: izin isteğinin sonucu (yalnızca gerçekten sorulduğunda).
+      analyticsDatasource.track({ name: 'notification_permission', granted: requested.granted });
       return requested.granted;
     } catch {
       return false;
@@ -146,6 +149,36 @@ export const notificationsDatasource = {
         trigger: {
           type: notifications.SchedulableTriggerInputTypes.DATE,
           date,
+          ...(Platform.OS === 'android' ? { channelId: REMINDER_CHANNEL_ID } : {}),
+        },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Her hafta aynı gün ve saatte tekrarlanan yerel bildirim (`weekday`: 1 = pazar … 7 = cumartesi).
+   * Aynı `identifier` ile yeniden kurulursa eskisinin yerini alır. İzin yoksa `false`; izin istemez.
+   */
+  async scheduleWeekly(
+    identifier: string,
+    when: { weekday: number; hour: number; minute: number },
+    title: string,
+    body: string,
+    path: string,
+  ): Promise<boolean> {
+    const notifications = load();
+    if (!notifications) return false;
+    try {
+      if (!(await notifications.getPermissionsAsync()).granted) return false;
+      await notifications.scheduleNotificationAsync({
+        identifier,
+        content: { title, body, data: { path } },
+        trigger: {
+          type: notifications.SchedulableTriggerInputTypes.WEEKLY,
+          ...when,
           ...(Platform.OS === 'android' ? { channelId: REMINDER_CHANNEL_ID } : {}),
         },
       });

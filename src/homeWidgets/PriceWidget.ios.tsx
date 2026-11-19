@@ -55,13 +55,15 @@ const PriceWidget = (props: HomeWidgetProps, environment: WidgetEnvironment) => 
     </ZStack>
   );
   const large = environment.widgetFamily === 'systemMedium';
+  // Ücretsiz planda yalnızca küçük boy fiyat gösterir; orta boy Pro tanıtımına döner.
+  const proOnly = !props.locked && props.free === true && large;
   const container = [
     containerBackground(palette.background, 'widget'),
     frame({ maxWidth: 10000, maxHeight: 10000, alignment: 'topLeading' as const }),
-    widgetURL(props.url),
+    widgetURL(proOnly ? 'altinkasam:///paywall?reason=widget' : props.url),
   ];
 
-  if (props.locked) {
+  if (props.locked || proOnly) {
     return (
       <VStack alignment="leading" spacing={2} modifiers={container}>
         <HStack alignment="top">
@@ -71,9 +73,11 @@ const PriceWidget = (props: HomeWidgetProps, environment: WidgetEnvironment) => 
         </HStack>
         <Text modifiers={[font({ size: 12 }), foregroundStyle(palette.muted), lineLimit(1)]}>{props.title}</Text>
         <Spacer />
-        <Text modifiers={[font({ size: 17, weight: 'bold' }), foregroundStyle(palette.ink)]}>Pro’ya özel</Text>
+        <Text modifiers={[font({ size: 17, weight: 'bold' }), foregroundStyle(palette.ink)]}>
+          {proOnly ? 'Orta boy widget Pro’ya özel' : 'Uygulamayı aç'}
+        </Text>
         <Text modifiers={[font({ size: 11 }), foregroundStyle(palette.muted), lineLimit(2)]}>
-          Canlı fiyat için dokun.
+          {proOnly ? 'Küçük boy gram altın widget’ı ücretsiz. İstediğin türü seçmek için dokun.' : 'Canlı fiyat uygulama açılınca gelir.'}
         </Text>
       </VStack>
     );

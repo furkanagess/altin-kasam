@@ -9,10 +9,12 @@ import { AppState } from 'react-native';
 type HomeWidgetViewModel = {
   /** Development build'de `true`; Expo Go ve web'de widget yoktur. */
   available: boolean;
+  /** Widget'ta gerçekten gösterilen birim; ücretsiz planda her zaman gram altın. */
   selectedId: string;
   select: (id: string) => void;
-  /** Pro içerik (fiyatlı); ücretsiz kullanıcıya önizlemede bulanık gösterilir. */
+  /** Ana ekrana gönderilen içeriğin aynısı. */
   preview: HomeWidgetProps | null;
+  /** Ücretsiz plan: birim seçimi ve orta boy widget Pro'dur. */
   locked: boolean;
 };
 
@@ -34,21 +36,15 @@ export function HomeWidgetProvider({ children }: { children: React.ReactNode }) 
     };
   }, []);
 
-  const preview = useMemo(
+  // Ücretsiz planda da canlı fiyat gider (gram altın): widget günlük alışkanlık ve tutunma getirir.
+  const sent = useMemo(
     () =>
       homeWidgetRepository.buildProps(
         selectedId,
         { quotes: displayQuotes, goldRates: displayGoldRates, currency },
-        true,
+        isPremium,
       ),
-    [selectedId, displayQuotes, displayGoldRates, currency],
-  );
-  const sent = useMemo(
-    () =>
-      isPremium
-        ? preview
-        : homeWidgetRepository.buildProps(selectedId, { quotes: [], goldRates: [], currency }, false),
-    [isPremium, preview, selectedId, currency],
+    [selectedId, displayQuotes, displayGoldRates, currency, isPremium],
   );
 
   const latest = useRef(sent);
@@ -83,8 +79,14 @@ export function HomeWidgetProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const value = useMemo(
-    () => ({ available, selectedId, select, preview, locked: !isPremium }),
-    [available, selectedId, select, preview, isPremium],
+    () => ({
+      available,
+      selectedId: homeWidgetRepository.effectiveOptionId(selectedId, isPremium),
+      select,
+      preview: sent,
+      locked: !isPremium,
+    }),
+    [available, selectedId, select, sent, isPremium],
   );
   return <HomeWidgetContext.Provider value={value}>{children}</HomeWidgetContext.Provider>;
 }

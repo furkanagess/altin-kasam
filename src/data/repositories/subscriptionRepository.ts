@@ -37,6 +37,10 @@ export class SubscriptionRepository {
     return this.datasource.managementUrl();
   }
 
+  trialEndsAt(): Promise<Date | null> {
+    return this.datasource.trialEndsAt();
+  }
+
   onPremiumChange(listener: (premium: boolean) => void): () => void {
     return this.datasource.onPremiumChange(listener);
   }

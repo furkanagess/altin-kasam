@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { FieldValue, getFirestore, type Firestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore, type DocumentReference, type Firestore, type Query } from 'firebase-admin/firestore';
 import { defineSecret, defineString } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import { onRequest } from 'firebase-functions/v2/https';
@@ -16,6 +16,26 @@ const ALARM_VALUES_URL = defineString('ALARM_VALUES_URL');
 const ALARM_SERVER_SECRET = defineSecret('ALARM_SERVER_SECRET');
 
 const MAX_ALARMS_PER_INSTALL = 30;
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+/** Uygulama açılışta ve her alarm değişikliğinde eşitler; normal kullanım saatte birkaç istektir. */
+const SYNC_LIMIT_PER_INSTALL = 30;
+const SYNC_LIMIT_PER_IP = 120;
+/**
+ * Saatte sunucuya ilk kez alarm yazabilecek yeni kurulum sayısı (tüm uygulama için). `installId`'yi
+ * istemci seçtiği için kurulum başına sınır tek başına yetmez; bu tavan, rastgele kimliklerle yapılan
+ * toplu kaydın yazma ve depolama maliyetini sınırlar. Aşılırsa alarm yalnızca cihazda çalışır ve
+ * cihaz bir sonraki eşitlemede yeniden dener.
+ */
+const NEW_INSTALLS_PER_HOUR = 200;
+/** 30 alarm ≈ 10 KB; fazlası kötüye kullanımdır. */
+const MAX_SYNC_BODY_BYTES = 64 * 1024;
+/** Bu kadar gün eşitlenmeyen (uygulaması açılmayan) bekleyen alarm silinir; cihaz açılışta yeniden yazar. */
+const STALE_PENDING_DAYS = 45;
+/** Değişmeyen alarmın `syncedAt` alanı en fazla günde bir yenilenir (gereksiz yazma olmasın). */
+const SYNCED_AT_REFRESH_MS = DAY_MS;
+/** Bir kontrolde tek sorgudan alınan en fazla tetiklenen alarm; fazlası bir sonraki dakikaya kalır. */
+const MAX_HITS_PER_QUERY = 400;
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 // Uygulamadaki `ANDROID_CHANNEL_ID` ile aynı olmalı; kanal sesi (coin_chlinc) uygulamada tanımlanır.
 const CHANNEL_ID = 'price-alarms-chlinc';
@@ -38,12 +58,47 @@ type AlarmDoc = {
   note?: string;
   triggeredAt: string | null;
   createdAt: string;
+  /** Cihazın bu alarmı en son eşitlediği an; eskiyen bekleyen alarmlar bununla temizlenir. */
+  syncedAt?: string;
 };
 
 type IncomingAlarm = Pick<AlarmDoc, 'assetId' | 'direction' | 'target' | 'label' | 'noun' | 'unit' | 'note'> & {
   id: string;
   createdAt?: string;
 };
+
+// --- Hız sınırı -----------------------------------------------------------------------------
+
+/** Hız sınırı sayaçları; `cleanupAlarms` süresi geçenleri siler. */
+const RATE_COLLECTION = 'rateLimits';
+
+/** IP'yi belge kimliğinde kullanılabilir hale getirir (IPv6 `:` dahil). */
+const ipKey = (ip: string | undefined) => (ip ?? 'unknown').replace(/[^\w.:-]/g, '_');
+
+/**
+ * Sabit pencereli sayaç: anahtar başına saatte `limit` istek. Sınır aşıldıysa ya da sayaç
+ * okunamadıysa (ör. yoğun yükte transaction çakışması) `false` – kapalı tarafta kalır.
+ */
+async function takeQuota(key: string, limit: number): Promise<boolean> {
+  const ref = db.collection(RATE_COLLECTION).doc(key);
+  try {
+    return await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const now = Date.now();
+      const data = snap.data() as { windowStart: number; count: number } | undefined;
+      if (!data || now - data.windowStart >= HOUR_MS) {
+        tx.set(ref, { windowStart: now, count: 1 });
+        return true;
+      }
+      if (data.count >= limit) return false;
+      tx.update(ref, { count: data.count + 1 });
+      return true;
+    });
+  } catch (error) {
+    logger.warn('takeQuota: sayaç okunamadı', { key, error: String(error) });
+    return false;
+  }
+}
 
 const docId = (installId: string, alarmId: string) => `${installId}_${alarmId}`;
 const isText = (v: unknown, max = 80): v is string => typeof v === 'string' && v.length > 0 && v.length <= max;
@@ -69,14 +124,35 @@ function parseAlarm(raw: unknown): IncomingAlarm | null {
   };
 }
 
+/** Alarmın sunucudaki kaydı cihazdan gelenle aynı mı (aynıysa yeniden yazılmaz). */
+function sameAlarm(current: AlarmDoc, next: IncomingAlarm, pushToken: string): boolean {
+  return (
+    current.pushToken === pushToken &&
+    current.assetId === next.assetId &&
+    current.direction === next.direction &&
+    current.target === next.target &&
+    current.label === next.label &&
+    current.noun === next.noun &&
+    current.unit === next.unit &&
+    (current.note ?? undefined) === next.note
+  );
+}
+
 /**
  * Cihaz alarm listesini sunucuyla eşitler. Gövde: `{ installId, pushToken, alarms: [...] }` (yalnızca
  * bekleyen alarmlar). Listede olmayan alarmlar silinir. Yanıt, uygulama kapalıyken sunucunun tetiklediği
  * alarmları döner; cihaz bunları yeniden bildirmeden tetiklenmiş sayar.
+ *
+ * Kötüye kullanıma karşı: gövde boyutu, kurulum ve IP başına saatlik sınır, saatlik yeni kurulum tavanı;
+ * yalnızca değişen alarmlar yazılır. Sınır aşılırsa 429 döner, alarm cihazda çalışmaya devam eder.
  */
 export const syncAlarms = onRequest({ cors: false, maxInstances: 5 }, async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'method' });
+    return;
+  }
+  if ((req.rawBody?.length ?? 0) > MAX_SYNC_BODY_BYTES) {
+    res.status(413).json({ error: 'too_large' });
     return;
   }
   const body = (req.body ?? {}) as Record<string, unknown>;
@@ -96,20 +172,50 @@ export const syncAlarms = onRequest({ cors: false, maxInstances: 5 }, async (req
     return;
   }
 
+  const [installOk, ipOk] = await Promise.all([
+    takeQuota(`sync_i_${installId}`, SYNC_LIMIT_PER_INSTALL),
+    takeQuota(`sync_ip_${ipKey(req.ip)}`, SYNC_LIMIT_PER_IP),
+  ]);
+  if (!installOk || !ipOk) {
+    res.status(429).json({ error: 'rate' });
+    return;
+  }
+
   const existing = await db.collection('alarms').where('installId', '==', installId).get();
+  if (existing.empty && incoming.length && !(await takeQuota('sync_new_installs', NEW_INSTALLS_PER_HOUR))) {
+    logger.warn('syncAlarms: saatlik yeni kurulum tavanı doldu');
+    res.status(429).json({ error: 'rate' });
+    return;
+  }
+
+  const now = Date.now();
+  const nowIso = new Date(now).toISOString();
+  const byId = new Map(existing.docs.map((d) => [d.id, d.data() as AlarmDoc]));
   const keep = new Set(incoming.map((a) => docId(installId, a.id)));
   const triggered: { id: string; at: string }[] = [];
+  const changed: AlarmDoc[] = [];
   const batch = db.batch();
+  let writes = 0;
 
   for (const doc of existing.docs) {
     const data = doc.data() as AlarmDoc;
-    if (!keep.has(doc.id)) batch.delete(doc.ref);
-    else if (data.triggeredAt) triggered.push({ id: data.alarmId, at: data.triggeredAt });
+    if (!keep.has(doc.id)) {
+      batch.delete(doc.ref);
+      writes += 1;
+    } else if (data.triggeredAt) triggered.push({ id: data.alarmId, at: data.triggeredAt });
   }
   for (const a of incoming) {
     const ref = db.collection('alarms').doc(docId(installId, a.id));
-    const current = existing.docs.find((d) => d.id === ref.id)?.data() as AlarmDoc | undefined;
+    const current = byId.get(ref.id);
     if (current?.triggeredAt) continue; // sunucuda tetiklenmiş; yanıtla bildirilir
+    if (current && sameAlarm(current, a, pushToken)) {
+      const synced = current.syncedAt ? Date.parse(current.syncedAt) : 0;
+      if (now - synced > SYNCED_AT_REFRESH_MS) {
+        batch.update(ref, { syncedAt: nowIso });
+        writes += 1;
+      }
+      continue;
+    }
     const next: AlarmDoc = {
       installId,
       alarmId: a.id,
@@ -122,20 +228,45 @@ export const syncAlarms = onRequest({ cors: false, maxInstances: 5 }, async (req
       unit: a.unit,
       ...(a.note ? { note: a.note } : {}),
       triggeredAt: null,
-      createdAt: a.createdAt ?? new Date().toISOString(),
+      createdAt: a.createdAt ?? current?.createdAt ?? nowIso,
+      syncedAt: nowIso,
     };
     batch.set(ref, next);
+    writes += 1;
+    changed.push(next);
   }
-  await batch.commit();
+  if (writes) await batch.commit();
+  if (changed.length) {
+    await lowerNearestGap(changed).catch((error: unknown) =>
+      logger.warn('syncAlarms: nearestGap güncellenemedi', { error: String(error) }),
+    );
+  }
   res.json({ triggered });
 });
 
+/**
+ * Yeni ya da değişen alarm, son fiyata bilinen en yakın hedeften daha yakınsa kontrol sıklığını hemen
+ * artırır; aksi halde zamanlanmış kontrol bir sonraki fiyat çekimine kadar (en fazla 15 dk) bunu bilmez.
+ */
+async function lowerNearestGap(alarms: AlarmDoc[]): Promise<void> {
+  const ref = db.collection('meta').doc('poll');
+  const state = ((await ref.get()).data() ?? {}) as PollState;
+  const gap = Math.min(...alarms.map((a) => gapPercent(a, state.values)));
+  if (state.nearestGap == null || gap < state.nearestGap) await ref.set({ nearestGap: gap }, { merge: true });
+}
+
 // --- Zamanlanmış kontrol --------------------------------------------------------------------
 
-type PollState = { lastFetchAt?: number; values?: Record<string, number> };
+type PollState = {
+  lastFetchAt?: number;
+  values?: Record<string, number>;
+  /** Son çekimde bekleyen alarmların fiyata en yakın olanının uzaklığı (%); bekleyen yoksa `null`. */
+  nearestGap?: number | null;
+};
 
 /** Hedefe uzaklık yüzdesi → bir sonraki fiyat çekimine kadar beklenecek süre (ms). */
-function intervalFor(gapPercent: number): number {
+function intervalFor(gapPercent: number | null): number {
+  if (gapPercent == null) return 15 * 60_000; // bekleyen alarm yok
   if (gapPercent <= 0.5) return 60_000;
   if (gapPercent <= 1.5) return 2 * 60_000;
   if (gapPercent <= 4) return 5 * 60_000;
@@ -188,7 +319,8 @@ async function sendPush(store: Firestore, hits: { alarm: AlarmDoc; price: number
     channelId: CHANNEL_ID,
     title: `${alarm.label} Alarmı Tetiklendi`,
     body: `Güncel ${NOUN_TITLE[alarm.noun] ?? 'Fiyat'} ${formatValue(price)}${alarm.note ? ` · ${alarm.note}` : ''}`,
-    data: { path: '/' },
+    // Uygulama `moment` ile alarmın çaldığını anlar ve uygunsa Pro tanıtımını gösterir.
+    data: { path: '/?moment=alarm_triggered' },
   }));
   for (let i = 0; i < messages.length; i += 100) {
     const chunk = messages.slice(i, i + 100);
@@ -211,10 +343,34 @@ async function sendPush(store: Firestore, hits: { alarm: AlarmDoc; price: number
   }
 }
 
+type Hit = { ref: DocumentReference; alarm: AlarmDoc; price: number };
+
 /**
- * Her dakika çalışır ama Hasfiyat'a nadiren gider: bekleyen alarm yoksa, piyasa kapalıysa ya da en
- * yakın hedef uzaksa fiyat çekilmez (bkz. `intervalFor`). Fiyat çekimi tek istektir; kullanıcı
- * sayısı arttıkça REST kotası artmaz.
+ * Tek varlık için tetiklenen alarmlar ve kalan en yakın hedefin uzaklığı (%). Okuma sayısı bekleyen
+ * alarm sayısından bağımsızdır: dört sorgu + tetiklenen alarm kadar belge.
+ * Bileşik dizinler: firebase/firestore.indexes.json.
+ */
+async function scanAsset(assetId: string, price: number): Promise<{ hits: Hit[]; nearest: number | null }> {
+  const base = db.collection('alarms').where('triggeredAt', '==', null).where('assetId', '==', assetId);
+  const above = base.where('direction', '==', 'above');
+  const below = base.where('direction', '==', 'below');
+  const [upHits, downHits, nextUp, nextDown] = await Promise.all([
+    above.where('target', '<=', price).limit(MAX_HITS_PER_QUERY).get(),
+    below.where('target', '>=', price).limit(MAX_HITS_PER_QUERY).get(),
+    above.where('target', '>', price).orderBy('target', 'asc').limit(1).get(),
+    below.where('target', '<', price).orderBy('target', 'desc').limit(1).get(),
+  ]);
+  const hits = [...upHits.docs, ...downHits.docs].map((d) => ({ ref: d.ref, alarm: d.data() as AlarmDoc, price }));
+  // Sınıra takıldıysa kalanlar bir sonraki dakikada işlensin.
+  if (upHits.size >= MAX_HITS_PER_QUERY || downHits.size >= MAX_HITS_PER_QUERY) return { hits, nearest: 0 };
+  const gaps = [...nextUp.docs, ...nextDown.docs].map((d) => gapPercent(d.data() as AlarmDoc, { [assetId]: price }));
+  return { hits, nearest: gaps.length ? Math.min(...gaps) : null };
+}
+
+/**
+ * Her dakika çalışır ama Hasfiyat'a nadiren gider: piyasa kapalıysa ya da en yakın hedef uzaksa fiyat
+ * çekilmez (bkz. `intervalFor`). Atlanan dakikalarda yalnızca `meta/poll` okunur; fiyat çekildiğinde
+ * varlık başına sorgu yapılır. Böylece okuma maliyeti bekleyen alarm sayısıyla büyümez.
  */
 export const checkAlarms = onSchedule(
   { schedule: 'every 1 minutes', timeZone: 'Europe/Istanbul', secrets: [ALARM_SERVER_SECRET], maxInstances: 1 },
@@ -225,48 +381,72 @@ export const checkAlarms = onSchedule(
       return;
     }
 
-    const snap = await db.collection('alarms').where('triggeredAt', '==', null).get();
-    if (snap.empty) {
-      logger.info('atlandı: bekleyen alarm yok');
-      return;
-    }
-    const alarms = snap.docs.map((d) => ({ ref: d.ref, data: d.data() as AlarmDoc }));
-
     const stateRef = db.collection('meta').doc('poll');
     const state = ((await stateRef.get()).data() ?? {}) as PollState;
-    const nearest = Math.min(...alarms.map((a) => gapPercent(a.data, state.values)));
-    if (state.lastFetchAt && now.getTime() - state.lastFetchAt < intervalFor(nearest) - 5_000) {
-      logger.info('atlandı: hedef uzak', { alarms: alarms.length, nearestPercent: Math.round(nearest * 100) / 100 });
+    // `nearestGap` hiç yazılmadıysa (ilk çalışma) sık kontrol edilir; bekleyen alarm yoksa (null) seyrek.
+    const gap = state.nearestGap === undefined ? 0 : state.nearestGap;
+    if (state.lastFetchAt && now.getTime() - state.lastFetchAt < intervalFor(gap) - 5_000) {
+      logger.info('atlandı: hedef uzak', { nearestPercent: gap == null ? null : Math.round(gap * 100) / 100 });
       return;
     }
 
     const values = await fetchValues();
-    await stateRef.set({ lastFetchAt: now.getTime(), ...(values ? { values } : {}) }, { merge: true });
-    logger.info(values ? 'fiyat çekildi' : 'fiyat alınamadı', { alarms: alarms.length });
-    if (!values) return;
+    if (!values) {
+      await stateRef.set({ lastFetchAt: now.getTime() }, { merge: true });
+      logger.info('fiyat alınamadı');
+      return;
+    }
 
-    const hits = alarms.flatMap(({ ref, data }) => {
-      const price = values[data.assetId];
-      if (!price) return [];
-      const reached = data.direction === 'above' ? price >= data.target : price <= data.target;
-      return reached ? [{ ref, alarm: data, price }] : [];
-    });
+    const scans = await Promise.all(
+      Object.entries(values)
+        .filter(([, price]) => typeof price === 'number' && price > 0)
+        .map(([assetId, price]) => scanAsset(assetId, price)),
+    );
+    const hits = scans.flatMap((s) => s.hits);
+    const gaps = scans.flatMap((s) => (s.nearest == null ? [] : [s.nearest]));
+    const nearestGap = gaps.length ? Math.min(...gaps) : null;
+    await stateRef.set({ lastFetchAt: now.getTime(), values, nearestGap }, { merge: true });
+    logger.info('fiyat çekildi', { hits: hits.length, nearestPercent: nearestGap });
     if (!hits.length) return;
-    logger.info('alarm tetiklendi', { count: hits.length });
 
     // Önce kalıcı olarak işaretlenir: gönderim sırasında hata olsa da alarm tekrar tetiklenmez.
-    const batch = db.batch();
-    for (const { ref } of hits) batch.update(ref, { triggeredAt: now.toISOString(), triggeredAtServer: FieldValue.serverTimestamp() });
-    await batch.commit();
+    for (let i = 0; i < hits.length; i += 450) {
+      const batch = db.batch();
+      for (const { ref } of hits.slice(i, i + 450)) {
+        batch.update(ref, { triggeredAt: now.toISOString(), triggeredAtServer: FieldValue.serverTimestamp() });
+      }
+      await batch.commit();
+    }
     await sendPush(db, hits);
   },
 );
 
-/** Tetiklenmiş ve 14 gündür cihaza bildirilmemiş alarm kayıtlarını temizler. */
+async function deleteAll(query: Query): Promise<number> {
+  let deleted = 0;
+  for (;;) {
+    const snap = await query.limit(400).get();
+    if (snap.empty) return deleted;
+    const batch = db.batch();
+    snap.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+    deleted += snap.size;
+    if (snap.size < 400) return deleted;
+  }
+}
+
+/**
+ * Günlük temizlik: 14 gündür cihaza bildirilmemiş tetiklenmiş alarmlar, `STALE_PENDING_DAYS` gündür
+ * eşitlenmemiş bekleyen alarmlar (cihaz açılışta yeniden yazar) ve süresi geçmiş hız sınırı sayaçları.
+ */
 export const cleanupAlarms = onSchedule({ schedule: 'every 24 hours', maxInstances: 1 }, async () => {
-  const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
-  const snap = await db.collection('alarms').where('triggeredAt', '<', cutoff).get();
-  await Promise.all(snap.docs.map((d) => d.ref.delete()));
+  const now = Date.now();
+  const alarms = db.collection('alarms');
+  const triggered = await deleteAll(alarms.where('triggeredAt', '<', new Date(now - 14 * DAY_MS).toISOString()));
+  const stale = await deleteAll(
+    alarms.where('triggeredAt', '==', null).where('syncedAt', '<', new Date(now - STALE_PENDING_DAYS * DAY_MS).toISOString()),
+  );
+  const counters = await deleteAll(db.collection(RATE_COLLECTION).where('windowStart', '<', now - 2 * HOUR_MS));
+  logger.info('temizlik', { triggered, stale, counters });
 });
 
 /**
@@ -390,7 +570,6 @@ const SUPPORT_SMTP_PASSWORD = defineSecret('SUPPORT_SMTP_PASSWORD');
 const SUPPORT_MESSAGE_MAX = 2000;
 /** Bir kurulumdan ve bir IP'den saatte kabul edilen en fazla mesaj. */
 const SUPPORT_LIMIT_PER_HOUR = 5;
-const HOUR_MS = 60 * 60 * 1000;
 
 const SUPPORT_TOPICS: Record<string, string> = {
   problem: 'Sorun bildirimi',
@@ -403,25 +582,6 @@ function cleanLine(v: unknown, max: number): string {
   return typeof v === 'string' ? v.replace(/[\r\n]+/g, ' ').trim().slice(0, max) : '';
 }
 
-/**
- * Sabit pencereli sayaç: anahtar başına saatte `SUPPORT_LIMIT_PER_HOUR` istek. Sınır aşıldıysa `false`.
- * Kayıtlar `supportRate` koleksiyonunda tutulur; süresi geçen pencere yeni istekle sıfırlanır.
- */
-async function takeSupportQuota(key: string): Promise<boolean> {
-  const ref = db.collection('supportRate').doc(key);
-  return db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const now = Date.now();
-    const data = snap.data() as { windowStart: number; count: number } | undefined;
-    if (!data || now - data.windowStart >= HOUR_MS) {
-      tx.set(ref, { windowStart: now, count: 1 });
-      return true;
-    }
-    if (data.count >= SUPPORT_LIMIT_PER_HOUR) return false;
-    tx.update(ref, { count: data.count + 1 });
-    return true;
-  });
-}
 
 /**
  * Uygulama içi destek formu. Gövde: `{ installId, topic, message, email?, meta? }`. Mesaj Firestore'a
@@ -453,10 +613,9 @@ export const support = onRequest(
       return;
     }
 
-    const ip = (req.ip ?? 'unknown').replace(/[^\w.:-]/g, '_');
     const [installOk, ipOk] = await Promise.all([
-      takeSupportQuota(`i_${installId}`),
-      takeSupportQuota(`ip_${ip}`),
+      takeQuota(`support_i_${installId}`, SUPPORT_LIMIT_PER_HOUR),
+      takeQuota(`support_ip_${ipKey(req.ip)}`, SUPPORT_LIMIT_PER_HOUR),
     ]);
     if (!installOk || !ipOk) {
       res.status(429).json({ error: 'rate' });
