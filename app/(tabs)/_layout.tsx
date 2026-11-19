@@ -29,8 +29,10 @@ export default function TabLayout() {
   // Geniş web ekranında alt sekme çubuğu gizlenir; yerine kök düzendeki sol menü kullanılır.
   const sidebar = useBreakpoint() !== 'compact';
 
-  // Depo okunana kadar sekmeler çizilmez; aksi halde karşılama ekranından önce bir an görünür.
-  if (!loaded) return null;
+  // Telefonda depo okunana kadar sekmeler çizilmez; aksi halde karşılama ekranından önce bir an
+  // görünür. Web'de karşılama zorunlu olmadığından beklenmez: sekmeler sunucu çıktısında hemen
+  // çizilir ve sayfa JS inmeden görünür olur (yavaş mobil ağda ilk boyama saniyeler kısalır).
+  if (!loaded && Platform.OS !== 'web') return null;
   // Telefonda karşılama zorunlu. Web'de isteğe bağlı: arama motorundan ya da paylaşılan bir linkten
   // gelen ziyaretçi doğrudan istediği sayfaya düşer.
   if (!onboardingDone && Platform.OS !== 'web') return <Redirect href="/onboarding" />;
