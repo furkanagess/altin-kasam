@@ -12,8 +12,12 @@ const RETRY_JITTER_MS = 300;
 const MAX_RETRY_TIMEOUT_MS = 12_000;
 /** Bağlantı zayıfken süre uzatılır; yavaş ama çalışan ağda istekler boşuna düşmesin. */
 const WEAK_TIMEOUT_FACTOR = 1.6;
-/** Ağ geçidi geçici hataları; yeniden denemeye değer. */
-const RETRYABLE_STATUS = new Set([502, 504]);
+/**
+ * Geçici sunucu hataları; yeniden denemeye değer. 500 ve 503 de dahil: barındırma platformu yeni
+ * yayından hemen sonra ya da anlık yükte bunları döndürebiliyor ve tek başarısız istek grafiği
+ * sayfa yenilenene kadar boş bırakıyordu.
+ */
+const RETRYABLE_STATUS = new Set([500, 502, 503, 504]);
 
 /**
  * Native'de `/api/...` isteklerinin gideceği sunucu (ör. https://altin-kasam.expo.app). Boşsa

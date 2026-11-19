@@ -10,6 +10,8 @@ const UPSTREAM = 'https://api.hasfiyat.com/api/prices/history';
 const TIMEOUT_MS = 10_000;
 const CACHE_TTL_MS = { '1h': HISTORY_TTL_S['1h'] * 1000, '1d': HISTORY_TTL_S['1d'] * 1000 } as const;
 const MAX_CACHE_ENTRIES = 200;
+/** Kaynak hata verdiğinde eski veriyle dönülen yanıtın CDN süresi (sn). */
+const STALE_TTL_S = 30;
 
 type Period = keyof typeof CACHE_TTL_MS;
 type UpstreamBar = { ts?: number; close?: number; buy?: { close?: number } };
@@ -46,7 +48,12 @@ export async function GET(request: Request): Promise<Response> {
     inflight.set(cacheKey, pending);
   }
   const result = await pending;
-  if (!result.ok) return Response.json(result.error, { status: result.status, headers: NO_STORE_HEADERS });
+  if (!result.ok) {
+    // Kaynak geçici olarak hata verirse süresi dolmuş da olsa son veri verilir (grafik boş kalmasın).
+    // Kısa CDN süresiyle döner; kaynak düzelince bir sonraki istek taze veriyi alır.
+    if (cached) return Response.json(cached.body, { headers: cdnCacheHeaders(STALE_TTL_S) });
+    return Response.json(result.error, { status: result.status, headers: NO_STORE_HEADERS });
+  }
   return Response.json(result.body, { headers: cdnCacheHeaders(HISTORY_TTL_S[period]) });
 }
 
