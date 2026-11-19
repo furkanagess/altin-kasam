@@ -1,3 +1,4 @@
+import { APP_LANDING_URL } from '@/src/core/constants/stores';
 import { getGoldAsset } from '@/src/core/constants/goldAssets';
 import type { Currency } from '@/src/core/constants/app';
 import {
@@ -21,7 +22,7 @@ import { ProMark } from '@/src/widgets/atoms/ProMark';
 import { Screen } from '@/src/widgets/atoms/Screen';
 import { SectionHeader } from '@/src/widgets/molecules/SectionHeader';
 import React from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 const ROW_ICON_WIDTH = 36;
 
@@ -165,6 +166,15 @@ export default function HomeWidgetScreen() {
 
   return (
     <Screen webWidth="readable" scroll>
+      {Platform.OS === 'web' ? (
+        <AppText tone="secondary" style={styles.center}>
+          Widget telefonunun ana ekranında çalışır; kurmak için{' '}
+          <AppText tone="gold" onPress={() => void Linking.openURL(APP_LANDING_URL)}>
+            uygulamayı telefonuna indir
+          </AppText>
+          .
+        </AppText>
+      ) : null}
       <View style={styles.top}>
         <View style={styles.previewWrap}>
           <WidgetPreview props={preview} />

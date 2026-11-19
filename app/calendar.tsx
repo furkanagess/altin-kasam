@@ -1,3 +1,5 @@
+import { pageMetadata } from '@/src/core/web/seo';
+import type { GenerateMetadataFunction } from 'expo-router/server';
 import { useBreakpoint } from '@/src/core/theme/web';
 import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { EVENT_REMINDER_LEAD_MINUTES } from '@/src/core/constants/economicCalendar';
@@ -24,6 +26,9 @@ const FOOTNOTES = [
 ];
 
 /** Yaklaşan tüm faiz kararları ve veri açıklamaları, olası etkileriyle. */
+/** Sunucu çıktısındaki sayfa başlığı ve açıklaması (arama ve paylaşım önizlemesi). */
+export const generateMetadata: GenerateMetadataFunction = () => pageMetadata({ title: 'Ekonomik takvim', description: 'Altını etkileyen faiz kararları, enflasyon ve istihdam verileri: tarih, beklenti ve açıklanan değerler.', path: '/calendar' });
+
 export default function EconomicCalendarScreen() {
   const styles = useStyles();
   const { colors } = useTheme();

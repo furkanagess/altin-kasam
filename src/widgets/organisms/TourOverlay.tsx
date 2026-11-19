@@ -1,3 +1,4 @@
+import { useWindowSize } from '@/src/core/hooks/useWindowSize';
 import { TOUR_STEPS } from '@/src/core/constants/tour';
 import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
 import { BRENT, MetalSymbol } from '@/src/domain/enums';
@@ -7,7 +8,7 @@ import { AppButton } from '@/src/widgets/atoms/AppButton';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import { router, usePathname } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions, type GestureResponderEvent } from 'react-native';
+import { Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -64,7 +65,7 @@ export function TourOverlay() {
   const { active, stepIndex, stepCount, next, back, skip } = useTour();
   const styles = useStyles();
   const { colors } = useTheme();
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useWindowSize();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);

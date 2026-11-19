@@ -19,12 +19,13 @@ export default function Root({ children }: { children: ReactNode }) {
         <meta name="color-scheme" content="light dark" />
         <meta name="theme-color" media="(prefers-color-scheme: light)" content={lightColors.surface.canvas} />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content={darkColors.surface.canvas} />
-        <title>Altın Kasam</title>
         {/* Kayıtlı tema tercihi ilk boyamadan önce uygulanır; koyu temada açık renk parlaması olmaz. */}
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{ __html: documentStyles + webInteractionCss }} />
         {headNodes}
+        {/* Varsayılan başlık sayfaya özel başlıktan (`generateMetadata`) sonra gelir; tarayıcı ilkini kullanır. */}
+        <title>Altın Kasam</title>
       </head>
       <body {...bodyAttributes}>
         {children}

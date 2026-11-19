@@ -1,3 +1,4 @@
+import { useWindowSize } from '@/src/core/hooks/useWindowSize';
 import { makeStyles, paddings, useTheme } from '@/src/core/theme';
 import { analyticsDatasource } from '@/src/data/datasources/analyticsDatasource';
 import { engagementDatasource } from '@/src/data/datasources/engagementDatasource';
@@ -12,7 +13,7 @@ import { GoalForm } from '@/src/widgets/organisms/GoalForm';
 import { AlarmDemo, CalendarDemo, LivePriceDemo, NewsDemo, VaultDemo } from '@/src/widgets/organisms/OnboardingDemos';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import React, { useRef, useState, type ComponentRef } from 'react';
-import { ScrollView, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /** Her sayfa: üstte özelliğin hareketli demosu, altında vurucu başlık ve kısa açıklama. */
@@ -53,7 +54,7 @@ export default function OnboardingScreen() {
   const styles = useStyles();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width } = useWindowSize();
   const { replay } = useLocalSearchParams<{ replay?: string }>();
   const isReplay = replay === '1';
   const { saveGoal, completeOnboarding } = useGoal();

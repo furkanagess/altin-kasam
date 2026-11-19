@@ -42,6 +42,15 @@ function load(): NotificationsModule | null {
   return handle;
 }
 
+/**
+ * Web: tarayıcının `Notification` API'si. Push yoktur; bildirim yalnızca sekme açıkken (alarm
+ * kontrolü sayfada çalışırken) gösterilebilir. Planlı bildirim (`scheduleAt`, `scheduleWeekly`) yoktur.
+ */
+const webNotification = (): typeof Notification | null =>
+  Platform.OS === 'web' && typeof window !== 'undefined' && 'Notification' in window ? window.Notification : null;
+/** Web bildirimine tıklanınca `onOpen` dinleyicilerine iletilir. */
+const webOpenListeners = new Set<(path: string) => void>();
+
 export const notificationsDatasource = {
   isAvailable(): boolean {
     return load() !== null;
@@ -49,6 +58,18 @@ export const notificationsDatasource = {
 
   /** İzin yoksa ister; reddedilirse ya da modül yoksa `false`. */
   async ensurePermission(): Promise<boolean> {
+    const web = webNotification();
+    if (web) {
+      if (web.permission === 'granted') return true;
+      if (web.permission === 'denied') return false;
+      try {
+        const granted = (await web.requestPermission()) === 'granted';
+        analyticsDatasource.track({ name: 'notification_permission', granted });
+        return granted;
+      } catch {
+        return false;
+      }
+    }
     const notifications = load();
     if (!notifications) return false;
     try {
@@ -97,6 +118,12 @@ export const notificationsDatasource = {
    * soğuk açıldıysa son bildirim de işlenir. Dönen fonksiyon dinlemeyi bırakır.
    */
   onOpen(listener: (path: string) => void): () => void {
+    if (webNotification()) {
+      webOpenListeners.add(listener);
+      return () => {
+        webOpenListeners.delete(listener);
+      };
+    }
     const notifications = load();
     if (!notifications) return () => {};
     const handle = (data: unknown) => {
@@ -119,6 +146,21 @@ export const notificationsDatasource = {
 
   /** Hemen gösterilen yerel bildirim; `path` dokununca açılacak ekran. İzin yoksa `false`. */
   async present(title: string, body: string, path: string): Promise<boolean> {
+    const web = webNotification();
+    if (web) {
+      if (web.permission !== 'granted') return false;
+      try {
+        const shown = new web(title, { body, icon: '/favicon.ico', tag: path });
+        shown.onclick = () => {
+          window.focus();
+          for (const listener of webOpenListeners) listener(path);
+          shown.close();
+        };
+        return true;
+      } catch {
+        return false;
+      }
+    }
     const notifications = load();
     if (!notifications) return false;
     try {

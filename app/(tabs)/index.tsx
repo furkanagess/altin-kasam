@@ -1,3 +1,5 @@
+import { pageMetadata } from '@/src/core/web/seo';
+import type { GenerateMetadataFunction } from 'expo-router/server';
 import { useWebElementWidth } from '@/src/core/hooks/useWebElementWidth';
 import {
   type ChartUnit,
@@ -272,6 +274,9 @@ function MarketChartSection() {
     </View>
   );
 }
+
+/** Sunucu çıktısındaki sayfa başlığı ve açıklaması (arama ve paylaşım önizlemesi). */
+export const generateMetadata: GenerateMetadataFunction = () => pageMetadata({});
 
 export default function MarketScreen() {
   const styles = useStyles();

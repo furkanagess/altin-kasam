@@ -1,3 +1,4 @@
+import { APP_LANDING_URL } from '@/src/core/constants/stores';
 import { useBreakpoint } from '@/src/core/theme/web';
 import { appAlert } from '@/src/core/dialog/appAlert';
 import { LEGAL_LINKS } from '@/src/core/constants/premium';
@@ -17,7 +18,9 @@ import { router } from 'expo-router';
 import { weeklySummaryRepository } from '@/src/data/repositories/weeklySummaryRepository';
 import { usePortfolioViewModel } from '@/src/viewmodels/portfolio/PortfolioProvider';
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+
+const IS_WEB = Platform.OS === 'web';
 
 function SettingsRow({
   title,
@@ -199,7 +202,8 @@ export default function SettingsScreen() {
         ) : (
           <AppButton label="Pro’yu incele" onPress={() => openPaywall()} />
         )}
-        {configured && !isPremium ? (
+        {/* RevenueCat web'de geri yüklemeyi desteklemez. */}
+        {configured && !isPremium && !IS_WEB ? (
           <AppButton
             label="Satın alımları geri yükle"
             variant="ghost"
@@ -211,6 +215,16 @@ export default function SettingsScreen() {
 
       <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>UYGULAMA</AppText>
       <View style={styles.card}>
+        {IS_WEB ? (
+          <>
+            <SettingsRow
+              title="Uygulamayı indir"
+              detail="Alarmlar, widget ve bildirimler telefonda da çalışsın"
+              onPress={() => void Linking.openURL(APP_LANDING_URL)}
+            />
+            <View style={styles.divider} />
+          </>
+        ) : null}
         <SettingsRow
           title="Ana ekran widget’ı"
           detail="Gram altın ücretsiz; tür seçimi ve orta boy Pro’da"
@@ -222,6 +236,9 @@ export default function SettingsScreen() {
           detail={followedSources.size ? `${followedSources.size} kaynak takip ediliyor` : 'Takip ettiğin kaynaktan haber gelince bildirim'}
           onPress={() => router.push('/sources')}
         />
+        {/* Haftalık özet planlı yerel bildirimdir; web'de planlı bildirim yoktur. */}
+        {IS_WEB ? null : (
+          <>
         <View style={styles.divider} />
         <View style={styles.row}>
           <View style={styles.rowText}>
@@ -236,6 +253,8 @@ export default function SettingsScreen() {
             accessibilityLabel="Haftalık kasa özeti bildirimi"
           />
         </View>
+          </>
+        )}
         <View style={styles.divider} />
         <SettingsRow
           title="Yatırım hedefi"

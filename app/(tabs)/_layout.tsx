@@ -5,7 +5,7 @@ import { TabIcon } from '@/src/widgets/atoms/TabIcon';
 import { HeaderActions } from '@/src/widgets/molecules/HeaderActions';
 import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { PriceTimestamp } from '@/src/widgets/molecules/PriceTimestamp';
 
 function TabLabel({ title, focused }: { title: string; focused: boolean }) {
@@ -31,7 +31,9 @@ export default function TabLayout() {
 
   // Depo okunana kadar sekmeler çizilmez; aksi halde karşılama ekranından önce bir an görünür.
   if (!loaded) return null;
-  if (!onboardingDone) return <Redirect href="/onboarding" />;
+  // Telefonda karşılama zorunlu. Web'de isteğe bağlı: arama motorundan ya da paylaşılan bir linkten
+  // gelen ziyaretçi doğrudan istediği sayfaya düşer.
+  if (!onboardingDone && Platform.OS !== 'web') return <Redirect href="/onboarding" />;
 
   return (
     <Tabs

@@ -1,3 +1,5 @@
+import { pageMetadata } from '@/src/core/web/seo';
+import type { GenerateMetadataFunction } from 'expo-router/server';
 import { useBreakpoint } from '@/src/core/theme/web';
 import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { useTheme } from '@/src/core/theme';
@@ -47,6 +49,9 @@ const FOLLOW_OPTIONS: { id: FollowFilter; label: string }[] = [
   { id: 'followed', label: 'Takip ettiklerim' },
   { id: 'unfollowed', label: 'Takip etmediklerim' },
 ];
+
+/** Sunucu çıktısındaki sayfa başlığı ve açıklaması (arama ve paylaşım önizlemesi). */
+export const generateMetadata: GenerateMetadataFunction = () => pageMetadata({ title: 'Altın haberleri ve topluluk', description: 'Altın ve gümüşle ilgili günün haberleri, topluluk paylaşımları ve piyasa beklentisi.', path: '/community' });
 
 export default function CommunityScreen() {
   const { colors } = useTheme();

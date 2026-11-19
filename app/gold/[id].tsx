@@ -1,3 +1,5 @@
+import { pageMetadata } from '@/src/core/web/seo';
+import type { GenerateMetadataFunction } from 'expo-router/server';
 import { useBreakpoint } from '@/src/core/theme/web';
 import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { getGoldAsset } from '@/src/core/constants/goldAssets';
@@ -18,6 +20,18 @@ import { PriceStatsTable } from '@/src/widgets/organisms/PriceStatsTable';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useCallback } from 'react';
 import { View } from 'react-native';
+
+/** Sunucu çıktısındaki sayfa başlığı: arama ve paylaşım önizlemesi için çeşidin adı. */
+export const generateMetadata: GenerateMetadataFunction = (_request, params) => {
+  const id = typeof params.id === 'string' ? params.id : '';
+  const asset = getGoldAsset(id);
+  if (!asset) return pageMetadata({ title: 'Altın fiyatı', path: `/gold/${id}` });
+  return pageMetadata({
+    title: `${asset.label} fiyatı`,
+    description: `${asset.label} canlı alış ve satış fiyatı, günlük değişim ve fiyat grafiği. Fiyat alarmı kur, kasana ekle.`,
+    path: `/gold/${asset.id}`,
+  });
+};
 
 export default function GoldRateDetailScreen() {
   const styles = useStyles();

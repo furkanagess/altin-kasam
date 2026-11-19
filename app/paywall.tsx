@@ -1,3 +1,5 @@
+import { useWindowSize } from '@/src/core/hooks/useWindowSize';
+import { STORE_LINKS } from '@/src/core/constants/stores';
 import {
   LEGAL_LINKS,
   PAYWALL_REASON_TEXT,
@@ -15,7 +17,7 @@ import { PaywallFeatureCarousel } from '@/src/widgets/organisms/PaywallFeatureCa
 import { PaywallHero } from '@/src/widgets/organisms/PaywallHero';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -31,6 +33,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+
+const IS_WEB = Platform.OS === 'web';
 
 const PERIOD_LABEL: Record<SubscriptionPeriod, string> = {
   annual: 'Yıllık',
@@ -196,7 +200,7 @@ export default function PaywallScreen() {
   const styles = useStyles();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useWindowSize();
   const { demo, reason } = useLocalSearchParams<{ demo?: string; reason?: string }>();
   const isDemo = demo === '1';
   // Paywall hangi sebeple açıldıysa ilk satır onu söyler (ör. alarm sınırı, alarm çaldı).
@@ -386,10 +390,29 @@ export default function PaywallScreen() {
         ) : (
           <View style={styles.notice}>
             <AppText variant="caption" tone="secondary">
-              {__DEV__
-                ? 'Satın alma yapılandırılmadı: .env.example dosyasını .env.local olarak kopyalayıp RevenueCat anahtarlarını girin.'
-                : 'Satın alma şu anda kullanılamıyor.'}
+              {IS_WEB
+                ? 'Pro’yu şimdilik telefonundaki Altın Kasam uygulamasından alabilirsin.'
+                : __DEV__
+                  ? 'Satın alma yapılandırılmadı: .env.example dosyasını .env.local olarak kopyalayıp RevenueCat anahtarlarını girin.'
+                  : 'Satın alma şu anda kullanılamıyor.'}
             </AppText>
+            {/* Web'de ödeme yapılandırılmamışsa sessizce başarısız olmak yerine mağazaya yönlendirilir. */}
+            {IS_WEB ? (
+              <View style={styles.storeRow}>
+                <AppButton
+                  label="App Store"
+                  variant="secondary"
+                  style={styles.storeButton}
+                  onPress={() => void Linking.openURL(STORE_LINKS.ios)}
+                />
+                <AppButton
+                  label="Google Play"
+                  variant="secondary"
+                  style={styles.storeButton}
+                  onPress={() => void Linking.openURL(STORE_LINKS.android)}
+                />
+              </View>
+            ) : null}
           </View>
         )}
 
@@ -424,7 +447,8 @@ export default function PaywallScreen() {
           />
         ) : null}
         <View style={styles.footerLinks}>
-          {canBuy ? (
+          {/* RevenueCat web'de `restorePurchases` desteklemez; web aboneliği hesaba bağlı gelir. */}
+          {canBuy && !IS_WEB ? (
             <AppText
               variant="caption"
               tone="gold"
@@ -434,7 +458,7 @@ export default function PaywallScreen() {
               {busy === 'restore' ? 'Geri yükleniyor…' : 'Satın alımları geri yükle'}
             </AppText>
           ) : null}
-          {canBuy ? <AppText variant="caption" tone="tertiary">·</AppText> : null}
+          {canBuy && !IS_WEB ? <AppText variant="caption" tone="tertiary">·</AppText> : null}
           <AppText variant="caption" tone="tertiary" onPress={() => router.back()} accessibilityRole="button">
             Şimdi değil
           </AppText>
@@ -523,7 +547,9 @@ const useStyles = makeStyles((colors) => ({
     backgroundColor: colors.brand.gold,
   },
   planBadgeText: { color: colors.text.onGold, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
-  notice: { padding: 12, borderRadius: 12, backgroundColor: colors.surface.muted },
+  notice: { gap: 10, padding: 12, borderRadius: 12, backgroundColor: colors.surface.muted },
+  storeRow: { flexDirection: 'row', gap: 8 },
+  storeButton: { flex: 1, minHeight: 40 },
   links: { flexDirection: 'row', justifyContent: 'center', gap: 16 },
   footer: {
     gap: paddings.xs,

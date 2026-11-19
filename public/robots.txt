@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Allow: /api/sitemap
+
+Sitemap: https://altin-kasam.expo.app/api/sitemap

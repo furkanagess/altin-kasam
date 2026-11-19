@@ -1,3 +1,5 @@
+import { pageMetadata } from '@/src/core/web/seo';
+import type { GenerateMetadataFunction } from 'expo-router/server';
 import { useBreakpoint } from '@/src/core/theme/web';
 import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { METAL_ALARM_ASSET, OUNCE_ALARM_ASSET } from '@/src/core/constants/alarmAssets';
@@ -38,6 +40,17 @@ const OUNCE_TITLES: Record<MetalChartSymbol, string> = {
 const EMPTY_POINTS: never[] = [];
 
 /** Piyasa ekranındaki metal grafiğinin detayı: büyük grafik, fiyat tablosu, ekle ve alarm. */
+/** Sunucu çıktısındaki sayfa başlığı: metalin adı. */
+export const generateMetadata: GenerateMetadataFunction = (_request, params) => {
+  const symbol = METAL_CHART_SYMBOLS.find((s) => s === params.symbol);
+  if (!symbol) return pageMetadata({ title: 'Metal fiyatı', path: '/metal' });
+  return pageMetadata({
+    title: `${TITLES[symbol]} fiyatı`,
+    description: `${TITLES[symbol]} ve ${OUNCE_TITLES[symbol]} canlı fiyatı, günlük değişim ve fiyat grafiği.`,
+    path: `/metal/${symbol}`,
+  });
+};
+
 export default function MetalDetailScreen() {
   const styles = useStyles();
   const { symbol: raw } = useLocalSearchParams<{ symbol: string }>();

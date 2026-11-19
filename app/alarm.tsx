@@ -1,3 +1,4 @@
+import { STORE_LINKS } from '@/src/core/constants/stores';
 import { appAlert } from '@/src/core/dialog/appAlert';
 import { useValueMoments } from '@/src/viewmodels/engagement/useValueMoments';
 import { analyticsDatasource } from '@/src/data/datasources/analyticsDatasource';
@@ -32,7 +33,7 @@ import { Screen } from '@/src/widgets/atoms/Screen';
 import { SectionHeader } from '@/src/widgets/molecules/SectionHeader';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 type Direction = PriceAlarm['direction'];
 
@@ -588,11 +589,36 @@ export default function AlarmScreen() {
             ))}
         </>
       ) : null}
+
+      {/* Web'de push yok: alarm yalnızca sekme açıkken tarayıcı bildirimiyle çalar. */}
+      {Platform.OS === 'web' ? (
+        <View style={styles.webNote}>
+          <AppText variant="caption" tone="secondary">
+            Web’de alarm bu sekme açıkken tarayıcı bildirimiyle çalar. Tarayıcı kapalıyken de haber almak için
+            alarmı telefonundaki Altın Kasam uygulamasında kur.
+          </AppText>
+          <View style={styles.webNoteLinks}>
+            <AppText variant="caption" tone="gold" onPress={() => void Linking.openURL(STORE_LINKS.ios)}>
+              App Store
+            </AppText>
+            <AppText variant="caption" tone="gold" onPress={() => void Linking.openURL(STORE_LINKS.android)}>
+              Google Play
+            </AppText>
+          </View>
+        </View>
+      ) : null}
     </Screen>
   );
 }
 
 const useStyles = makeStyles((colors) => ({
+  webNote: {
+    gap: paddings.xs,
+    padding: paddings.card,
+    borderRadius: radii.md,
+    backgroundColor: colors.surface.muted,
+  },
+  webNoteLinks: { flexDirection: 'row', gap: paddings.md },
   assetCard: {
     flexDirection: 'row',
     alignItems: 'center',

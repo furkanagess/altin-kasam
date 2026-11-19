@@ -1,10 +1,11 @@
+import { useWindowSize } from '@/src/core/hooks/useWindowSize';
 import { makeStyles, useTheme } from '@/src/core/theme';
 import { useBreakpoint } from '@/src/core/theme/web';
 import { storageGet, storageSet } from '@/src/core/storage/storage';
 import { registerTourTarget } from '@/src/viewmodels/tour/tourTargets';
 import { router, usePathname } from 'expo-router';
 import React, { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Animated, PanResponder, useWindowDimensions } from 'react-native';
+import { Animated, PanResponder } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { G, Path } from 'react-native-svg';
 
@@ -41,7 +42,7 @@ export function AddHoldingFab() {
   const pathname = usePathname();
   // Geniş web ekranında "Varlık ekle" kenar çubuğunda ve başlıkta durur; yüzen buton içeriği örtmez.
   const wide = useBreakpoint() !== 'compact';
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useWindowSize();
   const insets = useSafeAreaInsets();
   const [ready, setReady] = useState(false);
   const [drag] = useState(() => new DragStore());

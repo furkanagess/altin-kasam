@@ -1,3 +1,4 @@
+import { useWindowSize } from '@/src/core/hooks/useWindowSize';
 import { makeStyles, paddings } from '@/src/core/theme';
 import { formatClockTime, formatNumber, formatTRY } from '@/src/utils/format';
 import { useEconomicCalendar } from '@/src/viewmodels/analysis/EconomicCalendarProvider';
@@ -11,7 +12,7 @@ import { FlagIcon } from '@/src/widgets/atoms/FlagIcon';
 import { GoldAssetIcon } from '@/src/widgets/atoms/GoldAssetIcon';
 import { Bar, Coin, DOOR, Vault, VAULT, VaultDoor } from '@/src/widgets/organisms/VaultDropAnimation';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Image, Text, View, useWindowDimensions, type ImageSourcePropType } from 'react-native';
+import { Image, Text, View, type ImageSourcePropType } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedProps,
@@ -39,7 +40,7 @@ const useStage = () => useContext(StageContext);
 /** Karanlık sahne: telefonun genişliğine ve yüksekliğine göre büyür; demolar her temada aynı görünür. */
 function Stage({ children }: { children: React.ReactNode }) {
   const styles = useStyles();
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useWindowSize();
   const w = Math.min(width - 40, 380);
   const h = Math.max(340, Math.min(Math.round(height * 0.53), 480));
   const size: StageSize = { w, h, inner: w - paddings.lg * 2, compact: h < 410 };

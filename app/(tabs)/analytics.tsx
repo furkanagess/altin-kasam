@@ -1,3 +1,5 @@
+import { pageMetadata } from '@/src/core/web/seo';
+import type { GenerateMetadataFunction } from 'expo-router/server';
 import { useBreakpoint } from '@/src/core/theme/web';
 import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { isWeeklyAnalysisLocked } from '@/src/core/constants/premium';
@@ -35,6 +37,9 @@ const openAnalysis = (id: string) => router.push({ pathname: '/analysis/[id]', p
 /** Piyasa göstergeleri ve haftalık değerlendirmeler. */
 /** Analiz ekranında gösterilen son açıklanan olay sayısı; kalanı Takvim ekranında. */
 const RECENT_PREVIEW_COUNT = 2;
+
+/** Sunucu çıktısındaki sayfa başlığı ve açıklaması (arama ve paylaşım önizlemesi). */
+export const generateMetadata: GenerateMetadataFunction = () => pageMetadata({ title: 'Altın analizi ve ekonomik takvim', description: 'Altın/gümüş rasyosu, haftalık altın analizi ve Fed, TCMB, enflasyon gibi altını etkileyen ekonomik takvim.', path: '/analytics' });
 
 export default function AnalyticsScreen() {
   const styles = useStyles();
