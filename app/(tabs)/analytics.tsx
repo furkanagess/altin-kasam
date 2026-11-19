@@ -1,3 +1,5 @@
+import { useBreakpoint } from '@/src/core/theme/web';
+import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { isWeeklyAnalysisLocked } from '@/src/core/constants/premium';
 import { MARKET_INFO, type MarketInfoId } from '@/src/core/constants/marketInfo';
 import { RATIO_ALARM_ID } from '@/src/core/constants/alarmAssets';
@@ -51,6 +53,134 @@ export default function AnalyticsScreen() {
   const { analyses, loading } = useWeeklyAnalyses();
   const [info, setInfo] = useState<MarketInfoId | null>(null);
   const [latest, ...past] = analyses;
+  const expanded = useBreakpoint() === 'expanded';
+
+  const ratioBlock = (
+    <>
+      <TourTarget id="analysis-ratio">
+      <PriceChart
+        points={ratioChart.points}
+        currency="USD"
+        livePrice={ratioChart.ratio}
+        formatValue={formatNumber}
+        timeframe={ratioChart.timeframe}
+        timeframes={ratioChart.timeframes}
+        onTimeframeChange={ratioChart.setTimeframe}
+        lockedTimeframes={ratioChart.lockedTimeframes}
+        onLockedTimeframe={onLockedTimeframe}
+        loading={ratioChart.loading}
+        height={180}
+        title="Altın/Gümüş rasyosu"
+        headerLeft={<GoldSilverRatioIcon />}
+        headerRight={
+          <AlarmButton
+            assetId={RATIO_ALARM_ID}
+            onPress={() => router.push({ pathname: '/alarm', params: { assetId: RATIO_ALARM_ID } })}
+            accessibilityLabel="Altın/Gümüş rasyosu için alarm"
+          />
+        }
+        bare
+        titleRight={<InfoButton label="Altın/Gümüş rasyosu nedir?" onPress={() => setInfo('goldSilverRatio')} />}
+      />
+      </TourTarget>
+    </>
+  );
+  const calendarBlock = (
+    <>
+      <TourTarget id="analysis-calendar" style={styles.tourBlock}>
+      <SectionHeader
+        title="Ekonomik takvim"
+        right={<InfoButton label="Ekonomik takvim nedir?" onPress={() => setInfo('economicCalendar')} />}
+      />
+      {calendar.loading ? (
+        <ActivityIndicator color={colors.brand.gold} />
+      ) : calendar.events.length || calendar.recent.length ? (
+        <>
+          {calendar.recent.length ? (
+            <>
+              <EconomicCalendarList
+                events={calendar.recent.slice(0, RECENT_PREVIEW_COUNT)}
+                reminders={calendar.reminders}
+                past
+                onOpen={openReport}
+                badgeFor={reportBadge}
+              />
+            </>
+          ) : null}
+          <Pressable
+            onPress={() => router.push('/calendar')}
+            style={styles.calendarLink}
+            accessibilityRole="button"
+            accessibilityLabel="Tüm ekonomik takvim"
+          >
+            <AppText variant="bodyStrong" tone="gold">
+              {calendar.recent.length > RECENT_PREVIEW_COUNT
+                ? `Tüm açıklananlar ve takvim (${calendar.recent.length - RECENT_PREVIEW_COUNT} açıklama daha) ›`
+                : `Tüm takvim ve olası etkiler (${calendar.events.length}) ›`}
+            </AppText>
+          </Pressable>
+        </>
+      ) : calendar.error ? (
+        <Pressable onPress={() => void calendar.refresh()} accessibilityRole="button" style={styles.calendarLink}>
+          <AppText variant="caption" tone="tertiary">
+            Takvim şu an alınamadı.{' '}
+            <AppText variant="caption" tone="gold" style={styles.link}>
+              Tekrar dene
+            </AppText>
+          </AppText>
+        </Pressable>
+      ) : (
+        <AppText variant="caption" tone="tertiary">
+          Yaklaşan olay yok.
+        </AppText>
+      )}
+
+      </TourTarget>
+    </>
+  );
+  const weeklyBlock = (
+    <>
+      {/* Yayımlanmış analiz yoksa bölüm hiç gösterilmez. */}
+      <TourTarget id="analysis-weekly" style={styles.tourBlock}>
+      {loading || latest ? (
+        <SectionHeader
+          title="Haftalık analiz"
+          pro
+          right={<InfoButton label="Haftalık analiz nedir?" onPress={() => setInfo('weeklyAnalysis')} />}
+        />
+      ) : null}
+      {loading ? (
+        <ActivityIndicator color={colors.brand.gold} />
+      ) : latest ? (
+        <>
+          <WeeklyAnalysisCard
+            analysis={latest}
+            locked={isWeeklyAnalysisLocked(0, isPremium)}
+            onPress={() => (isWeeklyAnalysisLocked(0, isPremium) ? openPaywall('weekly') : openAnalysis(latest.id))}
+          />
+          {past.length ? (
+            <View style={styles.list}>
+              {past.map((a, i) => {
+                // `latest` 0. sırada; geçmiş listesi 1. sıradan başlar.
+                const locked = isWeeklyAnalysisLocked(i + 1, isPremium);
+                return (
+                  <WeeklyAnalysisCard
+                    key={a.id}
+                    analysis={a}
+                    dateOnly
+                    locked={locked}
+                    onPress={() => (locked ? openPaywall('weekly') : openAnalysis(a.id))}
+                  />
+                );
+              })}
+            </View>
+          ) : null}
+        </>
+      ) : null}
+
+      </TourTarget>
+    </>
+  );
 
   return (
     <View style={styles.root}>
@@ -64,121 +194,26 @@ export default function AnalyticsScreen() {
         }}
         refreshing={state === 'loading'}
       >
-        <TourTarget id="analysis-ratio">
-        <PriceChart
-          points={ratioChart.points}
-          currency="USD"
-          livePrice={ratioChart.ratio}
-          formatValue={formatNumber}
-          timeframe={ratioChart.timeframe}
-          timeframes={ratioChart.timeframes}
-          onTimeframeChange={ratioChart.setTimeframe}
-          lockedTimeframes={ratioChart.lockedTimeframes}
-          onLockedTimeframe={onLockedTimeframe}
-          loading={ratioChart.loading}
-          height={180}
-          title="Altın/Gümüş rasyosu"
-          headerLeft={<GoldSilverRatioIcon />}
-          headerRight={
-            <AlarmButton
-              assetId={RATIO_ALARM_ID}
-              onPress={() => router.push({ pathname: '/alarm', params: { assetId: RATIO_ALARM_ID } })}
-              accessibilityLabel="Altın/Gümüş rasyosu için alarm"
-            />
-          }
-          bare
-          titleRight={<InfoButton label="Altın/Gümüş rasyosu nedir?" onPress={() => setInfo('goldSilverRatio')} />}
-        />
-        </TourTarget>
-        <TourTarget id="analysis-calendar" style={styles.tourBlock}>
-        <SectionHeader
-          title="Ekonomik takvim"
-          right={<InfoButton label="Ekonomik takvim nedir?" onPress={() => setInfo('economicCalendar')} />}
-        />
-        {calendar.loading ? (
-          <ActivityIndicator color={colors.brand.gold} />
-        ) : calendar.events.length || calendar.recent.length ? (
-          <>
-            {calendar.recent.length ? (
+        {/* Masaüstünde takvim sağ sütunda sabit durur; telefonda sıra: rasyo, takvim, analiz. */}
+        {expanded ? (
+          <WideColumns
+            main={
               <>
-                <EconomicCalendarList
-                  events={calendar.recent.slice(0, RECENT_PREVIEW_COUNT)}
-                  reminders={calendar.reminders}
-                  past
-                  onOpen={openReport}
-                  badgeFor={reportBadge}
-                />
+                {ratioBlock}
+                {weeklyBlock}
               </>
-            ) : null}
-            <Pressable
-              onPress={() => router.push('/calendar')}
-              style={styles.calendarLink}
-              accessibilityRole="button"
-              accessibilityLabel="Tüm ekonomik takvim"
-            >
-              <AppText variant="bodyStrong" tone="gold">
-                {calendar.recent.length > RECENT_PREVIEW_COUNT
-                  ? `Tüm açıklananlar ve takvim (${calendar.recent.length - RECENT_PREVIEW_COUNT} açıklama daha) ›`
-                  : `Tüm takvim ve olası etkiler (${calendar.events.length}) ›`}
-              </AppText>
-            </Pressable>
-          </>
-        ) : calendar.error ? (
-          <Pressable onPress={() => void calendar.refresh()} accessibilityRole="button" style={styles.calendarLink}>
-            <AppText variant="caption" tone="tertiary">
-              Takvim şu an alınamadı.{' '}
-              <AppText variant="caption" tone="gold" style={styles.link}>
-                Tekrar dene
-              </AppText>
-            </AppText>
-          </Pressable>
-        ) : (
-          <AppText variant="caption" tone="tertiary">
-            Yaklaşan olay yok.
-          </AppText>
-        )}
-
-        </TourTarget>
-
-        {/* Yayımlanmış analiz yoksa bölüm hiç gösterilmez. */}
-        <TourTarget id="analysis-weekly" style={styles.tourBlock}>
-        {loading || latest ? (
-          <SectionHeader
-            title="Haftalık analiz"
-            pro
-            right={<InfoButton label="Haftalık analiz nedir?" onPress={() => setInfo('weeklyAnalysis')} />}
+            }
+            aside={calendarBlock}
+            asideWidth={420}
+            stickyAside
           />
-        ) : null}
-        {loading ? (
-          <ActivityIndicator color={colors.brand.gold} />
-        ) : latest ? (
+        ) : (
           <>
-            <WeeklyAnalysisCard
-              analysis={latest}
-              locked={isWeeklyAnalysisLocked(0, isPremium)}
-              onPress={() => (isWeeklyAnalysisLocked(0, isPremium) ? openPaywall('weekly') : openAnalysis(latest.id))}
-            />
-            {past.length ? (
-              <View style={styles.list}>
-                {past.map((a, i) => {
-                  // `latest` 0. sırada; geçmiş listesi 1. sıradan başlar.
-                  const locked = isWeeklyAnalysisLocked(i + 1, isPremium);
-                  return (
-                    <WeeklyAnalysisCard
-                      key={a.id}
-                      analysis={a}
-                      dateOnly
-                      locked={locked}
-                      onPress={() => (locked ? openPaywall('weekly') : openAnalysis(a.id))}
-                    />
-                  );
-                })}
-              </View>
-            ) : null}
+            {ratioBlock}
+            {calendarBlock}
+            {weeklyBlock}
           </>
-        ) : null}
-
-        </TourTarget>
+        )}
 
         <AppText variant="caption" tone="tertiary" style={styles.disclaimer}>
           Yatırım tavsiyesi değildir

@@ -1,3 +1,5 @@
+import { useBreakpoint } from '@/src/core/theme/web';
+import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { appAlert } from '@/src/core/dialog/appAlert';
 import { makeStyles, paddings, useTheme } from '@/src/core/theme';
 import { portfolioRepository } from '@/src/data/repositories/portfolioRepository';
@@ -150,6 +152,7 @@ export default function PortfolioScreen() {
   // Paylaşım görseli herkese açık (büyüme döngüsü); yalnızca tutarları göstermek Pro'dur.
   const openShare = useCallback(() => router.push('/share-vault'), []);
 
+  const expanded = useBreakpoint() === 'expanded';
   const goal = <GoalCard progress={goalProgress} onEdit={() => router.push('/goal')} compact />;
   // Son varlık çıkarılınca ekran boş duruma geçer; animasyon iki durumda da çizilir.
   const withdrawalAnimation = withdrawal ? (
@@ -188,6 +191,129 @@ export default function PortfolioScreen() {
 
   const currency = snapshot.currency;
 
+  const chartBlock = (
+    <>
+        <TourTarget id="vault-body">
+          <PortfolioChartSection snapshot={snapshot} />
+        </TourTarget>
+    </>
+  );
+  const statsBlock = (
+    <>
+        <View style={styles.grid}>
+          <StatTile
+            label="Toplam kâr / zarar"
+            value={formatSignedMoney(snapshot.pnl, currency)}
+            detail={`${formatPercent(snapshot.pnlPercent)} · maliyete göre`}
+            tone={snapshot.pnl >= 0 ? 'up' : 'down'}
+          />
+          <StatTile
+            right
+            label="Bugünkü kâr / zarar"
+            value={formatSignedMoney(snapshot.dayPnl, currency)}
+            detail={`${formatPercent(snapshot.dayPnlPercent)} · düne göre`}
+            tone={snapshot.dayPnl >= 0 ? 'up' : 'down'}
+          />
+          <StatTile label="Toplam maliyet" value={formatMoney(snapshot.totalCost, currency)} detail="Alış fiyatlarıyla" />
+          <StatTile
+            right
+            label="Altın karşılığı"
+            value={formatGrams(breakdown.pureGrams)}
+            detail="24 ayar gram"
+          />
+        </View>
+    </>
+  );
+  const holdingsBlock = (
+    <>
+        <SectionHeader title="Varlıklarım" subtitle="Ortalama maliyete göre kâr/zarar" />
+        <View style={styles.list}>
+          {snapshot.positions.map((p) => (
+            <HoldingListItem
+              key={p.assetId}
+              position={p}
+              currency={currency}
+              onOpen={openPosition}
+              onAddMore={addMore}
+              onRemove={confirmRemove}
+            />
+          ))}
+        </View>
+
+        <View style={styles.actions}>
+          <AppButton label="Görsel oluştur" variant="secondary" style={styles.flex} onPress={openShare} />
+          <AppButton label="CSV dışa aktar" variant="secondary" style={styles.flex} onPress={() => void exportCsv()} />
+        </View>
+        {!csvGate.isPremium ? (
+          <View style={styles.proNote}>
+            <ProMark />
+            <AppText variant="caption" tone="secondary" style={styles.flex}>
+              {csvGate.remaining
+                ? `Görsel ücretsiz. CSV ücretsiz planda ${FREE_EXPORT_USES} kez kullanılabilir · kalan: ${csvGate.remaining}`
+                : 'Görsel ücretsiz. CSV hakkını kullandın; sınırsız dışa aktarma Pro’da.'}
+            </AppText>
+          </View>
+        ) : null}
+    </>
+  );
+  const distributionBlock = (
+    <>
+        <SectionHeader title="Dağılım" subtitle="Ürün türlerine göre güncel değer" />
+        <View style={styles.card}>
+          <View style={styles.bar} accessibilityLabel="Ürün türlerine göre dağılım">
+            {breakdown.groups.map((g) => (
+              <View key={g.id} style={{ flex: g.share, backgroundColor: PORTFOLIO_GROUP_COLORS[g.id] }} />
+            ))}
+          </View>
+          {breakdown.groups.map((g) => (
+            <View key={g.id} style={styles.group}>
+              <View style={styles.legendRow}>
+                <View style={[styles.dot, { backgroundColor: PORTFOLIO_GROUP_COLORS[g.id] }]} />
+                <AppText variant="body" style={styles.flex}>
+                  {g.label}
+                  {g.unit ? (
+                    <AppText variant="caption" tone="tertiary">
+                      {' · '}
+                      {formatNumber(g.quantity)} {g.unit}
+                    </AppText>
+                  ) : g.summary ? (
+                    <AppText variant="caption" tone="tertiary">
+                      {' · '}
+                      {g.summary}
+                    </AppText>
+                  ) : null}
+                </AppText>
+                <AppText variant="bodyStrong">{formatMoney(g.value, currency)}</AppText>
+                <AppText variant="caption" tone="secondary" style={styles.percent}>
+                  %{Math.round(g.share * 100)}
+                </AppText>
+              </View>
+              {g.items?.length ? (
+                <View style={[styles.subList, { borderLeftColor: PORTFOLIO_GROUP_COLORS[g.id] }]}>
+                  {g.items.map((item) => (
+                    <View key={item.id} style={styles.legendRow}>
+                      <AppText variant="caption" tone="secondary" style={styles.flex}>
+                        {item.label}
+                        <AppText variant="caption" tone="tertiary">
+                          {` · ${item.amount}`}
+                        </AppText>
+                      </AppText>
+                      <AppText variant="caption" tone="primary" style={styles.subValue}>
+                        {formatMoney(item.value, currency)}
+                      </AppText>
+                      <AppText variant="caption" tone="tertiary" style={styles.percent}>
+                        %{Math.round(item.share * 100)}
+                      </AppText>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </View>
+          ))}
+        </View>
+    </>
+  );
+
   return (
     <Screen
       scroll
@@ -195,116 +321,33 @@ export default function PortfolioScreen() {
       onRefresh={() => void refresh()}
       refreshing={state === 'loading'}
     >
-      {goal}
-      <TourTarget id="vault-body">
-        <PortfolioChartSection snapshot={snapshot} />
-      </TourTarget>
-
-      <View style={styles.grid}>
-        <StatTile
-          label="Toplam kâr / zarar"
-          value={formatSignedMoney(snapshot.pnl, currency)}
-          detail={`${formatPercent(snapshot.pnlPercent)} · maliyete göre`}
-          tone={snapshot.pnl >= 0 ? 'up' : 'down'}
+      {/* Masaüstünde grafik ve varlıklar solda; hedef, özet ve dağılım sağda. Telefonda alt alta. */}
+      {expanded ? (
+        <WideColumns
+          main={
+            <>
+              {chartBlock}
+              {holdingsBlock}
+            </>
+          }
+          aside={
+            <>
+              {goal}
+              {statsBlock}
+              {distributionBlock}
+            </>
+          }
+          asideWidth={400}
         />
-        <StatTile
-          right
-          label="Bugünkü kâr / zarar"
-          value={formatSignedMoney(snapshot.dayPnl, currency)}
-          detail={`${formatPercent(snapshot.dayPnlPercent)} · düne göre`}
-          tone={snapshot.dayPnl >= 0 ? 'up' : 'down'}
-        />
-        <StatTile label="Toplam maliyet" value={formatMoney(snapshot.totalCost, currency)} detail="Alış fiyatlarıyla" />
-        <StatTile
-          right
-          label="Altın karşılığı"
-          value={formatGrams(breakdown.pureGrams)}
-          detail="24 ayar gram"
-        />
-      </View>
-
-      <SectionHeader title="Varlıklarım" subtitle="Ortalama maliyete göre kâr/zarar" />
-      <View style={styles.list}>
-        {snapshot.positions.map((p) => (
-          <HoldingListItem
-            key={p.assetId}
-            position={p}
-            currency={currency}
-            onOpen={openPosition}
-            onAddMore={addMore}
-            onRemove={confirmRemove}
-          />
-        ))}
-      </View>
-
-      <View style={styles.actions}>
-        <AppButton label="Görsel oluştur" variant="secondary" style={styles.flex} onPress={openShare} />
-        <AppButton label="CSV dışa aktar" variant="secondary" style={styles.flex} onPress={() => void exportCsv()} />
-      </View>
-      {!csvGate.isPremium ? (
-        <View style={styles.proNote}>
-          <ProMark />
-          <AppText variant="caption" tone="secondary" style={styles.flex}>
-            {csvGate.remaining
-              ? `Görsel ücretsiz. CSV ücretsiz planda ${FREE_EXPORT_USES} kez kullanılabilir · kalan: ${csvGate.remaining}`
-              : 'Görsel ücretsiz. CSV hakkını kullandın; sınırsız dışa aktarma Pro’da.'}
-          </AppText>
-        </View>
-      ) : null}
-
-      <SectionHeader title="Dağılım" subtitle="Ürün türlerine göre güncel değer" />
-      <View style={styles.card}>
-        <View style={styles.bar} accessibilityLabel="Ürün türlerine göre dağılım">
-          {breakdown.groups.map((g) => (
-            <View key={g.id} style={{ flex: g.share, backgroundColor: PORTFOLIO_GROUP_COLORS[g.id] }} />
-          ))}
-        </View>
-        {breakdown.groups.map((g) => (
-          <View key={g.id} style={styles.group}>
-            <View style={styles.legendRow}>
-              <View style={[styles.dot, { backgroundColor: PORTFOLIO_GROUP_COLORS[g.id] }]} />
-              <AppText variant="body" style={styles.flex}>
-                {g.label}
-                {g.unit ? (
-                  <AppText variant="caption" tone="tertiary">
-                    {' · '}
-                    {formatNumber(g.quantity)} {g.unit}
-                  </AppText>
-                ) : g.summary ? (
-                  <AppText variant="caption" tone="tertiary">
-                    {' · '}
-                    {g.summary}
-                  </AppText>
-                ) : null}
-              </AppText>
-              <AppText variant="bodyStrong">{formatMoney(g.value, currency)}</AppText>
-              <AppText variant="caption" tone="secondary" style={styles.percent}>
-                %{Math.round(g.share * 100)}
-              </AppText>
-            </View>
-            {g.items?.length ? (
-              <View style={[styles.subList, { borderLeftColor: PORTFOLIO_GROUP_COLORS[g.id] }]}>
-                {g.items.map((item) => (
-                  <View key={item.id} style={styles.legendRow}>
-                    <AppText variant="caption" tone="secondary" style={styles.flex}>
-                      {item.label}
-                      <AppText variant="caption" tone="tertiary">
-                        {` · ${item.amount}`}
-                      </AppText>
-                    </AppText>
-                    <AppText variant="caption" tone="primary" style={styles.subValue}>
-                      {formatMoney(item.value, currency)}
-                    </AppText>
-                    <AppText variant="caption" tone="tertiary" style={styles.percent}>
-                      %{Math.round(item.share * 100)}
-                    </AppText>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-          </View>
-        ))}
-      </View>
+      ) : (
+        <>
+          {goal}
+          {chartBlock}
+          {statsBlock}
+          {holdingsBlock}
+          {distributionBlock}
+        </>
+      )}
 
       {withdrawalAnimation}
     </Screen>

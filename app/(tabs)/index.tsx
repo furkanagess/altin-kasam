@@ -28,6 +28,7 @@ import { TourTarget } from '@/src/widgets/atoms/TourTarget';
 import { CurrencySwitcher } from '@/src/widgets/molecules/CurrencySwitcher';
 import { EmptyState } from '@/src/widgets/molecules/EmptyState';
 import { ExpandablePriceRow } from '@/src/widgets/molecules/ExpandablePriceRow';
+import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { SectionHeader } from '@/src/widgets/molecules/SectionHeader';
 import { TopTabs } from '@/src/widgets/molecules/TopTabs';
 import { UnitSwitcher } from '@/src/widgets/molecules/UnitSwitcher';
@@ -291,62 +292,70 @@ export default function MarketScreen() {
         <MarketTicker items={ticker} />
       </TourTarget>
       <Screen scroll scrollId="market" onRefresh={() => void refresh()} refreshing={state === 'loading'}>
-        <MarketChartSection />
+        {/* Masaüstünde grafik ve widget kartı solda, altın çeşitleri sağda; telefonda alt alta. */}
+        <WideColumns
+          main={
+            <>
+              <MarketChartSection />
 
-        {state === 'error' ? (
-          <EmptyState
-            title="Piyasa alınamadı"
-            message={error ?? 'Bilinmeyen hata'}
-            actionLabel="Yenile"
-            onAction={() => void refresh()}
-          />
-        ) : null}
-
-        <Pressable
-          style={styles.widgetEntry}
-          onPress={() => router.push('/widget')}
-          accessibilityRole="button"
-          accessibilityLabel="Ana ekran widget’ı, ücretsiz"
-        >
-          <View style={styles.widgetEntryText}>
-            <View style={styles.widgetEntryTitle}>
-              <AppText variant="bodyStrong">Ana ekran widget’ı</AppText>
-            </View>
-            <AppText variant="caption" tone="secondary">
-              Gram altın fiyatı telefonunun ana ekranında, ücretsiz
-            </AppText>
-          </View>
-          <AppText variant="bodyStrong" tone="gold">›</AppText>
-        </Pressable>
-
-        {goldProducts.length ? (
-          <TourTarget id="gold-list" style={styles.goldBlock}>
-            <SectionHeader
-              title="Altın çeşitleri"
-              right={<InfoButton label="Altın çeşitleri nedir?" onPress={() => setInfo('goldTypes')} />}
-            />
-            <View style={styles.list}>
-              {goldProducts.map(({ asset, rate }) => (
-                <ExpandablePriceRow
-                  key={asset.id}
-                  name={GOLD_ROW_TEXT[asset.id].title}
-                  caption={GOLD_ROW_TEXT[asset.id].meta}
-                  bid={rate.bid}
-                  ask={rate.ask}
-                  currency={currency}
-                  day={rate.day}
-                  id={asset.id}
-                  onAdd={openAddHolding}
-                  onAlarm={openAlarm}
-                  onDetail={openDetail}
-                  expanded={openGoldId === asset.id}
-                  onToggle={toggleGold}
-                  icon={GOLD_ICONS[asset.id]}
+              {state === 'error' ? (
+                <EmptyState
+                  title="Piyasa alınamadı"
+                  message={error ?? 'Bilinmeyen hata'}
+                  actionLabel="Yenile"
+                  onAction={() => void refresh()}
                 />
-              ))}
-            </View>
-          </TourTarget>
-        ) : null}
+              ) : null}
+
+              <Pressable
+                style={styles.widgetEntry}
+                onPress={() => router.push('/widget')}
+                accessibilityRole="button"
+                accessibilityLabel="Ana ekran widget’ı, ücretsiz"
+              >
+                <View style={styles.widgetEntryText}>
+                  <View style={styles.widgetEntryTitle}>
+                    <AppText variant="bodyStrong">Ana ekran widget’ı</AppText>
+                  </View>
+                  <AppText variant="caption" tone="secondary">
+                    Gram altın fiyatı telefonunun ana ekranında, ücretsiz
+                  </AppText>
+                </View>
+                <AppText variant="bodyStrong" tone="gold">›</AppText>
+              </Pressable>
+            </>
+          }
+          aside={
+            goldProducts.length ? (
+              <TourTarget id="gold-list" style={styles.goldBlock}>
+                <SectionHeader
+                  title="Altın çeşitleri"
+                  right={<InfoButton label="Altın çeşitleri nedir?" onPress={() => setInfo('goldTypes')} />}
+                />
+                <View style={styles.list}>
+                  {goldProducts.map(({ asset, rate }) => (
+                    <ExpandablePriceRow
+                      key={asset.id}
+                      name={GOLD_ROW_TEXT[asset.id].title}
+                      caption={GOLD_ROW_TEXT[asset.id].meta}
+                      bid={rate.bid}
+                      ask={rate.ask}
+                      currency={currency}
+                      day={rate.day}
+                      id={asset.id}
+                      onAdd={openAddHolding}
+                      onAlarm={openAlarm}
+                      onDetail={openDetail}
+                      expanded={openGoldId === asset.id}
+                      onToggle={toggleGold}
+                      icon={GOLD_ICONS[asset.id]}
+                    />
+                  ))}
+                </View>
+              </TourTarget>
+            ) : null
+          }
+        />
       </Screen>
       {info ? <InfoSheet visible {...MARKET_INFO[info]} onClose={() => setInfo(null)} /> : null}
     </View>

@@ -1,3 +1,5 @@
+import { useBreakpoint } from '@/src/core/theme/web';
+import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { useTheme } from '@/src/core/theme';
 import { CommunityPostKind } from '@/src/domain/enums';
 import {
@@ -104,9 +106,10 @@ export default function CommunityScreen() {
         }
       : null,
   ].filter((f) => f !== null);
+  const expanded = useBreakpoint() === 'expanded';
 
-  return (
-    <Screen scroll scrollId="community" onRefresh={() => void refresh()} refreshing={feed.refreshing}>
+  const insightBlock = (
+    <>
       <TourTarget id="community-insight">
       <InsightCard
         gold={insights.gold}
@@ -117,7 +120,10 @@ export default function CommunityScreen() {
         onOpen={(topic) => router.push({ pathname: '/insight', params: { topic } })}
       />
       </TourTarget>
-
+    </>
+  );
+  const feedBlock = (
+    <>
       <View style={styles.toolbar}>
         <View style={styles.toolbarLeft}>
           {feed.posts.length ? (
@@ -201,6 +207,20 @@ export default function CommunityScreen() {
           );
         })}
       </View>
+    </>
+  );
+
+  return (
+    <Screen scroll scrollId="community" onRefresh={() => void refresh()} refreshing={feed.refreshing}>
+      {/* Masaüstünde akış solda, topluluk beklentisi sağda sabit; telefonda beklenti üstte. */}
+      {expanded ? (
+        <WideColumns main={feedBlock} aside={insightBlock} asideWidth={380} stickyAside />
+      ) : (
+        <>
+          {insightBlock}
+          {feedBlock}
+        </>
+      )}
 
       <FilterSheet
         visible={filtersOpen}
