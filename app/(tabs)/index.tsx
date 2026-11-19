@@ -316,7 +316,6 @@ export default function MarketScreen() {
                 style={styles.widgetEntry}
                 onPress={() => router.push('/widget')}
                 accessibilityRole="button"
-                accessibilityLabel="Ana ekran widget’ı, ücretsiz"
               >
                 <View style={styles.widgetEntryText}>
                   <View style={styles.widgetEntryTitle}>

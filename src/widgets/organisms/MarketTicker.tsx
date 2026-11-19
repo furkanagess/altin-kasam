@@ -58,7 +58,8 @@ const TickerEntry = memo(function TickerEntry({ item, strip }: { item: TickerIte
       style={({ pressed }) => [styles.entry, pressed && styles.pressed]}
       hitSlop={{ top: 8, bottom: 8 }}
       accessibilityRole={pressable ? 'link' : undefined}
-      accessibilityLabel={pressable ? `${item.label} detayı` : undefined}
+      // Ad görünen metinden gelir ("GRAM 6.020,67 ▲"); ekran okuyucu ile görünen metin uyuşur.
+      accessibilityHint={pressable ? 'Detayı aç' : undefined}
     >
       <Text style={[styles.label, { color: strip.label }]}>{item.label}</Text>
       <Text style={[styles.value, { color: valueColor }]}>
@@ -205,6 +206,8 @@ const useStyles = makeStyles((colors) => ({
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: paddings.md,
+    // Dokunma/tıklama hedefi en az 24 px (WCAG 2.2); web'de `hitSlop` hedefi büyütmez.
+    minHeight: 24,
   },
   label: { fontSize: 13, fontWeight: '700', letterSpacing: 0.3 },
   value: { fontSize: 13, fontWeight: '600', fontVariant: ['tabular-nums'] },

@@ -146,7 +146,7 @@ function RootNavigator() {
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <View style={styles.shell}>
         {showSidebar ? <WebSidebar collapsed={breakpoint === 'medium'} /> : null}
-        <View style={styles.main}>
+        <View style={styles.main} role="main">
           <Stack
             screenLayout={({ children, route, options }) => {
               const size = wideWeb ? WEB_MODALS[route.name] : undefined;

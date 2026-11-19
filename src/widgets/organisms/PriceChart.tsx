@@ -134,7 +134,8 @@ const TimeframeTabs = memo(function TimeframeTabs({
             onPress={() => (locked ? onLockedTimeframe?.(tf) : onTimeframeChange(tf))}
             style={[styles.tab, selected && styles.tabActive]}
             accessibilityRole="button"
-            accessibilityLabel={`${TIMEFRAME_DESCRIPTIONS[tf]}${locked ? ', Pro' : ''}`}
+            // Ad görünen kısaltmayla başlar ("1G, Son 24 saat"); sesli komutla da seçilebilir.
+            accessibilityLabel={`${TIMEFRAME_LABELS[tf]}, ${TIMEFRAME_DESCRIPTIONS[tf]}${locked ? ', Pro' : ''}`}
             accessibilityState={{ selected }}
             hitSlop={4}
           >

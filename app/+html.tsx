@@ -54,8 +54,13 @@ const documentStyles = `
 }
 :root[data-theme="dark"] { color-scheme: dark; --app-canvas: ${darkColors.surface.canvas}; }
 html, body { background-color: var(--app-canvas); }
-/* Uygulama gerçek temayla çizilene kadar gizli (ThemeProvider \`data-ready\` ekler). JS çalışmazsa
-   içerik en geç 1,5 sn sonra yine görünür. */
-:root:not([data-ready]) #root { opacity: 0; animation: app-reveal 0s linear 1.5s forwards; }
+/* Sunucu çıktısı açık temayla çizilir. Koyu temalı kullanıcıda (sistem tercihi ya da uygulamada
+   seçilmiş) açık renk parlaması olmasın diye sayfa gerçek temayla çizilene kadar gizli kalır
+   (ThemeProvider \`data-ready\` ekler). Açık temada gizlenmez: sunucu çıktısı hemen görünür (hızlı ilk
+   boyama). JS çalışmazsa içerik en geç 1,5 sn sonra yine görünür. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-ready]) #root { opacity: 0; animation: app-reveal 0s linear 1.5s forwards; }
+}
+:root[data-theme="dark"]:not([data-ready]) #root { opacity: 0; animation: app-reveal 0s linear 1.5s forwards; }
 @keyframes app-reveal { to { opacity: 1; } }
 `;

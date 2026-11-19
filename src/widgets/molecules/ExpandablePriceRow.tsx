@@ -176,7 +176,8 @@ export const ExpandablePriceRow = memo(function ExpandablePriceRow({
         onPress={toggle}
         style={[styles.header, open && styles.headerOpen]}
         accessibilityRole="button"
-        accessibilityLabel={`${name}, ${open ? 'bilgileri gizle' : 'alış, satış ve farkı göster'}`}
+        // Ad görünen metni (ad, alt satır, fiyat) aynen içerir; ekran okuyucu ile görünen metin uyuşur.
+        accessibilityLabel={`${[name, caption, formatMoney(bid, currency)].filter(Boolean).join(' ')}, ${open ? 'bilgileri gizle' : 'alış, satış ve farkı göster'}`}
         aria-expanded={open}
       >
         {icon ? <View style={styles.icon}>{icon}</View> : null}

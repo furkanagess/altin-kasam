@@ -7,6 +7,7 @@ import type { ICommunitySource } from '@/src/data/datasources/communityDatasourc
 import { fetchText } from '@/src/data/datasources/http';
 import { hashId, parseFeed, type FeedItem } from '@/src/data/datasources/rss';
 import { CommunityPostKind } from '@/src/domain/enums';
+import { Platform } from 'react-native';
 import type { CommunityPost } from '@/src/domain/models';
 
 /** Altın ve gümüş akışları aynı dosyaları ister; tek indirme paylaşılır. */
@@ -36,7 +37,7 @@ function toPost(item: FeedItem, feed: Feed): CommunityPost {
 
 /**
  * Yayıncı akışlarının tamamını döndürür; konu ayrımı (altın/gümüş) ve tekrar
- * eleme `LiveCommunityDatasource` tarafında yapılır. CORS izni olmadığı için web'de çalışmaz.
+ * eleme `LiveCommunityDatasource` tarafında yapılır. Web'de akışlar `/api/feed` vekiliyle çekilir.
  */
 export class PublisherRssCommunitySource implements ICommunitySource {
   private readonly cache = new Map<string, { at: number; items: Promise<FeedItem[]> }>();
@@ -46,7 +47,9 @@ export class PublisherRssCommunitySource implements ICommunitySource {
   private load(feed: Feed): Promise<FeedItem[]> {
     const cached = this.cache.get(feed.url);
     if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.items;
-    const items = fetchText(feed.url).then(parseFeed);
+    // Web'de tarayıcı CORS yüzünden akışı doğrudan çekemez; sunucu vekili kullanılır (`/api/feed`).
+    const url = Platform.OS === 'web' ? `/api/feed?url=${encodeURIComponent(feed.url)}` : feed.url;
+    const items = fetchText(url).then(parseFeed);
     this.cache.set(feed.url, { at: Date.now(), items });
     items.catch(() => {
       if (this.cache.get(feed.url)?.items === items) this.cache.delete(feed.url);
