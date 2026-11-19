@@ -64,4 +64,11 @@ html, body { background-color: var(--app-canvas); }
 }
 :root[data-theme="dark"]:not([data-ready]) #root { filter: invert(1) hue-rotate(180deg); }
 :root[data-theme="dark"]:not([data-ready]) #root :is(img, svg) { filter: invert(1) hue-rotate(180deg); }
+/* Sunucu pencere genişliğini bilmez ve telefon düzeninde çizer. Geniş ekranda (menü, iki sütun)
+   bu çıktı gösterilirse hydrate sonrası düzen kayar; orada sayfa hydrate'e kadar gizli kalır.
+   JS çalışmazsa içerik en geç 1,5 sn sonra yine görünür. Telefonda sunucu çıktısı hemen görünür. */
+@media (min-width: 768px) {
+  :root:not([data-ready]) #root { opacity: 0; animation: app-reveal 0s linear 1.5s forwards; }
+}
+@keyframes app-reveal { to { opacity: 1; } }
 `;
