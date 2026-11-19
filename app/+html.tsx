@@ -55,12 +55,13 @@ const documentStyles = `
 :root[data-theme="dark"] { color-scheme: dark; --app-canvas: ${darkColors.surface.canvas}; }
 html, body { background-color: var(--app-canvas); }
 /* Sunucu çıktısı açık temayla çizilir. Koyu temalı kullanıcıda (sistem tercihi ya da uygulamada
-   seçilmiş) açık renk parlaması olmasın diye sayfa gerçek temayla çizilene kadar gizli kalır
-   (ThemeProvider \`data-ready\` ekler). Açık temada gizlenmez: sunucu çıktısı hemen görünür (hızlı ilk
-   boyama). JS çalışmazsa içerik en geç 1,5 sn sonra yine görünür. */
+   seçilmiş) sayfa gizlenmez: JS gelene kadar açık çıktı renk çevirme filtresiyle koyulaştırılarak
+   hemen gösterilir (yavaş mobil ağda saniyelerce boş ekran yerine). Resim ve SVG'ler çift çevrilip
+   asıl rengine döner. ThemeProvider \`data-ready\` ekleyince filtre kalkar, gerçek koyu tema çizilir. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-ready]) #root { opacity: 0; animation: app-reveal 0s linear 1.5s forwards; }
+  :root:not([data-theme="light"]):not([data-ready]) #root { filter: invert(1) hue-rotate(180deg); }
+  :root:not([data-theme="light"]):not([data-ready]) #root :is(img, svg) { filter: invert(1) hue-rotate(180deg); }
 }
-:root[data-theme="dark"]:not([data-ready]) #root { opacity: 0; animation: app-reveal 0s linear 1.5s forwards; }
-@keyframes app-reveal { to { opacity: 1; } }
+:root[data-theme="dark"]:not([data-ready]) #root { filter: invert(1) hue-rotate(180deg); }
+:root[data-theme="dark"]:not([data-ready]) #root :is(img, svg) { filter: invert(1) hue-rotate(180deg); }
 `;

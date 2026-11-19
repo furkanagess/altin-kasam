@@ -1,4 +1,4 @@
-import PostHog from 'posthog-react-native';
+import { createAnalyticsClient, type AnalyticsClient } from '@/src/data/datasources/analyticsClient';
 import { conversionDatasource } from '@/src/data/datasources/conversionDatasource';
 import { crashDatasource } from '@/src/data/datasources/crashDatasource';
 
@@ -62,20 +62,16 @@ function forwardConversion(event: AnalyticsEvent): void {
   }
 }
 
-let client: PostHog | null = null;
+let client: AnalyticsClient | null = null;
 let attempted = false;
 
-function getClient(): PostHog | null {
+function getClient(): AnalyticsClient | null {
   if (client || attempted) return client;
   attempted = true;
   if (!KEY) return null;
   try {
-    client = new PostHog(KEY, {
-      host: HOST,
-      // Ekran ve dokunma kayıtları açılmaz; yalnızca aşağıdaki açık olaylar gönderilir.
-      captureAppLifecycleEvents: true,
-      enableSessionReplay: false,
-    });
+    // Ekran ve dokunma kayıtları açılmaz; yalnızca açık olaylar gönderilir (`analyticsClient`).
+    client = createAnalyticsClient(KEY, HOST);
   } catch {
     client = null;
   }
