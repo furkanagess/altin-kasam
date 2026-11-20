@@ -1,5 +1,9 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+## Start here: project map
+
+Before exploring the codebase for any task, read [`app_preview/README.md`](app_preview/README.md). It maps every screen, provider, repository, API route and feature to its files, so you can open only the files the task needs instead of scanning the whole repo. When you add a screen, provider, repository or API route, add one line to the matching `app_preview/*.md` file.
+
 ## Expo has changed — do not trust your training data
 
 Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
