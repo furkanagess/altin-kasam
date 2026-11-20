@@ -1,3 +1,4 @@
+import { ADSENSE_CLIENT } from '@/src/core/constants/ads';
 import { darkColors, lightColors } from '@/src/core/theme/colors';
 import { webInteractionCss } from '@/src/core/theme/web/interaction';
 import { ScrollViewStyleReset, useServerDocumentContext } from 'expo-router/html';
@@ -17,6 +18,8 @@ export default function Root({ children }: { children: ReactNode }) {
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
         <meta name="color-scheme" content="light dark" />
+        {/* AdSense hesap doğrulaması; reklam betiği yalnızca dolu bir reklam alanı görününce yüklenir. */}
+        <meta name="google-adsense-account" content={ADSENSE_CLIENT} />
         <meta name="theme-color" media="(prefers-color-scheme: light)" content={lightColors.surface.canvas} />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content={darkColors.surface.canvas} />
         {/* Kayıtlı tema tercihi ilk boyamadan önce uygulanır; koyu temada açık renk parlaması olmaz. */}
