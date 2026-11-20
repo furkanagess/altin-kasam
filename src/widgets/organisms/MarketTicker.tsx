@@ -145,7 +145,16 @@ export const MarketTicker = memo(function MarketTicker({ items }: { items: Ticke
 
   const trackStyle = useAnimatedStyle(() => ({ transform: [{ translateX: -progress.get() * copyWidth.get() }] }));
 
-  if (!items.length) return null;
+  // Fiyatlar gelene kadar boş şerit aynı yüksekliği tutar; sonradan eklenip içeriği aşağı itmez.
+  if (!items.length) {
+    return (
+      <View
+        style={[styles.strip, { backgroundColor: strip.background, borderBottomColor: colors.brand.goldSoft }]}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      />
+    );
+  }
 
   const summary = items
     .map((i) => `${i.label} ${i.currency === 'USD' ? `${formatNumber(i.value)} dolar` : formatNumber(i.value)}`)
