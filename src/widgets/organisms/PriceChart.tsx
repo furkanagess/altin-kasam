@@ -7,7 +7,7 @@ import {
   type Currency,
   type Timeframe,
 } from '@/src/core/constants/app';
-import { makeStyles, paddings, radii, useTheme } from '@/src/core/theme';
+import { makeStyles, paddings, radii, typography, useTheme } from '@/src/core/theme';
 import type { CandlePoint } from '@/src/domain/models';
 import {
   formatAxisTick,
@@ -514,15 +514,14 @@ export function PriceChart({
         </View>
       </GestureDetector>
 
-      {ticks.length ? (
-        <View style={styles.axis}>
-          {ticks.map((t, i) => (
-            <AppText key={i} variant="caption" tone="tertiary" style={styles.axisLabel}>
-              {formatAxisTick(t, TICK_GRANULARITY[timeframe])}
-            </AppText>
-          ))}
-        </View>
-      ) : null}
+      {/* Eksen veri gelmeden de yerini tutar; veri gelince altındakiler aşağı kaymaz. */}
+      <View style={styles.axis}>
+        {ticks.map((t, i) => (
+          <AppText key={i} variant="caption" tone="tertiary" style={styles.axisLabel}>
+            {formatAxisTick(t, TICK_GRANULARITY[timeframe])}
+          </AppText>
+        ))}
+      </View>
 
       <TimeframeTabs
         timeframes={timeframes}
@@ -557,6 +556,8 @@ const useStyles = makeStyles((colors) => ({
     flexWrap: 'wrap',
     alignItems: 'baseline',
     columnGap: 8,
+    // Değişim satırı veri gelmeden de yerini tutar (düzen kayması olmasın).
+    minHeight: typography.bodyStrong.lineHeight,
   },
   change: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   changeLabel: { minWidth: CHANGE_LABEL_WIDTH },
@@ -580,6 +581,7 @@ const useStyles = makeStyles((colors) => ({
   axis: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    minHeight: typography.caption.lineHeight,
   },
   axisLabel: { fontVariant: ['tabular-nums'] },
   tabs: {

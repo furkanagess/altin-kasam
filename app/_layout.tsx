@@ -1,3 +1,4 @@
+import { getGoldAsset } from '@/src/core/constants/goldAssets';
 import { HeaderCloseButton } from '@/src/widgets/atoms/HeaderCloseButton';
 import { HeaderSupportButton } from '@/src/widgets/atoms/HeaderSupportButton';
 import { AppProviders } from '@/src/providers/AppProviders';
@@ -30,7 +31,7 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
@@ -68,6 +69,9 @@ const WEB_MODALS: Record<string, 'sm' | 'lg'> = {
   alarm: 'sm',
   'add-holding/index': 'lg',
 };
+
+const WEB_HEADER_TITLE =
+  Platform.OS === 'web' ? { headerTitleContainerStyle: { maxWidth: '100%', flexShrink: 1 } } : {};
 
 const SIDEBAR_HIDDEN_ON = ['/onboarding', '/paywall'];
 
@@ -164,6 +168,9 @@ function RootNavigator() {
               headerTitleStyle: { fontWeight: '600' },
               headerBackButtonDisplayMode: 'minimal',
               contentStyle: { backgroundColor: colors.surface.canvas },
+          // Web: başlık genişliği pencereden hesaplanır; sunucuda pencere 0 olduğundan başlık negatif
+          // genişlikle gizli çiziliyor ve ancak JS gelince görünüyordu (geç LCP). Web'de sabit sınır.
+          ...(WEB_HEADER_TITLE as object),
             }}
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -209,7 +216,12 @@ function RootNavigator() {
             />
             <Stack.Screen
               name="gold/[id]"
-              options={{ title: '', presentation: 'card' }}
+              // Başlık rota parametresinden: sunucu çıktısında da görünür (ekran içinden verilen başlık
+              // yalnızca istemcide uygulanır; boş başlık geç LCP'ye yol açıyordu).
+              options={({ route }) => ({
+                title: getGoldAsset(String((route.params as { id?: string } | undefined)?.id ?? ''))?.label ?? '',
+                presentation: 'card',
+              })}
             />
             <Stack.Screen name="metal/[symbol]" options={{ title: '', presentation: 'card' }} />
             <Stack.Screen
