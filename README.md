@@ -95,6 +95,8 @@ npx eas-cli@latest env:pull --environment production   # sunucunun ilk yayını
 npx expo export --platform web
 npx eas-cli@latest deploy --environment production
 npx eas-cli@latest build --profile production --platform all
+# Yalnızca mağaza derlemesi, web/API sunucusunu yeniden yayına almadan (sunucu değişmediyse):
+npx eas-cli@latest build --profile store --platform ios
 npx eas-cli@latest submit --profile production --platform ios   # ya da android
 ```
 

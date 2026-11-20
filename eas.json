@@ -14,6 +14,10 @@
       "env": {
         "EXPO_UNSTABLE_DEPLOY_SERVER": "1"
       }
+    },
+    "store": {
+      "environment": "production",
+      "autoIncrement": true
     }
   },
   "submit": {
