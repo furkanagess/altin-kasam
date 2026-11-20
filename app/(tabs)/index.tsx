@@ -1,3 +1,6 @@
+import { useBreakpoint } from '@/src/core/theme/web';
+import { useWindowSize } from '@/src/core/hooks/useWindowSize';
+import { WebAdSlot } from '@/src/widgets/organisms/WebAdSlot';
 import { pageMetadata } from '@/src/core/web/seo';
 import type { GenerateMetadataFunction } from 'expo-router/server';
 import { useWebElementWidth } from '@/src/core/hooks/useWebElementWidth';
@@ -70,6 +73,9 @@ const GOLD_ICONS: Record<string, ReactNode> = Object.fromEntries(
   ]),
 );
 
+/** Bu genişliğin altında reklam sütunu gösterilmez; grafik dar kalmasın. */
+const AD_COLUMN_MIN_WINDOW = 1600;
+
 const GOLD_ROW_TEXT = Object.fromEntries(GOLD_ASSETS.map((asset) => [asset.id, goldAssetRowText(asset)]));
 
 type ChartPageProps = {
@@ -86,6 +92,8 @@ type ChartPageProps = {
   onTimeframeChange: (tf: Timeframe) => void;
   onLockedTimeframe: () => void;
   currencySwitcher: ReturnType<typeof useChartCurrencySwitcher>;
+  /** Grafik çizim yüksekliği; masaüstünde daha büyük. */
+  chartHeight?: number;
 };
 
 /** Yalnızca kendi metalinin verisi değişince çizilir; diğer sayfanın yüklemesi ve kaydırma etkilemez. */
@@ -103,6 +111,7 @@ const ChartPage = memo(function ChartPage({
   onTimeframeChange,
   onLockedTimeframe,
   currencySwitcher,
+  chartHeight,
 }: ChartPageProps) {
   const styles = useStyles();
   const isBrent = symbol === BRENT;
@@ -114,6 +123,7 @@ const ChartPage = memo(function ChartPage({
         hideTimestamp
         // Grafik alanı sayfanın tam genişliğidir (`plotBare` kenar boşluğunu geri alır).
         plotWidth={width}
+        height={chartHeight}
         points={points ?? EMPTY_POINTS}
         currency={currency}
         livePrice={livePrice}
@@ -172,6 +182,8 @@ function MarketChartSection() {
   const brentSwitcher = useBrentCurrencySwitcher();
   const { openPaywall } = useSubscription();
   const onLockedTimeframe = useCallback(() => openPaywall('timeframe'), [openPaywall]);
+  // Masaüstünde grafik alanı daha büyük; telefonda bugünkü yükseklik (200).
+  const chartHeight = useBreakpoint() === 'expanded' ? 360 : undefined;
 
   const pagerRef = useRef<ComponentRef<typeof RNScrollView>>(null);
   const [pageWidth, setPageWidth] = useState(0);
@@ -265,6 +277,7 @@ function MarketChartSection() {
               onTimeframeChange={setTimeframe}
               onLockedTimeframe={onLockedTimeframe}
               currencySwitcher={symbol === BRENT ? brentSwitcher : currencySwitcher}
+              chartHeight={chartHeight}
             />
           ))}
         </ScrollView>
@@ -285,6 +298,8 @@ export default function MarketScreen() {
   const [info, setInfo] = useState<MarketInfoId | null>(null);
   // Listede aynı anda tek satır açık: başka satıra dokununca önceki kapanır. İlk açılışta 24 ayar gram altın açıktır.
   const [openGoldId, setOpenGoldId] = useState<string | null>('gram-24');
+  // Reklam sütunu yalnızca grafiğe yeterli yer kalıyorsa (pencere ≥ 1600 px).
+  const showAdColumn = useWindowSize().width >= AD_COLUMN_MIN_WINDOW;
   const toggleGold = useCallback((id: string) => setOpenGoldId((current) => (current === id ? null : id)), []);
 
   const goldProducts = GOLD_ASSETS.flatMap((asset) => {
@@ -296,9 +311,18 @@ export default function MarketScreen() {
       <TourTarget id="ticker">
         <MarketTicker items={ticker} />
       </TourTarget>
-      <Screen scroll scrollId="market" onRefresh={() => void refresh()} refreshing={state === 'loading'}>
-        {/* Masaüstünde grafik ve widget kartı solda, altın çeşitleri sağda; telefonda alt alta. */}
+      {/* Masaüstünde sayfa tam genişlik: grafik sekmeleri sol menüye bitişik başlayıp altın çeşitlerine
+          kadar uzanır; geniş ekranda altın çeşitlerinin sağında reklam alanı ayrılır. */}
+      <Screen
+        scroll
+        scrollId="market"
+        webWidth="full"
+        onRefresh={() => void refresh()}
+        refreshing={state === 'loading'}
+      >
         <WideColumns
+          asideWidth={380}
+          trailing={showAdColumn ? <WebAdSlot id="market-right" /> : null}
           main={
             <>
               <MarketChartSection />

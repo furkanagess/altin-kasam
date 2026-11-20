@@ -13,6 +13,8 @@ type Props = {
   stickyAside?: boolean;
   /** Sütun içi öğeler arası boşluk; `Screen` içeriğindeki boşlukla aynı (16). */
   gap?: number;
+  /** Yalnızca geniş ekranda, yan sütunun sağında çizilen üçüncü sütun (ör. reklam alanı). */
+  trailing?: ReactNode;
 };
 
 const COLUMN_GAP = paddings.xxl;
@@ -21,7 +23,7 @@ const COLUMN_GAP = paddings.xxl;
  * Masaüstü web'de (`expanded`) iki sütunlu düzen. Daha dar ekranlarda ve native'de iki parça
  * alt alta, bugünkü sırayla çizilir; ekranın telefon görünümü değişmez.
  */
-export function WideColumns({ main, aside, asideWidth = 400, stickyAside, gap = 16 }: Props) {
+export function WideColumns({ main, aside, asideWidth = 400, stickyAside, gap = 16, trailing }: Props) {
   const expanded = useBreakpoint() === 'expanded';
   if (!expanded) {
     return (
@@ -37,6 +39,7 @@ export function WideColumns({ main, aside, asideWidth = 400, stickyAside, gap = 
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: COLUMN_GAP }}>
       <View style={{ flex: 1, minWidth: 0, gap }}>{main}</View>
       <View style={asideStyle}>{aside}</View>
+      {trailing}
     </View>
   );
 }

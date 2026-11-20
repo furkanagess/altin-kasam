@@ -32,10 +32,11 @@ type Props = {
   /** Uygulama turu bu ekranı kaydırabilsin diye verilen kimlik. */
   scrollId?: string;
   /**
-   * Geniş web ekranında içeriğin en fazla genişliği: `content` (varsayılan, 1200) ya da metin ve
-   * formlar için `readable` (720). Telefonda ve native'de etkisizdir.
+   * Geniş web ekranında içeriğin en fazla genişliği: `content` (varsayılan, 1200), metin ve formlar
+   * için `readable` (720) ya da sınırsız `full` (ör. Piyasa: grafik menüye bitişik, sağda reklam
+   * sütunu). Telefonda ve native'de etkisizdir.
    */
-  webWidth?: 'content' | 'readable';
+  webWidth?: 'content' | 'readable' | 'full';
 };
 
 export function Screen({
@@ -64,7 +65,7 @@ export function Screen({
   const insets = useSafeAreaInsets();
   // Geniş ekranda içerik ortalanır; kenar boşluğu (`paddings.screen`) korunur, böylece ona negatif
   // margin ile taşan bileşenler (ör. grafik sayfaları) bozulmaz.
-  const wide = useBreakpoint() !== 'compact';
+  const wide = useBreakpoint() !== 'compact' && webWidth !== 'full';
   const maxWidth = webWidth === 'readable' ? webLayout.readable : webLayout.maxContent;
   const centered: StyleProp<ViewStyle> = wide
     ? { width: '100%', maxWidth: maxWidth + paddings.screen * 2, alignSelf: 'center' }
