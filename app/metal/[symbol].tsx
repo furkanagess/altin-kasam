@@ -89,10 +89,6 @@ export default function MetalDetailScreen() {
         asideWidth={360}
         main={
           <>
-            <View style={styles.unitRow}>
-              <UnitSwitcher value={unit} onChange={setUnit} />
-            </View>
-
             <PriceChart
               points={charts[symbol]?.points ?? EMPTY_POINTS}
               currency={currency}
@@ -114,6 +110,7 @@ export default function MetalDetailScreen() {
                   />
                 </View>
               }
+              headerBottom={<UnitSwitcher value={unit} onChange={setUnit} />}
               flashOnLiveChange
               flashKey={`${currency}-${unit}`}
               height={expanded ? 320 : 240}
@@ -133,6 +130,5 @@ export default function MetalDetailScreen() {
 }
 
 const useStyles = makeStyles(() => ({
-  unitRow: { alignItems: 'flex-end' },
   chartActions: { flexDirection: 'row', alignItems: 'center', gap: paddings.xs },
 }));

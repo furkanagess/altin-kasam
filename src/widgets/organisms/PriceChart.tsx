@@ -65,6 +65,8 @@ type Props = {
   headerLeft?: ReactNode;
   /** Fiyat bilgisinin sağında gösterilir (örn. para birimi seçici). */
   headerRight?: ReactNode;
+  /** Değişim satırının sağında, alarm butonlarının altında gösterilir (örn. gram/ons seçici). */
+  headerBottom?: ReactNode;
   /** Canlı fiyat değişince üstteki fiyat yükselişte yeşil, düşüşte kırmızı yanar. */
   flashOnLiveChange?: boolean;
   /** Bu anahtar değişince (ör. gram → ons) fiyat değişimi yanma sayılmaz; verilmezse para birimi. */
@@ -167,6 +169,7 @@ export function PriceChart({
   height = 200,
   headerLeft,
   headerRight,
+  headerBottom,
   flashOnLiveChange,
   flashKey,
   title,
@@ -365,6 +368,7 @@ export function PriceChart({
               {activeIsMarker && markerLabel ? ` · ${markerLabel}` : ''}
             </AppText>
           ) : null}
+          {headerBottom ? <View style={styles.headerBottom}>{headerBottom}</View> : null}
         </View>
       </View>
 
@@ -551,6 +555,7 @@ const useStyles = makeStyles((colors) => ({
   plot: { marginHorizontal: -paddings.md },
   wrapBare: { backgroundColor: 'transparent', borderWidth: 0, borderRadius: 0, padding: 0 },
   plotBare: { marginHorizontal: -paddings.screen },
+  headerBottom: { marginLeft: 'auto', alignSelf: 'center' },
   headerRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

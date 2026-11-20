@@ -82,6 +82,7 @@ type ChartPageProps = {
   livePrice: number | undefined;
   currency: Currency;
   unit: ChartUnit;
+  onUnitChange: (unit: ChartUnit) => void;
   timeframe: Timeframe;
   timeframes: readonly Timeframe[];
   lockedTimeframes: readonly Timeframe[];
@@ -101,6 +102,7 @@ const ChartPage = memo(function ChartPage({
   livePrice,
   currency,
   unit,
+  onUnitChange,
   timeframe,
   timeframes,
   lockedTimeframes,
@@ -149,6 +151,8 @@ const ChartPage = memo(function ChartPage({
             )}
           </View>
         }
+        // Brent varil fiyatıdır; gram/ons ayrımı olmadığı için birim seçici gösterilmez.
+        headerBottom={isBrent ? undefined : <UnitSwitcher value={unit} onChange={onUnitChange} />}
         flashOnLiveChange
         flashKey={`${currency}-${unit}`}
         bare
@@ -235,15 +239,6 @@ function MarketChartSection() {
         />
       </TourTarget>
 
-      {/* Brent varil fiyatıdır; gram/ons ayrımı olmadığı için birim seçici gösterilmez. */}
-      {CHART_SYMBOLS[page] === BRENT ? null : (
-        <View style={styles.unitRow}>
-          <TourTarget id="unit-switcher">
-            <UnitSwitcher value={unit} onChange={setUnit} />
-          </TourTarget>
-        </View>
-      )}
-
       <TourTarget id="chart" style={styles.pager}>
         {/* Genişlik sarmalayıcıdan ölçülür: web'de yatay ScrollView'un kendi onLayout'u pencere
             büyüyünce yeniden tetiklenmez, sayfalar eski genişlikte kalıp yan sayfa taşar. */}
@@ -267,6 +262,7 @@ function MarketChartSection() {
               livePrice={(unit === 'ounce' ? displayOunceQuotes : displayQuotes).find((q) => q.symbol === symbol)?.bid}
               currency={symbol === BRENT ? brentCurrency : chartCurrency}
               unit={unit}
+              onUnitChange={setUnit}
               timeframe={timeframe}
               timeframes={timeframes}
               lockedTimeframes={lockedTimeframes}
@@ -393,7 +389,6 @@ const useStyles = makeStyles((colors) => ({
   flex: { flex: 1 },
   // Sayfalar ekran kenarına kadar kayar; her sayfa kendi kenar boşluğunu taşır.
   chartTabs: { marginHorizontal: -paddings.screen },
-  unitRow: { alignItems: 'flex-end' },
   pager: { marginHorizontal: -paddings.screen },
   page: { paddingHorizontal: paddings.screen },
   chartActions: { flexDirection: 'row', alignItems: 'center', gap: paddings.xs },

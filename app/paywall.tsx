@@ -59,22 +59,6 @@ function annualSavingsPercent(packages: SubscriptionPackage[]): number | null {
   return savings > 0 ? savings : null;
 }
 
-const RENEWAL_UNIT: Partial<Record<SubscriptionPeriod, string>> = { annual: 'yıl', monthly: 'ay' };
-
-/**
- * Seçili paketin ödeme açıklaması, düğmenin hemen üstünde: deneme varsa "7 gün ücretsiz, sonra
- * ₺X/yıl" ve hatırlatma sözü; otomatik yenilenen pakette iptal bilgisi. Ömür boyu pakette yok.
- */
-function billingNote(pkg: SubscriptionPackage | undefined): string | null {
-  if (!pkg) return null;
-  const unit = RENEWAL_UNIT[pkg.period];
-  if (!unit) return null;
-  if (pkg.trial) {
-    return `${pkg.trial}, sonra ${pkg.priceString}/${unit}. Deneme bitmeden 1 gün önce hatırlatırız; istediğin zaman iptal edebilirsin.`;
-  }
-  return `${pkg.priceString}/${unit}, otomatik yenilenir. İstediğin zaman iptal edebilirsin.`;
-}
-
 function isPaywallReason(value: string | undefined): value is PaywallReason {
   return value !== undefined && value in PAYWALL_REASON_TEXT;
 }
@@ -308,13 +292,17 @@ export default function PaywallScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.topBar}>
-        {isDemo ? (
-          <Animated.View entering={FadeIn.duration(400)} style={styles.demoChip}>
-            <Text style={styles.demoChipText}>ÖNİZLEME</Text>
-          </Animated.View>
-        ) : (
-          <View />
-        )}
+        <View style={styles.topSide}>
+          {isDemo ? (
+            <Animated.View entering={FadeIn.duration(400)} style={styles.demoChip}>
+              <Text style={styles.demoChipText}>ÖNİZLEME</Text>
+            </Animated.View>
+          ) : null}
+        </View>
+        <AppText variant="h1" style={styles.topTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+          Altın Kasam <Text style={styles.proWord}>Pro</Text>
+        </AppText>
+        <View style={[styles.topSide, styles.topSideEnd]}>
         <Pressable
           onPress={() => router.back()}
           hitSlop={12}
@@ -324,6 +312,7 @@ export default function PaywallScreen() {
         >
           <CloseIcon color={colors.text.secondary} />
         </Pressable>
+        </View>
       </View>
 
       <ScrollView
@@ -336,9 +325,6 @@ export default function PaywallScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(120).duration(450)}>
-          <AppText variant="brand" style={styles.center}>
-            Altın Kasam <Text style={styles.proWord}>Pro</Text>
-          </AppText>
           {reasonText ? (
             <AppText tone="secondary" style={[styles.center, styles.reason]}>
               {reasonText}
@@ -419,11 +405,6 @@ export default function PaywallScreen() {
             </AppText>
           </Animated.View>
         ) : null}
-        {canBuy && billingNote(selected) ? (
-          <AppText variant="caption" tone="secondary" style={styles.center}>
-            {billingNote(selected)}
-          </AppText>
-        ) : null}
         {canBuy ? (
           <ShimmerCta
             label={ctaLabel}
@@ -432,25 +413,22 @@ export default function PaywallScreen() {
             onPress={() => void onPurchase()}
           />
         ) : null}
+        {/* App Store 3.1.2: abonelik ekranında kullanım koşulları (EULA) ve gizlilik bağlantısı zorunlu. */}
         <View style={styles.footerLinks}>
           {/* RevenueCat web'de `restorePurchases` desteklemez; web aboneliği hesaba bağlı gelir. */}
           {canBuy && !IS_WEB ? (
-            <AppText
-              variant="caption"
-              tone="gold"
-              onPress={busy ? undefined : () => void onRestore()}
-              accessibilityRole="button"
-            >
-              {busy === 'restore' ? 'Geri yükleniyor…' : 'Satın alımları geri yükle'}
-            </AppText>
+            <>
+              <AppText
+                variant="caption"
+                tone="gold"
+                onPress={busy ? undefined : () => void onRestore()}
+                accessibilityRole="button"
+              >
+                {busy === 'restore' ? 'Geri yükleniyor…' : 'Satın alımları geri yükle'}
+              </AppText>
+              <AppText variant="caption" tone="tertiary">·</AppText>
+            </>
           ) : null}
-          {canBuy && !IS_WEB ? <AppText variant="caption" tone="tertiary">·</AppText> : null}
-          <AppText variant="caption" tone="tertiary" onPress={() => router.back()} accessibilityRole="button">
-            Şimdi değil
-          </AppText>
-        </View>
-        {/* App Store 3.1.2: abonelik ekranında kullanım koşulları (EULA) ve gizlilik bağlantısı zorunlu. */}
-        <View style={styles.footerLinks}>
           <AppText
             variant="caption"
             tone="gold"
@@ -483,10 +461,15 @@ const useStyles = makeStyles((colors) => ({
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: paddings.screen,
     paddingVertical: paddings.xs,
+    minHeight: 52,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.subtle,
   },
+  topSide: { width: 56, flexDirection: 'row', alignItems: 'center' },
+  topSideEnd: { justifyContent: 'flex-end' },
+  topTitle: { flex: 1, textAlign: 'center' },
   close: {
     width: 32,
     height: 32,
@@ -578,5 +561,5 @@ const useStyles = makeStyles((colors) => ({
     width: 46,
     backgroundColor: 'rgba(255,255,255,0.35)',
   },
-  footerLinks: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, paddingVertical: 4 },
+  footerLinks: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', columnGap: 6, paddingVertical: 4 },
 }));

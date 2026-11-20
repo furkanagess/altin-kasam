@@ -9,10 +9,14 @@
  * Ayrıca GoogleService-Info.plist `ios/` köküne de kopyalanır: 26.x Crashlytics derleme betiği
  * (SPM dSYM yüklemesi) dosyayı yalnızca `${PROJECT_DIR}/GoogleService-Info.plist` yolunda arar,
  * prebuild ise onu hedef klasörüne (`ios/<Hedef>/`) koyar; bulamayınca derleme durur.
+ *
+ * Son olarak Crashlytics derleme aşaması Debug yapılandırmasında atlanır: `upload-symbols` her derlemede
+ * dSYM'i ağdan Firebase'e yüklemeye çalışır ve simülatör (Debug) derlemelerinde sonsuza dek takılır.
+ * Yükleme yalnızca Release/EAS derlemelerinde gerekir.
  */
 const fs = require('fs');
 const path = require('path');
-const { withAppDelegate, withDangerousMod } = require('expo/config-plugins');
+const { withAppDelegate, withDangerousMod, withXcodeProject } = require('expo/config-plugins');
 
 const CALL = 'FirebaseApp.configure()';
 const ANCHOR = /^([ \t]*)return super\.application\(application, didFinishLaunchingWithOptions:/m;
@@ -33,7 +37,24 @@ function withPlistAtIosRoot(config) {
   ]);
 }
 
+const SKIP_DEBUG = 'if [ "${CONFIGURATION}" = "Debug" ]; then echo "info: Debug build, skipping Crashlytics dSYM upload"; exit 0; fi';
+
+function withSkipCrashlyticsInDebug(config) {
+  return withXcodeProject(config, (c) => {
+    const phases = c.modResults.hash.project.objects.PBXShellScriptBuildPhase ?? {};
+    for (const phase of Object.values(phases)) {
+      if (typeof phase !== 'object' || !String(phase.name).includes('Crashlytics Configuration')) continue;
+      if (String(phase.shellScript).includes('skipping Crashlytics dSYM upload')) continue;
+      // shellScript pbxproj'de tırnaklı ve \n kaçışlı saklanır; satırı `set -e`nin altına ekle.
+      const line = SKIP_DEBUG.replace(/"/g, '\\"');
+      phase.shellScript = String(phase.shellScript).replace('set -e\\n', `set -e\\n\\n${line}\\n`);
+    }
+    return c;
+  });
+}
+
 module.exports = function withFirebaseConfigure(config) {
+  config = withSkipCrashlyticsInDebug(config);
   config = withPlistAtIosRoot(config);
   return withAppDelegate(config, (c) => {
     if (c.modResults.language !== 'swift') return c;
