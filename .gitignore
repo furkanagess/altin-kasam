@@ -75,3 +75,13 @@ firebase/functions/lib/
 
 # Claude Code yerel ayarları
 .claude/
+
+# İç strateji, güvenlik ve operasyon belgeleri: yalnızca yerelde (depo herkese açık)
+/docs/GUVENLIK_DENETIMI.md
+/docs/BUYUME_VE_ABONELIK_REHBERI.md
+/docs/ERISIM_YOL_HARITASI.md
+/docs/MAGAZA_GORUNURLUK_REHBERI.md
+/docs/REKLAM_KAMPANYASI.md
+/docs/REKLAM_YOL_HARITASI_IOS_ANDROID.md
+/docs/ABONELIK_MAGAZA_AYARLARI.md
+/YAPILACAKLAR.md
