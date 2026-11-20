@@ -123,3 +123,21 @@ Geçmiş istekleri için üst sınır, anahtar sayısı ÷ TTL × `L`: 12 temel 
   sunucu aynı görüntüyü saniyelik üretebilir. Hasfiyat sözleşmesi doğrulanmadan uygulanmamalı.
 - **TTL ayarı.** Kota hâlâ yetmiyorsa en ucuz kaldıraç `PRICES_TTL_OPEN_S` ve `POLL_INTERVAL_MS`
   değerlerini birlikte 30-60 sn yapmaktır (fiyat gecikmesi artar, yalnızca bu iki sabit değişir).
+
+## 7. Kötüye kullanım ve web korumaları (20 Kasım 2026)
+
+Web sitesi (`altin-kasam.expo.app`) aynı `/api/...` uçlarını herkese açık sunar; bu yüzden önbelleği
+atlatan isteklere karşı ek katmanlar eklendi:
+
+| Koruma | Dosya | Etkisi |
+| --- | --- | --- |
+| Sembol beyaz listesi (`HISTORY_TITLES` + son fiyat listesindeki kalemler); bilinmeyen sembol 404 | `app/api/history+api.ts`, `hasfiyatPriceMap.ts` | Rastgele sembollerle Hasfiyat'a istek attırılamaz |
+| `from` sunucuda periyoda göre hesaplanır, istemcinin tarihi yok sayılır | `history+api.ts`, `HISTORY_FETCH_DAYS` | Rastgele tarihlerle önbellek anahtarı üretilemez |
+| Geçmiş hata önbelleği (60 sn) ve eski veriyle yanıt | `history+api.ts` | Kesintide grafik istekleri Hasfiyat'ı dövmez |
+| İşçi başına dakikalık Hasfiyat tavanı (30/dk, 6'sı fiyata ayrılmış) | `src/server/upstreamGuard.ts` | Bir saldırı ya da hata döngüsü kotayı en çok bu hızla harcar; fiyatlar hep güncellenir |
+| 429 → `Retry-After` (yoksa 120 sn), 401/403 → 300 sn duraklama | `upstreamGuard.ts` | Kota dolduğunda ya da anahtar bozulduğunda istekler boşuna gitmez |
+| Bütçe/kesinti sırasında son iyi fiyat `stale: true` ile verilir; hiç yoksa 429 | `hasfiyatPrices.ts` | Kullanıcı boş ekran görmez |
+| Web: 10 dk etkileşim yoksa yoklama durur, ilk harekette hemen yenilenir | `src/core/network/userActivity.ts`, `MarketProvider.tsx` | Açık unutulan masaüstü sekmesi günde binlerce istek üretmez |
+| Web: sekmeler son fiyatı `localStorage` ile paylaşır; sekme içinde eşzamanlı istekler birleşir | `hasfiyatMarketDatasource.ts` | N açık sekme ≈ 1 sekme trafiği |
+
+Ayar sabitleri: `src/core/constants/hasfiyatCache.ts` (`UPSTREAM_*`, `HISTORY_*`).

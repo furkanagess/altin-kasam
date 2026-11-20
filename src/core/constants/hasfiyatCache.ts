@@ -14,6 +14,27 @@ export const PRICES_TTL_CLOSED_S = 300;
 /** Saatlik ve günlük geçmiş çubukları; çubuk saatte / günde bir kapanır, son nokta canlı fiyatla güncellenir. */
 export const HISTORY_TTL_S = { '1h': 1800, '1d': 21600 } as const;
 
+/**
+ * Her periyot için tek `from` (o periyodun en geniş penceresi, gün). İstemci bunu gönderir, sunucu
+ * gelen değeri yok sayıp kendisi hesaplar: rastgele tarihlerle önbellek atlatılamaz.
+ */
+export const HISTORY_FETCH_DAYS = { '1h': 30, '1d': 366 } as const;
+
+/** Geçmiş isteği Hasfiyat'ta hata verirse aynı seri bu süre yeniden denenmez. */
+export const HISTORY_ERROR_BACKOFF_S = 60;
+
+/**
+ * İşçi başına dakikalık Hasfiyat isteği tavanı (önbelleği atlatan istek selini sınırlar). Normal
+ * trafikte fiyat ~3/dk, geçmiş birkaç/dk'dır; tavan yalnızca kötüye kullanımda devreye girer.
+ */
+export const UPSTREAM_BUDGET_PER_MIN = 30;
+/** Tavandan fiyat isteklerine ayrılan pay; geçmiş istekleri bunu tüketemez. */
+export const UPSTREAM_PRICES_RESERVE = 6;
+/** Hasfiyat 429 (kota) döndürüp `Retry-After` vermezse bekleme süresi. */
+export const UPSTREAM_QUOTA_COOLDOWN_S = 120;
+/** Hasfiyat 401/403 (anahtar geçersiz) döndürürse bekleme süresi; her istek boşuna gitmesin. */
+export const UPSTREAM_AUTH_COOLDOWN_S = 300;
+
 /** Yahoo tabanlı uzun dönem tamamlama (Hasfiyat kotasına girmez ama aynı mantıkla önbelleklenir). */
 export const HISTORY_LONG_TTL_S = 6 * 60 * 60;
 

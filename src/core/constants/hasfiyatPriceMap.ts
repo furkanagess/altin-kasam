@@ -100,3 +100,23 @@ export function alarmValuesFromItems(items: readonly PricedItem[]): Record<strin
   else if (gold && silver) values['altin-gumus-rasyosu'] = gold / silver.bid;
   return values;
 }
+
+/**
+ * Geçmişi istenebilen Harem kalemleri (`/api/history` sembol denetimi). Listede olmayan sembol,
+ * yalnızca son fiyat listesinde varsa kabul edilir; rastgele sembollerle kota yakılamaz.
+ */
+export const HISTORY_TITLES: readonly string[] = [
+  ...new Set([
+    ...GRAM_GOLD_TITLES,
+    ...Object.values(GOLD_RATES).flatMap((rate) => rate.titles),
+    'GÜMÜŞ TL',
+    'GÜMÜŞ ONS',
+    'ONS',
+    'PLATİN ONS',
+    'PALADYUM ONS',
+    'USD/TL',
+    'EUR/TL',
+    'ALTIN/GÜMÜŞ',
+    'USD/KG',
+  ]),
+];

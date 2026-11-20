@@ -7,6 +7,7 @@
 import { PRICES_ERROR_BACKOFF_S, PRICES_TTL_CLOSED_S, PRICES_TTL_OPEN_S } from '@/src/core/constants/hasfiyatCache';
 import type { HasfiyatItem, HasfiyatPricesResponse } from '@/src/data/datasources/hasfiyatTypes';
 import { isMarketClosed } from '@/src/utils/marketHours';
+import { acquireUpstream, reportUpstreamStatus } from '@/src/server/upstreamGuard';
 
 const UPSTREAM = 'https://api.hasfiyat.com/api/prices';
 const SOURCE = 'harem';
@@ -98,7 +99,12 @@ export type PricesResult =
   | { ok: true; body: HasfiyatPricesResponse; raw?: UpstreamResponse }
   | { ok: false; status: number; error: string; reason?: string | null };
 
-function remember(result: Extract<PricesResult, { ok: false }>): PricesResult {
+/** Kesintide son iyi fiyat (eski olarak işaretli) verilir; hiç yoksa hata. */
+function orStale(result: Extract<PricesResult, { ok: false }>, wantsRaw = false): PricesResult {
+  return !wantsRaw && cache ? { ok: true, body: { ...cache.body, stale: true } } : result;
+}
+
+function remember(result: Extract<PricesResult, { ok: false }>): Extract<PricesResult, { ok: false }> {
   failure = { at: Date.now(), result };
   return result;
 }
@@ -108,13 +114,24 @@ export async function loadPrices(wantsRaw = false): Promise<PricesResult> {
   const key = process.env.HASFIYAT_API_KEY;
   if (!key) return { ok: false, status: 503, error: 'not_configured' };
   if (!wantsRaw && cache && Date.now() - cache.at < pricesTtlSeconds() * 1000) return { ok: true, body: cache.body };
-  if (!wantsRaw && failure && Date.now() - failure.at < PRICES_ERROR_BACKOFF_S * 1000) return failure.result;
+  if (!wantsRaw && failure && Date.now() - failure.at < PRICES_ERROR_BACKOFF_S * 1000) return orStale(failure.result);
+  if (!wantsRaw && inflight) return inflight;
+  // Bütçe dolduysa ya da Hasfiyat kota/anahtar hatası verdiyse gidilmez; son iyi fiyat (eski de
+  // olsa) verilir. Hiç yoksa 429 (503 değil: istemci 503'ü "uç yok" sayıp 5 dk bekler).
+  if (!acquireUpstream('prices')) {
+    return orStale({ ok: false, status: 429, error: 'busy' });
+  }
   if (wantsRaw) return fetchUpstream(key, true);
   // Önbellek süresi dolduğunda aynı anda gelen istekler tek Hasfiyat çağrısını paylaşır.
-  inflight ??= fetchUpstream(key, false).finally(() => {
+  inflight = fetchUpstream(key, false).finally(() => {
     inflight = null;
   });
   return inflight;
+}
+
+/** Önbellekteki son fiyat listesinin kalem adları; Hasfiyat'a gitmez (geçmiş ucunun sembol denetimi). */
+export function cachedTitles(): readonly string[] {
+  return cache?.body.items.map((item) => item.title) ?? [];
 }
 
 let inflight: Promise<PricesResult> | null = null;
@@ -130,8 +147,9 @@ async function fetchUpstream(key: string, wantsRaw: boolean): Promise<PricesResu
       signal: controller.signal,
     });
     if (!res.ok) {
+      reportUpstreamStatus(res.status, res.headers.get('retry-after'));
       const detail = (await res.json().catch(() => null)) as { reason?: string } | null;
-      return remember({ ok: false, status: 502, error: 'upstream', reason: detail?.reason ?? null });
+      return orStale(remember({ ok: false, status: 502, error: 'upstream', reason: detail?.reason ?? null }), wantsRaw);
     }
     const data = (await res.json()) as UpstreamResponse;
     const body = normalize(data);
@@ -141,7 +159,7 @@ async function fetchUpstream(key: string, wantsRaw: boolean): Promise<PricesResu
     failure = null;
     return { ok: true, body };
   } catch {
-    return remember({ ok: false, status: 504, error: 'unreachable' });
+    return orStale(remember({ ok: false, status: 504, error: 'unreachable' }), wantsRaw);
   } finally {
     clearTimeout(timeout);
   }

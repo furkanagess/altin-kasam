@@ -1,4 +1,5 @@
-import type { ChartUnit, Currency, Timeframe } from '@/src/core/constants/app';
+import { Platform } from 'react-native';
+import { POLL_INTERVAL_MS, type ChartUnit, type Currency, type Timeframe } from '@/src/core/constants/app';
 import type { HasfiyatItem, HasfiyatPricesResponse } from '@/src/data/datasources/hasfiyatTypes';
 import { usdPerOunceToTryPerGram } from '@/src/utils/metal';
 import { fetchJson } from '@/src/data/datasources/http';
@@ -75,12 +76,51 @@ function scaleDay(day: HasfiyatItem['day'], units: number): DayRange | undefined
 class UnavailableError extends Error {}
 
 /**
+ * Web'de aynı tarayıcının açık sekmeleri son fiyat yanıtını `localStorage` üzerinden paylaşır:
+ * bir sekme yeni çektiyse diğerleri yoklama aralığı içinde ağa gitmez. N sekme ≈ 1 sekme trafiği.
+ */
+const SHARED_KEY = 'altinkasam:prices:v1';
+/** Paylaşılan yanıt bu süreden tazeyse kullanılır; yoklama aralığından biraz kısa (sekmeler kaymasın). */
+const SHARED_FRESH_MS = POLL_INTERVAL_MS - 2_000;
+
+function webStorage(): Storage | null {
+  if (Platform.OS !== 'web') return null;
+  try {
+    return typeof localStorage === 'undefined' ? null : localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function readShared(now = Date.now()): HasfiyatPricesResponse | null {
+  try {
+    const raw = webStorage()?.getItem(SHARED_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { at?: number; body?: HasfiyatPricesResponse };
+    if (typeof parsed.at !== 'number' || now - parsed.at >= SHARED_FRESH_MS || now < parsed.at) return null;
+    return parsed.body?.items?.length ? parsed.body : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeShared(body: HasfiyatPricesResponse) {
+  try {
+    webStorage()?.setItem(SHARED_KEY, JSON.stringify({ at: Date.now(), body }));
+  } catch {
+    // Depolama kapalı ya da dolu: sekme kendi isteğiyle devam eder.
+  }
+}
+
+/**
  * Fiyatların tek kaynağı Hasfiyat'tır (Harem; lisanslı API, anahtar sunucuda). Yedek fiyat kaynağı
  * yoktur: ulaşılamazsa hata döner ve depo son fiyatı "eski veri" olarak gösterir. Grafik geçmişi
  * `ChartHistoryDatasource`'tan gelir ve Hasfiyat fiyat seviyesine hizalanır.
  */
 export class HasfiyatMarketDatasource implements IMarketDatasource {
   private unavailableUntil = 0;
+  /** Elle yenileme ile yoklama çakışırsa tek istek atılır. */
+  private inflight: Promise<HasfiyatPricesResponse> | null = null;
 
   constructor(private readonly chartHistory = new ChartHistoryDatasource()) {}
 
@@ -210,11 +250,21 @@ export class HasfiyatMarketDatasource implements IMarketDatasource {
     return this.chartHistory.fetchHistory(symbol, timeframe, currency, unit);
   }
 
-  private async fetchPrimary(): Promise<HasfiyatPricesResponse> {
+  private fetchPrimary(): Promise<HasfiyatPricesResponse> {
+    const shared = readShared();
+    if (shared) return Promise.resolve(shared);
+    this.inflight ??= this.requestPrimary().finally(() => {
+      this.inflight = null;
+    });
+    return this.inflight;
+  }
+
+  private async requestPrimary(): Promise<HasfiyatPricesResponse> {
     if (Date.now() < this.unavailableUntil) throw new UnavailableError('Hasfiyat geçici olarak devre dışı');
     try {
       const response = await fetchJson<HasfiyatPricesResponse>(ENDPOINT);
       if (!response.items?.length) throw new Error('Hasfiyat boş yanıt döndürdü');
+      writeShared(response);
       return response;
     } catch (e) {
       // 503: anahtar tanımlı değil; 404/ağ hatası: sunucu ucu yok (ör. üretimde `origin` ayarlanmamış).

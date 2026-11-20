@@ -1,4 +1,4 @@
-import { HISTORY_LONG_TTL_S, HISTORY_TTL_S } from '@/src/core/constants/hasfiyatCache';
+import { HISTORY_FETCH_DAYS, HISTORY_LONG_TTL_S, HISTORY_TTL_S } from '@/src/core/constants/hasfiyatCache';
 import { TIMEFRAME_SPAN_MS, type Timeframe } from '@/src/core/constants/app';
 import type { HasfiyatHistoryResponse } from '@/src/data/datasources/hasfiyatTypes';
 import { fetchJson } from '@/src/data/datasources/http';
@@ -27,7 +27,7 @@ const PLAN: Record<Timeframe, { period: '1h' | '1d' }> = {
  * istemcide `since` ile kırpılır. Aksi halde 1D/1W/1M ve 3M/1Y ayrı CDN anahtarı, yani aynı seri
  * için ayrı Hasfiyat isteği olurdu: periyotlar arasında gezmek istek sayısını 2-3 katına çıkarırdı.
  */
-const FETCH_DAYS = { '1h': 30, '1d': 366 } as const;
+const FETCH_DAYS = HISTORY_FETCH_DAYS;
 
 /** Hasfiyat kalemi → tamamlama serisi; listede olmayanlar (ziynet, bilezik…) altın hareketini izler. */
 const BACKFILL_SERIES: Record<string, 'silver' | 'platinum' | 'palladium' | 'usd' | 'eur'> = {

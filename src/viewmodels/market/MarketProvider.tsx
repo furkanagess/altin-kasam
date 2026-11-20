@@ -36,6 +36,7 @@ import React, {
 } from 'react';
 import { isMarketClosed } from '@/src/utils/marketHours';
 import { AppState } from 'react-native';
+import { isUserActive, onUserResume } from '@/src/core/network/userActivity';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -395,7 +396,8 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
       timer = setTimeout(
         () => {
           // Çevrimdışıyken yoklanmaz; bağlantı gelince `useNetworkRecovery` hemen yeniler.
-          if (AppState.currentState !== 'background' && !networkMonitor.isOffline()) void refresh();
+          // Web'de görünür ama uzun süredir dokunulmayan sekme de yoklamaz (`userActivity`).
+          if (AppState.currentState !== 'background' && !networkMonitor.isOffline() && isUserActive()) void refresh();
           schedule();
         },
         isMarketClosed() ? POLL_INTERVAL_CLOSED_MS : POLL_INTERVAL_MS,
@@ -413,10 +415,20 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void loadCharts(timeframe, chartCurrency, unit, brentCurrency, false);
     const id = setInterval(() => {
-      if (AppState.currentState !== 'background' && !networkMonitor.isOffline()) void loadCharts(timeframe, chartCurrency, unit, brentCurrency);
+      if (AppState.currentState !== 'background' && !networkMonitor.isOffline() && isUserActive()) void loadCharts(timeframe, chartCurrency, unit, brentCurrency);
     }, CHART_REFRESH_MS);
     return () => clearInterval(id);
   }, [timeframe, chartCurrency, unit, brentCurrency, loadCharts]);
+
+  // Boşta kalan web sekmesine dönülünce fiyat hemen, grafikler yalnızca süresi dolduysa yenilenir.
+  useEffect(
+    () =>
+      onUserResume(() => {
+        void refresh();
+        void loadCharts(timeframe, chartCurrency, unit, brentCurrency, false);
+      }),
+    [refresh, loadCharts, timeframe, chartCurrency, unit, brentCurrency],
+  );
 
   // Kopukluk bitince fiyat ve grafikler kullanıcı yenilemeden güncellenir.
   useNetworkRecovery(() => {
