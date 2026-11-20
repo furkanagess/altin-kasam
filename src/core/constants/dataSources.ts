@@ -26,8 +26,4 @@ export const DATA_SOURCE_GROUPS: { title: string; sources: DataSource[] }[] = [
       { name: 'FRED® (St. Louis Fed)', usage: 'Fed faiz bandı, ABD enflasyonu, tarım dışı istihdam ve açıklama günleri' },
     ],
   },
-  {
-    title: 'Topluluk',
-    sources: [{ name: 'Bluesky', usage: 'Altın ve gümüş gönderileri' }],
-  },
 ];

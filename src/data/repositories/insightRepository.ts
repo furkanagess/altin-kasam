@@ -91,7 +91,7 @@ function buildSummary(insight: Omit<MetalInsight, 'summary'>, topics: SummaryTop
   const parts: string[] = [];
 
   if (!analyzed) {
-    return `Bugün ${metal.with} ilgili henüz haber veya gönderi yok; gün içinde içerik geldikçe analiz güncellenir.`;
+    return `Bugün ${metal.with} ilgili henüz haber yok; gün içinde içerik geldikçe analiz güncellenir.`;
   }
 
   if (label === 'insufficient') {

@@ -70,3 +70,9 @@ Adımlar `src/core/constants/tour.ts` (`TOUR_STEPS`) → `TourProvider` + `tourT
 
 ## Landing sayfası
 `firebase/landing/index.html` → Firebase Hosting `altin-kasam` sitesi. Mağaza linkleri `src/core/constants/stores.ts` ile aynı tutulmalı.
+
+
+## Yasal sayfalar ve topluluk kaynakları (App Store incelemesi)
+
+- Topluluk akışı yalnızca yayıncı RSS'i (`publisherRssCommunitySource.ts`); kullanıcı içeriği (Bluesky) yok → Age Rating'de UGC "No"
+- Yasal sayfalar: `scripts/build-legal-pages.mjs` → `firebase/landing/kosullar`, `firebase/landing/gizlilik`; adresler `LEGAL_LINKS` (`premium.ts`)

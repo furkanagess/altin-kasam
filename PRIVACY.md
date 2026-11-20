@@ -60,7 +60,7 @@ IP adresin ve cihaz/uygulama türü karşı sunucuya ulaşır. Bu isteklerden pr
 | Apple App Store / Google Play | Abonelik ödemesi | Ödeme bilgilerini biz görmeyiz |
 | PostHog (AB bölgesi) | Ürün analitiği | Olay adı (ör. ekran görüntüleme, satın alma) ve genel nitelikler; ekran kaydı yok |
 | Hasfiyat, Yahoo Finance, TCMB, FRED vb. | Fiyat, grafik ve takvim verisi | Sunucumuz üzerinden alınır; kişisel veri gönderilmez |
-| Yayıncı RSS akışları, Bluesky | Haber ve topluluk akışı | Teknik istek verisi (IP) |
+| Yayıncı RSS akışları | Haber akışı | Teknik istek verisi (IP) |
 
 Bir haberi veya resmî kaynağı Uygulama içinde açtığında ilgili site kendi gizlilik politikası ve
 çerezleri çerçevesinde çalışır. Üçüncü tarafların kendi politikaları geçerlidir.

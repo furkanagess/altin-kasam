@@ -26,9 +26,22 @@ const TRIAL_UNITS: Record<string, string> = {
   YEAR: 'yıl',
 };
 
+/**
+ * Uygulamada tek ücretli seviye (Pro) vardır. Entitlement adı panelde farklı yazılmışsa ya da ürün
+ * entitlement'a bağlanmamışsa bile aktif bir abonelik Pro sayılır (App Review'da satın alma sonrası
+ * Pro'nun açılmaması bu yüzden reddedilmişti).
+ */
 function hasPremium(info: CustomerInfo): boolean {
-  return info.entitlements.active[PREMIUM_ENTITLEMENT] !== undefined;
+  return (
+    info.entitlements.active[PREMIUM_ENTITLEMENT] !== undefined ||
+    Object.keys(info.entitlements.active).length > 0 ||
+    info.activeSubscriptions.length > 0
+  );
 }
+
+const ACTIVATION_RETRIES = 3;
+const ACTIVATION_DELAY_MS = 1500;
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function toPackage(pkg: PurchasesPackage, offeringId?: string): SubscriptionPackage {
   const intro = pkg.product.introPrice;
@@ -82,7 +95,18 @@ export class RevenueCatPurchasesDatasource implements IPurchasesDatasource {
     if (!pkg) throw new Error('Paket bulunamadı; ödeme ekranını yeniden açın.');
     try {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
-      return hasPremium(customerInfo);
+      if (hasPremium(customerInfo)) return true;
+      // Sandbox'ta makbuz doğrulaması birkaç saniye gecikebilir: önbelleği atlayıp yeniden sorulur,
+      // olmazsa mağaza makbuzu RevenueCat'e yeniden gönderilir.
+      for (let i = 0; i < ACTIVATION_RETRIES; i++) {
+        await wait(ACTIVATION_DELAY_MS);
+        await Purchases.invalidateCustomerInfoCache();
+        if (hasPremium(await Purchases.getCustomerInfo())) return true;
+      }
+      if (hasPremium(await Purchases.restorePurchases())) return true;
+      throw new Error(
+        'Ödemen alındı ancak Pro henüz etkinleşmedi. Birkaç saniye sonra "Satın alımları geri yükle"ye dokun.',
+      );
     } catch (error) {
       if (isCancellation(error)) return this.isPremium();
       throw error;

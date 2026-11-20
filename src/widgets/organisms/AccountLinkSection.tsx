@@ -1,7 +1,9 @@
 import { appAlert } from '@/src/core/dialog/appAlert';
 import { AUTH_PROVIDER_LABELS, type AuthProviderId } from '@/src/core/constants/account';
 import { makeStyles, paddings, radii, typography, useTheme } from '@/src/core/theme';
+import { LEGAL_LINKS } from '@/src/core/constants/premium';
 import { useAccount } from '@/src/viewmodels/account/AccountProvider';
+import { router } from 'expo-router';
 import { AppButton } from '@/src/widgets/atoms/AppButton';
 import { AppText } from '@/src/widgets/atoms/AppText';
 import React, { useState } from 'react';
@@ -184,6 +186,21 @@ export function AccountLinkSection() {
       <AppText variant="caption" tone="secondary">
         Kasan, alarmların, aboneliğin, analiz ve bildirim tercihlerin ile haber takiplerin hesabına taşınsın;
         telefon değişse de kaybolmasın.
+      </AppText>
+      {/* App Store 1.2: koşullar (sıfır tolerans) giriş / hesap bağlamadan önce gösterilir. */}
+      <AppText variant="caption" tone="tertiary">
+        Hesabını bağlayarak{' '}
+        <AppText
+          variant="caption"
+          tone="gold"
+          accessibilityRole="link"
+          onPress={() =>
+            router.push({ pathname: '/reader', params: { url: LEGAL_LINKS.terms, title: 'Kullanım koşulları' } })
+          }
+        >
+          Kullanım Koşulları’nı (EULA)
+        </AppText>{' '}
+        kabul etmiş olursun.
       </AppText>
       {appleAvailable ? (
         <ProviderButton

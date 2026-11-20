@@ -4,7 +4,6 @@ import {
   startOfToday,
 } from '@/src/core/constants/community';
 import { COMMUNITY_HASHTAGS } from '@/src/core/constants/hashtags';
-import { BlueskyCommunitySource } from '@/src/data/datasources/blueskyCommunitySource';
 import type {
   ICommunityDatasource,
   ICommunitySource,
@@ -65,8 +64,9 @@ export class LiveCommunityDatasource implements ICommunityDatasource {
   private readonly cache = new Map<string, CommunityPost>();
 
   constructor(
+    // Yalnızca yayıncıların kendi RSS akışları: kişi paylaşımı (kullanıcı içeriği) gösterilmez.
     // Google Haberler RSS'i yalnızca kişisel, ticari olmayan kullanım için açık; kaynak değildir.
-    private readonly sources: ICommunitySource[] = [new BlueskyCommunitySource(), new PublisherRssCommunitySource()],
+    private readonly sources: ICommunitySource[] = [new PublisherRssCommunitySource()],
   ) {}
 
   async fetchPosts(hashtag?: string): Promise<CommunityPost[]> {

@@ -350,20 +350,6 @@ export default function PaywallScreen() {
           <PaywallFeatureCarousel width={contentWidth + paddings.screen * 2} />
         </Animated.View>
 
-        {LEGAL_LINKS.terms || LEGAL_LINKS.privacy ? (
-          <View style={styles.links}>
-            {LEGAL_LINKS.terms ? (
-              <AppText variant="caption" tone="gold" onPress={() => void Linking.openURL(LEGAL_LINKS.terms)}>
-                Kullanım Şartları
-              </AppText>
-            ) : null}
-            {LEGAL_LINKS.privacy ? (
-              <AppText variant="caption" tone="gold" onPress={() => void Linking.openURL(LEGAL_LINKS.privacy)}>
-                Gizlilik Politikası
-              </AppText>
-            ) : null}
-          </View>
-        ) : null}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, paddings.md) }]}>
@@ -463,6 +449,26 @@ export default function PaywallScreen() {
             Şimdi değil
           </AppText>
         </View>
+        {/* App Store 3.1.2: abonelik ekranında kullanım koşulları (EULA) ve gizlilik bağlantısı zorunlu. */}
+        <View style={styles.footerLinks}>
+          <AppText
+            variant="caption"
+            tone="gold"
+            accessibilityRole="link"
+            onPress={() => void Linking.openURL(LEGAL_LINKS.terms)}
+          >
+            Kullanım Koşulları (EULA)
+          </AppText>
+          <AppText variant="caption" tone="tertiary">·</AppText>
+          <AppText
+            variant="caption"
+            tone="gold"
+            accessibilityRole="link"
+            onPress={() => void Linking.openURL(LEGAL_LINKS.privacy)}
+          >
+            Gizlilik Politikası
+          </AppText>
+        </View>
         {canSimulate && !isDemo ? (
           <AppButton label="Pro’yu simüle et (geliştirme)" variant="ghost" onPress={() => simulatePremium(true)} />
         ) : null}
@@ -550,7 +556,6 @@ const useStyles = makeStyles((colors) => ({
   notice: { gap: 10, padding: 12, borderRadius: 12, backgroundColor: colors.surface.muted },
   storeRow: { flexDirection: 'row', gap: 8 },
   storeButton: { flex: 1, minHeight: 40 },
-  links: { flexDirection: 'row', justifyContent: 'center', gap: 16 },
   footer: {
     gap: paddings.xs,
     paddingHorizontal: paddings.screen,

@@ -1,14 +1,14 @@
-# Altın Kasam Kullanım Koşulları
+# Altın Kasam Kullanım Koşulları (EULA)
 
-> **Taslak.** Yayımlamadan önce köşeli parantezli alanları doldurun ve bir hukukçuya kontrol ettirin.
-> Yayımlanan sayfanın adresi `EXPO_PUBLIC_TERMS_URL` olarak ve App Store Connect'te uygulama
-> açıklamasına / EULA alanına girilir. 5. bölümdeki FRED® maddesi FRED API kullanım koşullarının
-> zorunlu tuttuğu bir maddedir; çıkarılmamalıdır.
+> Yayımlanan adres: https://altin-kasam.web.app/kosullar (`firebase/landing/kosullar/index.html`,
+> `node scripts/build-legal-pages.mjs` ile üretilir). App Store Connect'te uygulama açıklamasına / EULA
+> alanına bu adres girilir. 5. bölümdeki FRED® maddesi FRED API kullanım koşullarının zorunlu tuttuğu
+> bir maddedir; çıkarılmamalıdır.
 
-Son güncelleme: [GG.AA.YYYY]
+Son güncelleme: 20.11.2026
 
 Altın Kasam mobil uygulamasını ("Uygulama") indirerek ya da kullanarak bu koşulları kabul etmiş
-olursun. Uygulama [Geliştirici / şirket adı] ("biz") tarafından sunulur.
+olursun. Uygulama Furkan Çağlar ("biz") tarafından sunulur.
 
 ## 1. Hizmet
 
@@ -33,9 +33,9 @@ bölümler çalışmayabilir. Kuyumcu ve bankaların fiyatları uygulamadakinden
 
 ## 4. Üçüncü taraf içerikler
 
-Haber başlıkları, özetleri ve Bluesky gönderileri ilgili yayıncı ve kullanıcılara aittir; içerikleri
-için sorumluluk sahiplerindedir. Bu içeriklerin tamamına yayıncının sitesinden ulaşılır. Hakkının
-ihlal edildiğini düşündüğün bir içerik için [e-posta adresi] adresine yazabilirsin.
+Haber başlıkları ve özetleri ilgili yayıncılara aittir; içerikleri için sorumluluk yayıncılardadır.
+Uygulamada kullanıcıların içerik paylaştığı ya da birbiriyle etkileştiği bir bölüm yoktur. Bu içeriklerin tamamına yayıncının sitesinden ulaşılır. Hakkının
+ihlal edildiğini düşündüğün bir içerik için altinkasamapp@gmail.com adresine yazabilirsin.
 
 ## 5. FRED® API
 
@@ -95,4 +95,4 @@ ve tüketici mahkemeleri yetkilidir.
 
 ## 13. İletişim
 
-[Geliştirici / şirket adı] · [adres] · [e-posta adresi]
+Furkan Çağlar · altinkasamapp@gmail.com

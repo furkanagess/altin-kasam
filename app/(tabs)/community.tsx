@@ -8,7 +8,6 @@ import { CommunityPostKind } from '@/src/domain/enums';
 import {
   useCommunityViewModel,
   type FollowFilter,
-  type KindFilter,
   type MetalFilter,
   type ReadFilter,
 } from '@/src/viewmodels/community/CommunityProvider';
@@ -33,12 +32,6 @@ const METAL_OPTIONS: { id: MetalFilter; label: string }[] = [
   { id: 'silver', label: 'Gümüş' },
 ];
 
-const KIND_OPTIONS: { id: KindFilter; label: string }[] = [
-  { id: 'all', label: 'Tümü' },
-  { id: 'news', label: 'Haber' },
-  { id: 'post', label: 'Gönderi' },
-];
-
 const READ_OPTIONS: { id: ReadFilter; label: string }[] = [
   { id: 'all', label: 'Tümü' },
   { id: 'unread', label: 'Okunmamış' },
@@ -52,17 +45,15 @@ const FOLLOW_OPTIONS: { id: FollowFilter; label: string }[] = [
 ];
 
 /** Sunucu çıktısındaki sayfa başlığı ve açıklaması (arama ve paylaşım önizlemesi). */
-export const generateMetadata: GenerateMetadataFunction = () => pageMetadata({ title: 'Altın haberleri ve topluluk', description: 'Altın ve gümüşle ilgili günün haberleri, topluluk paylaşımları ve piyasa beklentisi.', path: '/community' });
+export const generateMetadata: GenerateMetadataFunction = () => pageMetadata({ title: 'Altın haberleri ve topluluk', description: 'Altın ve gümüşle ilgili günün haberleri ve piyasa beklentisi.', path: '/community' });
 
 export default function CommunityScreen() {
   const { colors } = useTheme();
   const {
     metal,
-    kind,
     read,
     follow,
     setMetal,
-    setKind,
     setRead,
     setFollow,
     resetFilters,
@@ -88,13 +79,6 @@ export default function CommunityScreen() {
           key: 'metal',
           label: METAL_OPTIONS.find((o) => o.id === metal)?.label,
           clear: () => setMetal('all'),
-        }
-      : null,
-    kind !== 'all'
-      ? {
-          key: 'kind',
-          label: KIND_OPTIONS.find((o) => o.id === kind)?.label,
-          clear: () => setKind('all'),
         }
       : null,
     read !== 'all'
@@ -165,14 +149,14 @@ export default function CommunityScreen() {
         activeFilters.length ? (
           <EmptyState
             title="Bu filtreye uygun içerik yok"
-            message="Bugün seçtiğin filtreyle eşleşen haber veya gönderi henüz yok."
+            message="Bugün seçtiğin filtreyle eşleşen haber henüz yok."
             actionLabel="Filtreleri temizle"
             onAction={resetFilters}
           />
         ) : (
           <EmptyState
             title="Bugün henüz içerik yok"
-            message="Altın veya gümüşle ilgili bugün paylaşılan haber ya da gönderi henüz yok. Gün içinde aşağı çekip yenileyebilirsin."
+            message="Altın veya gümüşle ilgili bugün yayımlanan haber henüz yok. Gün içinde aşağı çekip yenileyebilirsin."
             actionLabel="Yenile"
             onAction={() => void refresh()}
           />
@@ -248,12 +232,6 @@ export default function CommunityScreen() {
             options: METAL_OPTIONS.map((o) => ({ ...o, count: filterCounts.metal[o.id] })),
             value: metal,
             onChange: (id) => setMetal(id as MetalFilter),
-          },
-          {
-            title: 'İçerik türü',
-            options: KIND_OPTIONS.map((o) => ({ ...o, count: filterCounts.kind[o.id] })),
-            value: kind,
-            onChange: (id) => setKind(id as KindFilter),
           },
           {
             title: 'Okunma durumu',

@@ -105,7 +105,7 @@ export default function InsightScreen() {
     return (
       <Screen webWidth="readable" scroll>
         <AppText tone="secondary">
-          Altın ve gümüşle ilgili bugünkü haber ve gönderilerin yönü ve özeti Pro’ya dahildir.
+          Altın ve gümüşle ilgili bugünkü haberlerin yönü ve özeti Pro’ya dahildir.
         </AppText>
         <AppButton label="Pro’yu incele" onPress={() => openPaywall('insight')} />
       </Screen>
@@ -125,7 +125,7 @@ export default function InsightScreen() {
           <>
             <View style={styles.report}>
               <AppText variant="caption" tone="tertiary">
-                {`${reportDate} · ${insight.analyzed} haber ve gönderi incelendi`}
+                {`${reportDate} · ${insight.analyzed} haber incelendi`}
               </AppText>
             </View>
 

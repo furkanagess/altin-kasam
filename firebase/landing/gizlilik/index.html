@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gizlilik Politikası · Altın Kasam</title>
+<meta name="theme-color" content="#0D1014">
+<link rel="icon" href="/img/icon.png">
+<style>
+:root{--bg:#0D1014;--card:#171B23;--line:rgba(255,255,255,.08);--gold:#F2C862;--text:#F3F0EA;--mut:#9AA1AE}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6}
+main{max-width:760px;margin:0 auto;padding:32px 16px 64px}
+a{color:var(--gold);word-break:break-word}
+h1{font-size:1.7rem;line-height:1.25;margin:8px 0 16px}
+h2{font-size:1.15rem;margin:32px 0 8px;color:var(--gold)}
+p,li{color:var(--text);font-size:1rem}
+ul{padding-left:20px}
+code{background:var(--card);padding:1px 5px;border-radius:4px}
+.back{display:inline-block;margin-bottom:8px;font-size:.9rem;text-decoration:none}
+footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:var(--mut);font-size:.85rem}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="/">← Altın Kasam</a>
+<h1>Altın Kasam Gizlilik Politikası</h1>
+<p>Son güncelleme: 17.11.2026</p>
+<p>Bu politika, Furkan Çağlar ("biz") tarafından sunulan Altın Kasam mobil uygulamasının ("Uygulama") hangi verileri, neden ve nasıl işlediğini açıklar. 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında veri sorumlusu Furkan Çağlar'dır. İletişim: altinkasamapp@gmail.com</p>
+<h2>1. Kısaca</h2>
+<ul><li>Hesap açmak <strong>zorunlu değildir</strong>. Hesap olmadan da Uygulama'yı kullanabilirsin; kasan, hedefin ve alarmların cihazında durur.</li><li>İstersen Google veya Apple ile hesabını bağlayıp verini yedekleyebilir, başka cihazda geri yükleyebilirsin. Bu yalnızca sen bağladığında çalışır.</li><li>Reklam göstermeyiz, seni uygulamalar ve siteler arasında izlemeyiz, verini satmayız.</li><li>Analitik yalnızca olay adı ve genel bilgi içerir; miktar, tutar, not ya da e-posta göndermez.</li></ul>
+<h2>2. Cihazında saklanan veriler</h2>
+<p>Aşağıdakiler cihazının yerel depolamasında tutulur ve Uygulama'yı sildiğinde silinir:</p>
+<ul><li>Kasandaki varlıklar (tür, miktar, alış fiyatı ve tarihi)</li><li>Yatırım hedefi</li><li>Fiyat alarmları ve ekonomik takvim hatırlatmaları</li><li>Okunan haberler, takip edilen kaynaklar, ana ekran widget'ı seçimi</li><li>Tema tercihi ve son fiyatların önbelleği</li><li>Cihaza özgü rastgele bir kurulum kimliği (isim, e-posta veya telefonla ilişkisi yoktur)</li></ul>
+<h2>3. Sunucularımıza gönderilen veriler</h2>
+<p>Sunucularımız Google Firebase (Cloud Functions, Firestore, Authentication) üzerinde çalışır.</p>
+<p><strong>a) Hesap bağlama ve yedekleme (isteğe bağlı).</strong> Google veya Apple ile giriş yaptığında Firebase Authentication sana bir kullanıcı kimliği oluşturur ve giriş sağlayıcının verdiği e-posta adresi ile adı (varsa) işler. Kasa, hedef, alarm ve tercihlerinin yedeği bu kimliğe bağlı olarak Firestore'da saklanır. Uygulama Firestore'a doğrudan erişmez; her istek kimlik jetonuyla doğrulanır. Yedeği ve hesabını istediğin an Ayarlar'dan silebilirsin; silince sunucudaki yedek de silinir.</p>
+<p><strong>b) Sunucu tarafı fiyat alarmı.</strong> Uygulama kapalıyken alarmın çalışabilmesi için alarm bilgileri (hedef fiyat, bildirim metni), kurulum kimliğin ve bildirim jetonun (push token) sunucuya gönderilir. Alarm tetiklenip bildirim gönderildikten bir süre sonra kayıt silinir; geçersiz bildirim jetonları otomatik temizlenir.</p>
+<p><strong>c) Destek mesajları.</strong> Ayarlar &gt; Destek'ten mesaj gönderdiğinde mesaj metni, yazdıysan dönüş e-postan, kurulum kimliğin, uygulama sürümü, işletim sistemi ve cihaz modeli bize ulaşır ve destek gelen kutumuza iletilir. Bunları yalnızca talebini yanıtlamak için kullanır, talep sonrasında makul bir süre içinde sileriz. Kötüye kullanımı sınırlamak için kurulum kimliğinden türetilen sayaç tutulur.</p>
+<p><strong>d) Fiyat, grafik, takvim ve haber istekleri.</strong> Bu isteklerde her internet bağlantısında olduğu gibi IP adresin ve cihaz/uygulama türü karşı sunucuya ulaşır. Bu isteklerden profil çıkarmayız.</p>
+<h2>4. Üçüncü taraf hizmetler</h2>
+<p>| Hizmet | Amaç | Aktarılan veri | | --- | --- | --- | | Google Firebase | Sunucu, hesap, yedek, bildirim | Bölüm 3'te anlatılanlar | | Google / Apple ile giriş | İsteğe bağlı hesap bağlama | Kimlik doğrulama jetonu, e-posta, ad | | Expo (EAS Hosting, bildirim servisi) | Uygulamanın sunucu uçları, bildirim iletimi | Teknik istek verisi, bildirim jetonu | | RevenueCat, Inc. | Pro abonelik doğrulama | Anonim kullanıcı kimliği, satın alma geçmişi, cihaz/OS bilgisi | | Apple App Store / Google Play | Abonelik ödemesi | Ödeme bilgilerini biz görmeyiz | | PostHog (AB bölgesi) | Ürün analitiği | Olay adı (ör. ekran görüntüleme, satın alma) ve genel nitelikler; ekran kaydı yok | | Hasfiyat, Yahoo Finance, TCMB, FRED vb. | Fiyat, grafik ve takvim verisi | Sunucumuz üzerinden alınır; kişisel veri gönderilmez | | Yayıncı RSS akışları | Haber akışı | Teknik istek verisi (IP) |</p>
+<p>Bir haberi veya resmî kaynağı Uygulama içinde açtığında ilgili site kendi gizlilik politikası ve çerezleri çerçevesinde çalışır. Üçüncü tarafların kendi politikaları geçerlidir.</p>
+<h2>5. Analitik</h2>
+<p>Ürünü iyileştirmek için PostHog ile anonim kullanım olayları toplarız (uygulama açılışı, ekran görüntüleme, alarm kuruldu, satın alma gibi). Varlık miktarı, tutar, not metni ve e-posta gibi kişisel veya parasal veri analitiğe <strong>gönderilmez</strong>. Ekran ve dokunma kaydı alınmaz.</p>
+<h2>6. Verilerin işlenme amacı ve hukuki sebebi</h2>
+<ul><li>Hizmetin sunulması, yedek ve alarm (KVKK m.5/2-c, sözleşmenin ifası)</li><li>Abonelik ve ödeme doğrulama (m.5/2-c ve hukuki yükümlülük m.5/2-ç)</li><li>Analitik, güvenlik ve kötüye kullanımın önlenmesi (m.5/2-f, meşru menfaat)</li><li>Destek taleplerinin yanıtlanması (m.5/2-c ve m.5/2-f)</li><li>Bildirim izni ve hesap bağlama gibi isteğe bağlı özellikler (m.5/1, açık rıza; istediğin an geri alabilirsin)</li></ul>
+<h2>7. Saklama süresi</h2>
+<p>Cihazdaki veriler Uygulama'yı silene kadar kalır. Hesap yedeği, hesabını silene kadar saklanır. Tetiklenmiş alarmlar kısa süre sonra silinir. Destek yazışmaları talep sonrası makul bir süre saklanır. Yasal yükümlülükler (ör. abonelik kayıtları) mağaza ve RevenueCat tarafında kendi politikalarına göre tutulur.</p>
+<h2>8. Yurt dışına aktarım</h2>
+<p>Google (Firebase), Expo, RevenueCat, PostHog, Apple ve Google Play sunucuları yurt dışında olabilir. Bu aktarımlar KVKK m.9 kapsamındaki şartlara uygun olarak yapılır.</p>
+<h2>9. Haklarınız</h2>
+<p>KVKK m.11 uyarınca verinin işlenip işlenmediğini öğrenme, bilgi isteme, düzeltme, silme, işlemeye itiraz etme ve zarar hâlinde tazminat isteme haklarına sahipsin. Şunları kendin yapabilirsin:</p>
+<ul><li>Hesabını ve sunucudaki yedeğini Uygulama içinden silmek,</li><li>Bildirim iznini cihaz ayarlarından kapatmak,</li><li>Cihazdaki verileri Uygulama'yı silerek kaldırmak.</li></ul>
+<p>Diğer talepler için altinkasamapp@gmail.com adresine yazabilirsin.</p>
+<h2>10. Güvenlik</h2>
+<p>Aktarımlar HTTPS ile yapılır; hesap istekleri Firebase kimlik jetonuyla doğrulanır ve servis anahtarları Uygulama içinde değil yalnızca sunucuda tutulur. Hiçbir yöntem mutlak güvenlik sağlamaz.</p>
+<h2>11. Çocuklar</h2>
+<p>Uygulama 18 yaşından küçüklere yönelik değildir ve bilerek çocuklardan veri toplamaz.</p>
+<h2>12. Yatırım tavsiyesi değildir</h2>
+<p>Uygulamadaki fiyat, analiz ve yorumlar bilgilendirme amaçlıdır; yatırım tavsiyesi değildir.</p>
+<h2>13. Değişiklikler</h2>
+<p>Bu politikayı güncellediğimizde yeni sürümü bu sayfada ve tarihini yukarıda yayımlarız.</p>
+<h2>14. İletişim</h2>
+<p>Furkan Çağlar · altinkasamapp@gmail.com</p>
+<footer><a href="/kosullar">Kullanım Koşulları</a> · <a href="/gizlilik">Gizlilik Politikası</a> · altinkasamapp@gmail.com</footer>
+</main>
+</body>
+</html>
