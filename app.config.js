@@ -34,7 +34,10 @@ function firebaseFile(envName, fileName) {
 /*
  * - Crashlytics ve Analytics: React Native Firebase iki platformda da Firebase dosyası ister. İki dosya da
  *   varsa `@react-native-firebase/app` + `crashlytics` + `analytics` eklentileri ve iOS için zorunlu
- *   `useFrameworks: "dynamic"` ayarı eklenir (v27 SPM kullanır; "static" derlemeyi bozar).
+ *   `useFrameworks: "dynamic"` ayarı eklenir (RNFB SPM kullanır; "static" derlemeyi bozar).
+ *   RNFB 26.x'te tutulur: 27.x Firebase iOS SDK 13.1.1'e sabitlenir ve Xcode 26.2+ ister.
+ *   26.x eklentisi Expo 58 AppDelegate'inde `FirebaseApp.configure()` ekleyemediği için
+ *   `withFirebaseConfigure` bu satırı ekler.
  *   Dosyalardan biri yoksa Crashlytics eklenmez, uygulama yine derlenir.
  */
 module.exports = ({ config }) => {
@@ -56,6 +59,7 @@ module.exports = ({ config }) => {
         // ATT izni gerekmez, Apple Ads atıfı AdServices ile ayrıca çalışır.
         ['@react-native-firebase/analytics', { ios: { withoutAdIdSupport: true } }],
         ['expo-build-properties', { ios: { useFrameworks: 'dynamic' } }],
+        './plugins/withFirebaseConfigure',
       ],
     };
   } else {
