@@ -1,3 +1,4 @@
+import { WebAdLayout } from '@/src/widgets/molecules/WebAdLayout';
 import { APP_LANDING_URL } from '@/src/core/constants/stores';
 import { useBreakpoint } from '@/src/core/theme/web';
 import { appAlert } from '@/src/core/dialog/appAlert';
@@ -167,7 +168,9 @@ export default function SettingsScreen() {
   };
 
   return (
-    <Screen webWidth="readable" scroll>
+    <Screen webWidth="full" scroll>
+      {/* Geniş ekranda ayarlar sol menüye dayalı (okunabilir genişlikte), sağda reklam alanı. */}
+      <WebAdLayout adId="settings-right" maxWidth={720}>
       {showAccount ? (
         <>
           <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>HESAP</AppText>
@@ -307,6 +310,7 @@ export default function SettingsScreen() {
       <AppText variant="caption" tone="tertiary" style={styles.disclaimer}>
         Yatırım tavsiyesi değildir
       </AppText>
+      </WebAdLayout>
     </Screen>
   );
 }

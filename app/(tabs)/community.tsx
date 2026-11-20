@@ -1,6 +1,7 @@
+import { WebAdSlot } from '@/src/widgets/organisms/WebAdSlot';
 import { pageMetadata } from '@/src/core/web/seo';
 import type { GenerateMetadataFunction } from 'expo-router/server';
-import { useBreakpoint } from '@/src/core/theme/web';
+import { useAdColumn, useBreakpoint } from '@/src/core/theme/web';
 import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { useTheme } from '@/src/core/theme';
 import { CommunityPostKind } from '@/src/domain/enums';
@@ -112,6 +113,8 @@ export default function CommunityScreen() {
       : null,
   ].filter((f) => f !== null);
   const expanded = useBreakpoint() === 'expanded';
+  // Geniş ekranda içerik sol menüye dayalı, sağda reklam alanı.
+  const showAd = useAdColumn();
 
   const insightBlock = (
     <>
@@ -216,10 +219,16 @@ export default function CommunityScreen() {
   );
 
   return (
-    <Screen scroll scrollId="community" onRefresh={() => void refresh()} refreshing={feed.refreshing}>
+    <Screen scroll webWidth="full" scrollId="community" onRefresh={() => void refresh()} refreshing={feed.refreshing}>
       {/* Masaüstünde akış solda, topluluk beklentisi sağda sabit; telefonda beklenti üstte. */}
       {expanded ? (
-        <WideColumns main={feedBlock} aside={insightBlock} asideWidth={380} stickyAside />
+        <WideColumns
+          main={feedBlock}
+          aside={insightBlock}
+          asideWidth={380}
+          stickyAside
+          trailing={showAd ? <WebAdSlot id="community-right" /> : null}
+        />
       ) : (
         <>
           {insightBlock}

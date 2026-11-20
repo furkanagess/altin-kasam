@@ -1,5 +1,4 @@
-import { useBreakpoint } from '@/src/core/theme/web';
-import { useWindowSize } from '@/src/core/hooks/useWindowSize';
+import { useAdColumn, useBreakpoint } from '@/src/core/theme/web';
 import { WebAdSlot } from '@/src/widgets/organisms/WebAdSlot';
 import { pageMetadata } from '@/src/core/web/seo';
 import type { GenerateMetadataFunction } from 'expo-router/server';
@@ -72,9 +71,6 @@ const GOLD_ICONS: Record<string, ReactNode> = Object.fromEntries(
     <GoldAssetIcon key={asset.id} asset={asset} size={27} maxWidth={ROW_ICON_WIDTH} />,
   ]),
 );
-
-/** Bu genişliğin altında reklam sütunu gösterilmez; grafik dar kalmasın. */
-const AD_COLUMN_MIN_WINDOW = 1600;
 
 const GOLD_ROW_TEXT = Object.fromEntries(GOLD_ASSETS.map((asset) => [asset.id, goldAssetRowText(asset)]));
 
@@ -299,7 +295,7 @@ export default function MarketScreen() {
   // Listede aynı anda tek satır açık: başka satıra dokununca önceki kapanır. İlk açılışta 24 ayar gram altın açıktır.
   const [openGoldId, setOpenGoldId] = useState<string | null>('gram-24');
   // Reklam sütunu yalnızca grafiğe yeterli yer kalıyorsa (pencere ≥ 1600 px).
-  const showAdColumn = useWindowSize().width >= AD_COLUMN_MIN_WINDOW;
+  const showAdColumn = useAdColumn();
   const toggleGold = useCallback((id: string) => setOpenGoldId((current) => (current === id ? null : id)), []);
 
   const goldProducts = GOLD_ASSETS.flatMap((asset) => {

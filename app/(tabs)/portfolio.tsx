@@ -1,4 +1,6 @@
-import { useBreakpoint } from '@/src/core/theme/web';
+import { WebAdSlot } from '@/src/widgets/organisms/WebAdSlot';
+import { WebAdLayout } from '@/src/widgets/molecules/WebAdLayout';
+import { useAdColumn, useBreakpoint } from '@/src/core/theme/web';
 import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { appAlert } from '@/src/core/dialog/appAlert';
 import { makeStyles, paddings, useTheme } from '@/src/core/theme';
@@ -153,6 +155,8 @@ export default function PortfolioScreen() {
   const openShare = useCallback(() => router.push('/share-vault'), []);
 
   const expanded = useBreakpoint() === 'expanded';
+  // Geniş ekranda içerik sol menüye dayalı, sağda reklam alanı.
+  const showAd = useAdColumn();
   const goal = <GoalCard progress={goalProgress} onEdit={() => router.push('/goal')} compact />;
   // Son varlık çıkarılınca ekran boş duruma geçer; animasyon iki durumda da çizilir.
   const withdrawalAnimation = withdrawal ? (
@@ -167,7 +171,8 @@ export default function PortfolioScreen() {
 
   if (!snapshot || !breakdown || !snapshot.holdings.length) {
     return (
-      <Screen scroll scrollId="portfolio" onRefresh={() => void refresh()} refreshing={state === 'loading'}>
+      <Screen scroll webWidth="full" scrollId="portfolio" onRefresh={() => void refresh()} refreshing={state === 'loading'}>
+        <WebAdLayout adId="portfolio-right">
         {goal}
         <CurrencySwitcher {...currencySwitcher} />
         {state === 'loading' && !snapshot ? <ActivityIndicator color={colors.brand.gold} /> : null}
@@ -184,6 +189,7 @@ export default function PortfolioScreen() {
             <VaultEmptyState onAdd={() => router.push('/add-holding')} />
           </TourTarget>
         ) : null}
+        </WebAdLayout>
         {withdrawalAnimation}
       </Screen>
     );
@@ -317,6 +323,7 @@ export default function PortfolioScreen() {
   return (
     <Screen
       scroll
+      webWidth="full"
       scrollId="portfolio"
       onRefresh={() => void refresh()}
       refreshing={state === 'loading'}
@@ -338,6 +345,7 @@ export default function PortfolioScreen() {
             </>
           }
           asideWidth={400}
+          trailing={showAd ? <WebAdSlot id="portfolio-right" /> : null}
         />
       ) : (
         <>

@@ -1,6 +1,7 @@
+import { WebAdSlot } from '@/src/widgets/organisms/WebAdSlot';
 import { pageMetadata } from '@/src/core/web/seo';
 import type { GenerateMetadataFunction } from 'expo-router/server';
-import { useBreakpoint } from '@/src/core/theme/web';
+import { useAdColumn, useBreakpoint } from '@/src/core/theme/web';
 import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { isWeeklyAnalysisLocked } from '@/src/core/constants/premium';
 import { MARKET_INFO, type MarketInfoId } from '@/src/core/constants/marketInfo';
@@ -59,6 +60,8 @@ export default function AnalyticsScreen() {
   const [info, setInfo] = useState<MarketInfoId | null>(null);
   const [latest, ...past] = analyses;
   const expanded = useBreakpoint() === 'expanded';
+  // Geniş ekranda içerik sol menüye dayalı, sağda reklam alanı.
+  const showAd = useAdColumn();
 
   const ratioBlock = (
     <>
@@ -192,6 +195,7 @@ export default function AnalyticsScreen() {
       <MarketTicker items={ticker} />
       <Screen
         scroll
+        webWidth="full"
         scrollId="analytics"
         onRefresh={() => {
           void refresh();
@@ -210,6 +214,7 @@ export default function AnalyticsScreen() {
             }
             aside={calendarBlock}
             asideWidth={420}
+            trailing={showAd ? <WebAdSlot id="analytics-right" /> : null}
             stickyAside
           />
         ) : (

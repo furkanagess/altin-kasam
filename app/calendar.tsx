@@ -1,6 +1,7 @@
+import { WebAdSlot } from '@/src/widgets/organisms/WebAdSlot';
 import { pageMetadata } from '@/src/core/web/seo';
 import type { GenerateMetadataFunction } from 'expo-router/server';
-import { useBreakpoint } from '@/src/core/theme/web';
+import { useAdColumn, useBreakpoint } from '@/src/core/theme/web';
 import { WideColumns } from '@/src/widgets/molecules/WideColumns';
 import { EVENT_REMINDER_LEAD_MINUTES } from '@/src/core/constants/economicCalendar';
 import { makeStyles, paddings, useTheme } from '@/src/core/theme';
@@ -52,6 +53,8 @@ export default function EconomicCalendarScreen() {
       : FOOTNOTES;
 
   const expanded = useBreakpoint() === 'expanded';
+  // Geniş ekranda içerik sol menüye dayalı, sağda reklam alanı.
+  const showAd = useAdColumn();
   const recentList = recent.length ? (
     <>
       <AppText variant="caption" tone="tertiary" style={styles.sectionTitle}>
@@ -133,6 +136,7 @@ export default function EconomicCalendarScreen() {
   return (
     <Screen
       scroll
+      webWidth="full"
       refreshing={refreshing}
       onRefresh={() => {
         setRefreshing(true);
@@ -143,6 +147,7 @@ export default function EconomicCalendarScreen() {
       {expanded ? (
         <WideColumns
           asideWidth={420}
+          trailing={showAd ? <WebAdSlot id="calendar-right" /> : null}
           main={
             <>
               {upcomingTitle}
